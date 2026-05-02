@@ -402,6 +402,8 @@ function loadSavedSongs() {
 
 async function playSong(song, artist, button) {
 
+    console.log("playSong triggered:", song, artist);
+
     // ✅ Track active song (no coupling to save)
     activeSong = { song, artist };
     localStorage.setItem("activeSong", JSON.stringify(activeSong));
