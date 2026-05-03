@@ -412,14 +412,9 @@ async function playSong(song, artist, playBtn) {
     activeSong = { song, artist };
     localStorage.setItem("activeSong", JSON.stringify(activeSong));
 
-    // ✅ Only stop playback if NOT Play All
-    if (!isPlayingAll) {
-        stopPlayback();
-    }
-
     const card = playBtn.closest(".card");
 
-    // 🔴 stop any currently playing videos (Play All fix)
+    // 🔴 stop any currently playing videos
     document.querySelectorAll("iframe").forEach(frame => {
         frame.src = "";
     });
@@ -430,14 +425,10 @@ async function playSong(song, artist, playBtn) {
         slot = document.createElement("div");
         slot.className = "video-slot";
         card.appendChild(slot);
-}
+    }
 
-    // 🔴 remove any previous video wrapper in this card
-    const oldWrapper = slot.querySelector("div");
-    if (oldWrapper) oldWrapper.remove();
-
-// 🔴 completely clear previous video + X button
-slot.innerHTML = "";
+    // 🔴 remove ALL previous video wrappers (THIS fixes X button issue)
+    slot.querySelectorAll(".video-wrapper").forEach(w => w.remove());
 
     try {
         const query = (song + " " + artist).trim();
@@ -469,19 +460,22 @@ slot.innerHTML = "";
             return;
         }
 
-        // 🔴 convert ISO duration (PT3M35S → seconds)
-    function parseDuration(iso) {
-        const match = iso.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
-        const minutes = parseInt(match[1] || 0);
-        const seconds = parseInt(match[2] || 0);
-        return minutes * 60 + seconds;
-    }
+        // 🔴 convert ISO duration
+        function parseDuration(iso) {
+            const match = iso.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
+            const minutes = parseInt(match[1] || 0);
+            const seconds = parseInt(match[2] || 0);
+            return minutes * 60 + seconds;
+        }
 
-    let durationSeconds = 30; // fallback
+        let durationSeconds = 30;
 
-    if (data.duration) {
-    durationSeconds = parseDuration(data.duration);
-    }
+        if (data.duration) {
+            durationSeconds = parseDuration(data.duration);
+        }
+
+        // 🔴 store duration globally for playNextSong
+        window.currentDurationSeconds = durationSeconds;
 
         const embedUrl =
             "https://www.youtube-nocookie.com/embed/" +
@@ -489,6 +483,7 @@ slot.innerHTML = "";
             "?autoplay=1&rel=0&modestbranding=1&playsinline=1";
 
         const wrapper = document.createElement("div");
+        wrapper.className = "video-wrapper";
         wrapper.style.position = "relative";
         wrapper.style.marginTop = "10px";
 
@@ -513,7 +508,7 @@ slot.innerHTML = "";
         wrapper.appendChild(closeBtn);
         wrapper.appendChild(iframe);
 
-        slot.innerHTML = "";
+        // 🔴 ONLY append (no innerHTML wipe here)
         slot.appendChild(wrapper);
 
     } catch (err) {
@@ -578,12 +573,19 @@ function playNextSong(index, containerSelector = "#result", playlist = currentPl
     // clear previous timer
     if (playlistTimer) clearTimeout(playlistTimer);
 
-    // schedule next song
     const currentDuration = window.currentDurationSeconds || 30;
 
-    playlistTimer = setTimeout(() => {
-        playNextSong(index + 1, containerSelector, playlist);
-    }, currentDuration * 1000);
+playlistTimer = setTimeout(() => {
+
+    // 🔴 if last song, stop instead of continuing
+    if (index + 1 >= playlist.length) {
+        stopPlayback();
+        return;
+    }
+
+    playNextSong(index + 1, containerSelector, playlist);
+
+}, currentDuration * 1000);
 }
 
 function playAllSongs(button) {
