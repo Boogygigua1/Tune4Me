@@ -465,6 +465,20 @@ slot.innerHTML = "Loading video...";
             return;
         }
 
+        // 🔴 convert ISO duration (PT3M35S → seconds)
+    function parseDuration(iso) {
+        const match = iso.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
+        const minutes = parseInt(match[1] || 0);
+        const seconds = parseInt(match[2] || 0);
+        return minutes * 60 + seconds;
+    }
+
+    let durationSeconds = 30; // fallback
+
+    if (data.duration) {
+    durationSeconds = parseDuration(data.duration);
+    }
+
         const embedUrl =
             "https://www.youtube-nocookie.com/embed/" +
             data.videoId +
@@ -557,8 +571,8 @@ function playNextSong(index, containerSelector = "#result", playlist = currentPl
 
     // schedule next song
     playlistTimer = setTimeout(() => {
-        playNextSong(index + 1, containerSelector, playlist);
-    }, DEFAULT_SONG_PLAY_MS + 3000);
+    playNextSong(index + 1, containerSelector, playlist);
+    }, durationSeconds * 1000);
 }
 
 async function playAllSongs(button) {
