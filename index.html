@@ -557,8 +557,11 @@ playButtons.forEach(btn => {
     if (playlistTimer) clearTimeout(playlistTimer);
 
     playlistTimer = setTimeout(() => {
+    // 3 sec transition before next song
+    setTimeout(() => {
         playNextSong(index + 1, containerSelector, playlist);
-    }, DEFAULT_SONG_PLAY_MS);
+    }, 3000);
+}, DEFAULT_SONG_PLAY_MS);
 }
 
 async function playAllSongs(button) {
