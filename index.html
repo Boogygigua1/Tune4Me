@@ -417,9 +417,9 @@ async function playSong(song, artist, button) {
         slot.className = "video-slot";
         card.appendChild(slot);
     }
-
-    // ✅ Stop any currently playing video first
-stopPlayback();
+    if (!isPlayingAll) {
+    stopPlayback();
+    }
 
 slot.innerHTML = "Loading video...";
 
