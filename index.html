@@ -436,8 +436,8 @@ async function playSong(song, artist, playBtn) {
     const oldWrapper = slot.querySelector("div");
     if (oldWrapper) oldWrapper.remove();
 
-// clear ONLY this card
-slot.innerHTML = "Loading video...";
+// 🔴 completely clear previous video + X button
+slot.innerHTML = "";
 
     try {
         const query = (song + " " + artist).trim();
