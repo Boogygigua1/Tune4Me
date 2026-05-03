@@ -102,7 +102,9 @@ Tell us how you’re feeling — a word or a full sentence — and Tune4Me creat
 <div id="player" style="margin-top:10px;"></div>
 
 <div style="margin-top:10px;">
-    <button onclick="playAllSongs(this)">▶ Play All</button>
+    <button class="play-all-btn" onclick="playAllSongs(this)">
+        ▶ Play Preview (45s)
+    </button>
 </div>
 
 <button id="savePlaylistBtn" onclick="savePlaylist(event)" disabled> 💾 Save Playlist</button>
@@ -121,7 +123,9 @@ Tell us how you’re feeling — a word or a full sentence — and Tune4Me creat
 
 <h2>💾 Saved Songs</h2>
 
-<button onclick="playSavedSongs()">▶ Play Saved Songs</button>  <!-- 👈 ADD THIS -->
+<button class="play-saved-btn" onclick="playSavedSongs(this)">
+    ▶ Play Saved Songs
+</button>
 
 
 <button onclick="downloadSavedSongs()">⬇️ Download Saved Songs</button>
@@ -520,24 +524,29 @@ slot.innerHTML = "Loading video...";
 
 // PLAYBACK ENG
 
-function stopPlayback(btn) {
+function stopPlayback() {
     isPlayingAll = false;
 
-    // clear timer
     if (playlistTimer) {
         clearTimeout(playlistTimer);
         playlistTimer = null;
     }
 
-    // stop all videos
-    document.querySelectorAll(".video-slot").forEach(el => {
-        el.innerHTML = "";
+    document.querySelectorAll("iframe").forEach(frame => {
+        frame.src = "";
     });
 
-    // reset button back to Play All
-    if (btn) {
-        btn.textContent = "Play All";
-    }
+    document.querySelectorAll(".video-slot").forEach(slot => {
+        slot.innerHTML = "";
+    });
+
+    document.querySelectorAll(".play-all-btn").forEach(btn => {
+        btn.innerText = "▶ Play Preview (45s)";
+    });
+
+    document.querySelectorAll(".play-saved-btn").forEach(btn => {
+        btn.innerText = "▶ Play Saved Songs";
+    });
 }
 
 function playNextSong(index, containerSelector = "#result", playlist = currentPlaylist, durationSeconds = 30) {
@@ -577,25 +586,16 @@ function playNextSong(index, containerSelector = "#result", playlist = currentPl
     }, currentDuration * 1000);
 }
 
-async function playAllSongs(button) {
+function playAllSongs(button) {
 
-    console.log("playAllSongs triggered");
-    console.log("currentPlaylist:", currentPlaylist);
-
-    if (!currentPlaylist || currentPlaylist.length === 0) {
-        alert("No playlist loaded");
-        return;
-    }
-
-    // toggle stop
+    // 🔴 toggle OFF
     if (isPlayingAll) {
         stopPlayback();
-        button.innerText = "▶ Play All";
         return;
     }
 
-    // ✅ FIX: don't kill Play All state
-    clearTimeout(playlistTimer);
+    // 🔴 toggle ON
+    stopPlayback(); // ensure clean start
 
     isPlayingAll = true;
 
@@ -607,32 +607,49 @@ async function playAllSongs(button) {
 function stopPlayback() {
     isPlayingAll = false;
 
+    // stop timer
     if (playlistTimer) {
         clearTimeout(playlistTimer);
         playlistTimer = null;
     }
- }
 
-function playSavedSongs() {
+    // stop videos
+    document.querySelectorAll("iframe").forEach(frame => {
+        frame.src = "";
+    });
 
-    let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+    // 🔴 reset ALL buttons cleanly
+    document.querySelectorAll(".play-all-btn").forEach(btn => {
+        btn.innerText = "▶ Play Preview (45s)";
+    });
+
+    document.querySelectorAll(".play-saved-btn").forEach(btn => {
+        btn.innerText = "▶ Play Saved Songs";
+    });
+}
+
+function playSavedSongs(button) {
+
+    const saved = JSON.parse(localStorage.getItem("savedSongs") || "[]");
 
     if (!saved.length) {
-        alert("No saved songs to play");
+        alert("No saved songs");
         return;
     }
 
-    // stop current playback
+    // 🔴 toggle OFF
+    if (isPlayingAll) {
+        stopPlayback();
+        return;
+    }
+
+    // 🔴 toggle ON
     stopPlayback();
-
-    // rebuild UI
-    loadSavedSongs();
-
-    currentPlaylist = saved;
 
     isPlayingAll = true;
 
-    // ✅ no delay needed
+    button.innerText = "⏹ Stop";
+
     playNextSong(0, "#savedSongs", saved);
 }
 
