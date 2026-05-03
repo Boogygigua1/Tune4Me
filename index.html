@@ -421,9 +421,10 @@ async function playSong(song, artist, playBtn) {
         slot = document.createElement("div");
         slot.className = "video-slot";
         card.appendChild(slot);
-    }
+}
 
-    slot.innerHTML = "Loading video...";
+// clear ONLY this card
+slot.innerHTML = "Loading video...";
 
     try {
         const query = (song + " " + artist).trim();
@@ -552,7 +553,18 @@ playButtons.forEach(btn => {
 
     activeSong = { song, artist };
 
-    playSong(song, artist, playBtn);
+    // find correct button inside THIS container
+const buttons = document.querySelectorAll(containerSelector + " .play-song-btn");
+
+let correctBtn = buttons[index];
+
+if (!correctBtn) {
+    console.log("No button at index:", index);
+    isPlayingAll = false;
+    return;
+}
+
+playSong(song, artist, correctBtn);
 
     if (playlistTimer) clearTimeout(playlistTimer);
 
