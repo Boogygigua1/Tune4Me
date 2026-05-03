@@ -412,14 +412,16 @@ async function playSong(song, artist, button) {
 
     let slot = card.querySelector(".video-slot");
 
+// ✅ Ensure slot exists
 if (!slot) {
     slot = document.createElement("div");
     slot.className = "video-slot";
     card.appendChild(slot);
 }
 
-// clear ONLY this card’s video
-slot.innerHTML = "";
+// 🔴 DO NOT clear all slots anymore
+// just clear this one
+slot.innerHTML = "Loading video...";
 
     try {
         const safeSong = song ? song.trim() : "";
