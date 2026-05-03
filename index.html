@@ -400,88 +400,38 @@ function loadSavedSongs() {
 
 // PLAYBACK CORE
 
-async function playSong(song, artist, button) {
+async function playSong(song, artist, playBtn) {
 
     console.log("playSong triggered:", song, artist);
 
-    // ✅ Track active song (no coupling to save)
+    // ✅ Track active song
     activeSong = { song, artist };
     localStorage.setItem("activeSong", JSON.stringify(activeSong));
+
+    // ✅ Only stop playback if NOT Play All
+    if (!isPlayingAll) {
+        stopPlayback();
+    }
 
     const card = playBtn.closest(".card");
 
     let slot = card.querySelector(".video-slot");
 
-// ✅ Ensure slot exists
-if (!slot) {
-    slot = document.createElement("div");
-    slot.className = "video-slot";
-    card.appendChild(slot);
-}
+    if (!slot) {
+        slot = document.createElement("div");
+        slot.className = "video-slot";
+        card.appendChild(slot);
+    }
 
-// 🔴 DO NOT clear all slots anymore
-// just clear this one
-slot.innerHTML = "Loading video...";
+    slot.innerHTML = "Loading video...";
 
     try {
-        const safeSong = song ? song.trim() : "";
-        const safeArtist = artist ? artist.trim() : "";
-        const query = (safeSong + " " + safeArtist).trim();
+        const query = (song + " " + artist).trim();
 
-        if (!query) {
-            slot.innerHTML = "Invalid song data";
-            return;
-        }
+        console.log("FETCH START:", query);
 
-        let cache = JSON.parse(localStorage.getItem("videoCache") || "{}");
-
-if (cache[query]) {
-
-    console.log("CACHE HIT:", query);
-    
-const embedUrl = "https://www.youtube-nocookie.com/embed/" + cache[query] +
-"?autoplay=1&rel=0&modestbranding=1&playsinline=1";
-    const wrapper = document.createElement("div");
-    wrapper.style.position = "relative";
-    wrapper.style.marginTop = "10px";
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "✖";
-
-    closeBtn.style.position = "absolute";
-    closeBtn.style.top = "10px";
-    closeBtn.style.right = "-10px";
-    closeBtn.style.zIndex = "20";
-    closeBtn.style.background = "rgba(255,0,0,0.9)";
-    closeBtn.style.color = "white";
-    closeBtn.style.border = "none";
-    closeBtn.style.padding = "6px 12px";
-    closeBtn.style.cursor = "pointer";
-    closeBtn.style.borderRadius = "6px";
-    closeBtn.style.fontWeight = "bold";
-
-    closeBtn.addEventListener("click", () => {
-        slot.innerHTML = "";
-    });
-
-    const iframe = document.createElement("iframe");
-    iframe.width = "100%";
-    iframe.height = "200";
-    iframe.src = embedUrl;
-    iframe.setAttribute("frameborder", "0");
-    iframe.setAttribute("allow", "autoplay; encrypted-media");
-    iframe.setAttribute("allowfullscreen", "");
-
-    wrapper.appendChild(closeBtn);
-    wrapper.appendChild(iframe);
-
-    slot.innerHTML = "";
-    slot.appendChild(wrapper);
-
-    return; // 🚨 STOP — no API call
-}
-
-            const response = await fetch("/api/getYouTubeVideo", {            method: "POST",
+        const response = await fetch("/api/getYouTubeVideo", {
+            method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 query: query + " official music video"
@@ -489,6 +439,8 @@ const embedUrl = "https://www.youtube-nocookie.com/embed/" + cache[query] +
         });
 
         const text = await response.text();
+
+        console.log("FETCH RESPONSE:", text);
 
         let data;
         try {
@@ -498,83 +450,49 @@ const embedUrl = "https://www.youtube-nocookie.com/embed/" + cache[query] +
             return;
         }
 
-        // ✅ Handle quota / no video safely
         if (!data.videoId) {
-            const searchUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query);
-
-            slot.innerHTML = `
-                <div style="margin-top:10px;">
-                    <p>⚠️ Video unavailable</p>
-                    <a href="${searchUrl}" target="_blank">▶ Watch on YouTube</a>
-                </div>
-            `;
+            slot.innerHTML = "Video unavailable";
             return;
         }
 
-        cache[query] = data.videoId;
-localStorage.setItem("videoCache", JSON.stringify(cache));    
+        const embedUrl =
+            "https://www.youtube-nocookie.com/embed/" +
+            data.videoId +
+            "?autoplay=1&rel=0&modestbranding=1&playsinline=1";
 
-const embedUrl = "https://www.youtube-nocookie.com/embed/" + data.videoId +
-"?autoplay=1&rel=0&modestbranding=1&playsinline=1";
-const wrapper = document.createElement("div");
-wrapper.style.position = "relative";
-wrapper.style.marginTop = "10px";
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "relative";
+        wrapper.style.marginTop = "10px";
 
-const closeBtn = document.createElement("button");
-closeBtn.textContent = "✖";
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = "✖";
+        closeBtn.style.position = "absolute";
+        closeBtn.style.top = "10px";
+        closeBtn.style.right = "-10px";
+        closeBtn.style.zIndex = "20";
 
-closeBtn.style.position = "absolute";
-closeBtn.style.top = "10px";
-closeBtn.style.right = "-10px";
-closeBtn.style.zIndex = "20";
-closeBtn.style.background = "rgba(255,0,0,0.9)";
-closeBtn.style.color = "white";
-closeBtn.style.border = "none";
-closeBtn.style.padding = "6px 12px";
-closeBtn.style.cursor = "pointer";
-closeBtn.style.borderRadius = "6px";
-closeBtn.style.fontWeight = "bold";
+        closeBtn.addEventListener("click", () => {
+            slot.innerHTML = "";
+        });
 
-closeBtn.addEventListener("click", () => {
-    slot.innerHTML = "";
-});
+        const iframe = document.createElement("iframe");
+        iframe.width = "100%";
+        iframe.height = "200";
+        iframe.src = embedUrl;
+        iframe.setAttribute("allow", "autoplay; encrypted-media");
+        iframe.setAttribute("frameborder", "0");
 
-// Only clear the current card, not all cards
-let slot = playBtn.parentElement.querySelector(".video-slot");
-if (slot) {
-    slot.innerHTML = "";
-}
+        wrapper.appendChild(closeBtn);
+        wrapper.appendChild(iframe);
 
-const iframe = document.createElement("iframe");
-iframe.width = "100%";
-iframe.height = "200";
-iframe.src = embedUrl;
-iframe.setAttribute("frameborder", "0");
-iframe.setAttribute("allow", "autoplay; encrypted-media");
-iframe.setAttribute("allowfullscreen", "");
-
-wrapper.appendChild(closeBtn);
-wrapper.appendChild(iframe);
-
-slot.innerHTML = "";
-slot.appendChild(wrapper);
-
-        // ✅ Track usage ONLY (no save logic here)
-        playsToday++;
-        localStorage.setItem("playsToday", playsToday);
+        slot.innerHTML = "";
+        slot.appendChild(wrapper);
 
     } catch (err) {
-    const searchUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query);
-
-    slot.innerHTML = `
-        <div style="margin-top:10px;">
-            <p>⚠️ Couldn't load video</p>
-            <a href="${searchUrl}" target="_blank">▶ Watch on YouTube</a>
-        </div>
-    `;
-}   // closes catch
-
-}   // 👈 ADD THIS LINE (closes playSong)
+        console.error("playSong error:", err);
+        slot.innerHTML = "Error loading video";
+    }
+}
 
 // PLAYBACK ENG
 
