@@ -428,6 +428,10 @@ async function playSong(song, artist, playBtn) {
         card.appendChild(slot);
 }
 
+    // 🔴 remove any previous video wrapper in this card
+    const oldWrapper = slot.querySelector("div");
+    if (oldWrapper) oldWrapper.remove();
+
 // clear ONLY this card
 slot.innerHTML = "Loading video...";
 
@@ -478,7 +482,7 @@ slot.innerHTML = "Loading video...";
         closeBtn.style.zIndex = "20";
 
         closeBtn.addEventListener("click", () => {
-            slot.innerHTML = "";
+            wrapper.remove();
         });
 
         const iframe = document.createElement("iframe");
