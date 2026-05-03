@@ -609,7 +609,8 @@ if (!playBtn) {
 
 const card = playBtn.closest(".card");
 
-    playBtn.click();
+    const { song, artist } = playlist[index];
+    playSong(song, artist, playBtn);
 
     if (playlistTimer) clearTimeout(playlistTimer);
 
