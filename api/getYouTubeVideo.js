@@ -31,7 +31,18 @@ export default async function handler(req, res) {
 
         const videoId = data.items[0].id.videoId;
 
-        return res.status(200).json({ videoId });
+        const videoDetailsResponse = await fetch(
+            `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${YOUTUBE_API_KEY}`
+        );
+
+        const videoDetails = await videoDetailsResponse.json();
+
+        const duration = videoDetails.items[0].contentDetails.duration;
+
+        return res.status(200).json({
+            videoId,
+            duration
+        });
 
     } catch (error) {
         return res.status(500).json({ error: "Server error", details: error.message });
