@@ -415,6 +415,11 @@ async function playSong(song, artist, playBtn) {
 
     const card = playBtn.closest(".card");
 
+    // 🔴 stop any currently playing videos (Play All fix)
+    document.querySelectorAll("iframe").forEach(frame => {
+        frame.src = "";
+    });
+
     let slot = card.querySelector(".video-slot");
 
     if (!slot) {
