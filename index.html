@@ -620,6 +620,9 @@ const card = playBtn.closest(".card");
 
 async function playAllSongs(button) {
 
+    console.log("playAllSongs triggered");
+    console.log("currentPlaylist:", currentPlaylist);
+
     if (!currentPlaylist || currentPlaylist.length === 0) {
         alert("No playlist loaded");
         return;
