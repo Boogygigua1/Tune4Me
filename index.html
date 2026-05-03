@@ -609,15 +609,21 @@ function playNextSong(index, containerSelector = "#result", playlist = currentPl
     // find the correct button by matching song + artist
     const playButtons = document.querySelectorAll(containerSelector + " .play-song-btn");
 
-    let playBtn = null;
-    playButtons.forEach(btn => {
-        if (
-            btn.dataset.song === song &&
-            btn.dataset.artist === artist
-        ) {
-            playBtn = btn;
-        }
-    });
+let playBtn = null;
+playButtons.forEach(btn => {
+    const btnSong = (btn.dataset.song || "").toLowerCase().trim();
+    const btnArtist = (btn.dataset.artist || "").toLowerCase().trim();
+
+    const targetSong = (song || "").toLowerCase().trim();
+    const targetArtist = (artist || "").toLowerCase().trim();
+
+    if (
+        (btnSong.includes(targetSong) || targetSong.includes(btnSong)) &&
+        (btnArtist.includes(targetArtist) || targetArtist.includes(btnArtist))
+    ) {
+        playBtn = btn;
+    }
+});
 
     if (!playBtn) {
         console.log("No matching button found for:", song);
