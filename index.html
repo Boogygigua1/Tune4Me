@@ -526,54 +526,30 @@ function playNextSong(index, containerSelector = "#result", playlist = currentPl
 
     const { song, artist } = playlist[index];
 
-    // find the correct button by matching song + artist
-    const playButtons = document.querySelectorAll(containerSelector + " .play-song-btn");
+    // get buttons in the correct container
+    const buttons = document.querySelectorAll(containerSelector + " .play-song-btn");
 
-let playBtn = null;
-playButtons.forEach(btn => {
-    const btnSong = (btn.dataset.song || "").toLowerCase().trim();
-    const btnArtist = (btn.dataset.artist || "").toLowerCase().trim();
+    const currentBtn = buttons[index];
 
-    const targetSong = (song || "").toLowerCase().trim();
-    const targetArtist = (artist || "").toLowerCase().trim();
-
-    if (
-        (btnSong.includes(targetSong) || targetSong.includes(btnSong)) &&
-        (btnArtist.includes(targetArtist) || targetArtist.includes(btnArtist))
-    ) {
-        playBtn = btn;
-    }
-});
-
-    if (!playBtn) {
-        console.log("No matching button found for:", song);
+    if (!currentBtn) {
+        console.log("No button at index:", index);
         isPlayingAll = false;
         return;
     }
 
+    // track active song
     activeSong = { song, artist };
 
-    // find correct button inside THIS container
-const buttons = document.querySelectorAll(containerSelector + " .play-song-btn");
+    // play the song
+    playSong(song, artist, currentBtn);
 
-let correctBtn = buttons[index];
-
-if (!correctBtn) {
-    console.log("No button at index:", index);
-    isPlayingAll = false;
-    return;
-}
-
-playSong(song, artist, correctBtn);
-
+    // clear previous timer
     if (playlistTimer) clearTimeout(playlistTimer);
 
+    // schedule next song
     playlistTimer = setTimeout(() => {
-    // 3 sec transition before next song
-    setTimeout(() => {
         playNextSong(index + 1, containerSelector, playlist);
-    }, 3000);
-}, DEFAULT_SONG_PLAY_MS);
+    }, DEFAULT_SONG_PLAY_MS + 3000);
 }
 
 async function playAllSongs(button) {
