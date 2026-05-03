@@ -145,7 +145,7 @@ let continueCount = parseInt(localStorage.getItem("continueCount")) || 0;
 
 // 👇 ADD THIS LINE HERE
 let activeSong = JSON.parse(localStorage.getItem("activeSong") || "null");
-let DEFAULT_SONG_PLAY_MS = 5000; // 4 minutes so Play All does not cut songs off after 30 seconds
+let DEFAULT_SONG_PLAY_MS = 30000; // 4 minutes so Play All does not cut songs off after 30 seconds
 
 let FREE_PLAY_LIMIT = 15;
 let PRO_PLAY_LIMIT = 150;
@@ -607,6 +607,8 @@ function playSavedSongs() {
 
     // rebuild UI
     loadSavedSongs();
+
+    currentPlaylist = saved;
 
     isPlayingAll = true;
 
