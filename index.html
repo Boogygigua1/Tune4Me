@@ -539,6 +539,11 @@ closeBtn.addEventListener("click", () => {
     slot.innerHTML = "";
 });
 
+// 🔴 STOP any other playing videos first
+document.querySelectorAll(".video-slot").forEach(el => {
+    el.innerHTML = "";
+});
+
 const iframe = document.createElement("iframe");
 iframe.width = "100%";
 iframe.height = "200";
