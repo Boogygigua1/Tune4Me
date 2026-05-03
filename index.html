@@ -408,7 +408,8 @@ async function playSong(song, artist, button) {
     activeSong = { song, artist };
     localStorage.setItem("activeSong", JSON.stringify(activeSong));
 
-    const card = button.closest(".card");
+    const card = playBtn.parentElement.closest(".card");
+
     let slot = card.querySelector(".video-slot");
 
     // ✅ Ensure slot exists (only once)
@@ -539,10 +540,11 @@ closeBtn.addEventListener("click", () => {
     slot.innerHTML = "";
 });
 
-// 🔴 STOP any other playing videos first
-document.querySelectorAll(".video-slot").forEach(el => {
-    el.innerHTML = "";
-});
+// Only clear the current card, not all cards
+let slot = playBtn.parentElement.querySelector(".video-slot");
+if (slot) {
+    slot.innerHTML = "";
+}
 
 const iframe = document.createElement("iframe");
 iframe.width = "100%";
