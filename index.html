@@ -408,21 +408,18 @@ async function playSong(song, artist, button) {
     activeSong = { song, artist };
     localStorage.setItem("activeSong", JSON.stringify(activeSong));
 
-    const card = playBtn.parentElement.closest(".card");
+    const card = playBtn.closest(".card");
 
     let slot = card.querySelector(".video-slot");
 
-    // ✅ Ensure slot exists (only once)
-    if (!slot) {
-        slot = document.createElement("div");
-        slot.className = "video-slot";
-        card.appendChild(slot);
-    }
-    if (!isPlayingAll) {
-    stopPlayback();
-    }
+if (!slot) {
+    slot = document.createElement("div");
+    slot.className = "video-slot";
+    card.appendChild(slot);
+}
 
-slot.innerHTML = "Loading video...";
+// clear ONLY this card’s video
+slot.innerHTML = "";
 
     try {
         const safeSong = song ? song.trim() : "";
