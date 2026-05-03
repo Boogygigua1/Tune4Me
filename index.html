@@ -540,7 +540,7 @@ function stopPlayback(btn) {
     }
 }
 
-function playNextSong(index, containerSelector = "#result", playlist = currentPlaylist) {
+function playNextSong(index, containerSelector = "#result", playlist = currentPlaylist, durationSeconds = 30) {
 
     if (!isPlayingAll || index >= playlist.length) {
         isPlayingAll = false;
@@ -570,9 +570,11 @@ function playNextSong(index, containerSelector = "#result", playlist = currentPl
     if (playlistTimer) clearTimeout(playlistTimer);
 
     // schedule next song
+    const currentDuration = window.currentDurationSeconds || 30;
+
     playlistTimer = setTimeout(() => {
-    playNextSong(index + 1, containerSelector, playlist);
-    }, durationSeconds * 1000);
+        playNextSong(index + 1, containerSelector, playlist);
+    }, currentDuration * 1000);
 }
 
 async function playAllSongs(button) {
