@@ -653,12 +653,11 @@ async function playAllSongs(button) {
         return;
     }
 
-    // reset first
-    stopPlayback();
+    // ✅ FIX: don't kill Play All state
+    clearTimeout(playlistTimer);
 
     isPlayingAll = true;
 
-    // ✅ use passed button (no querySelector)
     button.innerText = "⏹ Stop";
 
     playNextSong(0, "#result", currentPlaylist);
