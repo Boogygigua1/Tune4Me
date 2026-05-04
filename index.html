@@ -898,13 +898,7 @@ const response = await fetch("/api/getPlaylist", {            method: "POST",
             if (!song) return;
             if (!artist) artist = "Unknown Artist";
 
-            let newSongs = [];
-
-songs.forEach(({ song, artist }) => {
-    newSongs.push({ song, artist });
-});
-
-currentPlaylist = [...newSongs, ...currentPlaylist];
+            currentPlaylist.unshift({ song, artist });
 
             // ✅ safe card build
             const card = document.createElement("div");
