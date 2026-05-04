@@ -485,31 +485,6 @@ async function playSong(song, artist, playBtn) {
 
 // PLAYBACK ENG
 
-function stopPlayback() {
-    isPlayingAll = false;
-
-    if (playlistTimer) {
-        clearTimeout(playlistTimer);
-        playlistTimer = null;
-    }
-
-    document.querySelectorAll("iframe").forEach(frame => {
-        frame.src = "";
-    });
-
-    document.querySelectorAll(".video-slot").forEach(slot => {
-        slot.innerHTML = "";
-    });
-
-    document.querySelectorAll(".play-all-btn").forEach(btn => {
-        btn.innerText = "▶ Play Preview (45s)";
-    });
-
-    document.querySelectorAll(".play-saved-btn").forEach(btn => {
-        btn.innerText = "▶ Play Saved Songs";
-    });
-}
-
 async function playNextSong(index, containerSelector = "#result", playlist = currentPlaylist) {
 
     if (!isPlayingAll || index >= playlist.length) {
