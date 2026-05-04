@@ -949,7 +949,13 @@ try {
             card.appendChild(controls);
             card.appendChild(slot);
 
-            result.appendChild(card);
+            const firstCard = result.querySelector(".card");
+
+if (firstCard) {
+    result.insertBefore(card, firstCard);
+} else {
+    result.appendChild(card);
+}
         });
 
         continueBtn.innerText = "▶ Add More Songs";
