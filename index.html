@@ -510,7 +510,12 @@ async function playNextSong(index, containerSelector = "#result", playlist = cur
     const { song, artist } = playlist[index];
 
     const buttons = document.querySelectorAll(containerSelector + " .play-song-btn");
-    const currentBtn = buttons[index];
+    
+    const currentBtn = [...buttons].find(btn => {
+        const card = btn.closest(".card");
+        const title = card?.querySelector("div")?.textContent || "";
+        return title.includes(song);
+});
 
     if (!currentBtn) {
         console.log("No button at index:", index);
