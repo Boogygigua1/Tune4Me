@@ -98,6 +98,8 @@ Tell us how you’re feeling — a word or a full sentence — and Tune4Me creat
 
 <button onclick="showMood()">Create Playlist</button>
 
+<button onclick="clearNewList()">🗑 Clear List</button>
+
 <div id="nowPlaying" style="font-weight:bold; margin-top:20px;"></div>
 <div id="player" style="margin-top:10px;"></div>
 
@@ -297,6 +299,19 @@ function clearSavedSongs() {
     }
 }
 
+function clearNewList() {
+    const result = document.getElementById("result");
+
+    result.innerHTML = "";
+
+    currentPlaylist = [];
+
+    stopPlayback();
+
+    document.getElementById("savePlaylistBtn").disabled = true;
+
+    document.getElementById("continueBtn").style.display = "none";
+}
 
 // LOAD
 
