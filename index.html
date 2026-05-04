@@ -128,7 +128,7 @@ Tell us how you’re feeling — a word or a full sentence — and Tune4Me creat
 </button>
 
 
-<button onclick="downloadSavedSongs()">⬇️ Download Saved Songs</button>
+
 <button onclick="clearSavedSongs()">🗑 Clear Saved Songs</button>
 <div id="savedSongs"></div>
 
@@ -297,48 +297,6 @@ function clearSavedSongs() {
     }
 }
 
-function downloadSavedSongs() {
-    let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-
-    if (!Array.isArray(saved) || saved.length === 0) {
-        alert("No saved songs to download.");
-        return;
-    }
-
-    let html = `
-    <html>
-    <head>
-        <title>My Tune4Me Songs</title>
-    </head>
-    <body style="font-family: Arial; padding: 20px;">
-        <h2>🎧 My Saved Songs</h2>
-    `;
-
-    saved.forEach(s => {
-        let url = "https://www.youtube.com/results?search_query=" + 
-            encodeURIComponent(s.song + " " + s.artist);
-
-        html += `
-            <p>
-                <a href="${url}" target="_blank">
-                    🎵 ${s.song} - ${s.artist}
-                </a>
-            </p>
-        `;
-    });
-
-    html += `</body></html>`;
-
-    let blob = new Blob([html], { type: "text/html" });
-    let url = URL.createObjectURL(blob);
-
-    let a = document.createElement("a");
-    a.href = url;
-    a.download = "my_tune4me_songs.html";
-    a.click();
-
-    URL.revokeObjectURL(url);
-}
 
 // LOAD
 
@@ -407,7 +365,9 @@ function loadSavedSongs() {
 async function playSong(song, artist, playBtn) {
 
     // 🔴 STOP everything before playing a new song
+    if (!isPlayingAll) {
     stopPlayback();
+}
 
     // 🔴 remove all video wrappers (ensures no duplicates)
     document.querySelectorAll(".video-wrapper").forEach(w => w.remove());
@@ -550,7 +510,7 @@ function stopPlayback() {
     });
 }
 
-function playNextSong(index, containerSelector = "#result", playlist = currentPlaylist) {
+async function playNextSong(index, containerSelector = "#result", playlist = currentPlaylist) {
 
     if (!isPlayingAll || index >= playlist.length) {
         isPlayingAll = false;
@@ -572,24 +532,23 @@ function playNextSong(index, containerSelector = "#result", playlist = currentPl
     activeSong = { song, artist };
 
     // play the song
-    playSong(song, artist, currentBtn);
+    await playSong(song, artist, currentBtn);
 
     // 🔴 clear previous timer (ONLY once)
     if (playlistTimer) clearTimeout(playlistTimer);
 
-    const previewDuration = 30; // change to 45 if you want
+const previewDuration = 45;
 
-    playlistTimer = setTimeout(() => {
+playlistTimer = setTimeout(() => {
 
-        if (index + 1 >= playlist.length) {
-            stopPlayback();
-            return;
-        }
+    if (index + 1 >= playlist.length) {
+        stopPlayback();
+        return;
+    }
 
-        playNextSong(index + 1, containerSelector, playlist);
+    playNextSong(index + 1, containerSelector, playlist);
 
-    }, previewDuration * 1000);
-}
+}, (previewDuration + 1) * 1000); // add 1s buffer directly
 
 function playAllSongs(button) {
 
