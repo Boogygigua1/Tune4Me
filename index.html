@@ -392,16 +392,11 @@ async function playSong(song, artist, playBtn) {
 
     console.log("playSong triggered:", song, artist);
 
-    // ✅ Track active song
-    activeSong = { song, artist };
-    localStorage.setItem("activeSong", JSON.stringify(activeSong));
+// ✅ Track active song
+activeSong = { song, artist };
+localStorage.setItem("activeSong", JSON.stringify(activeSong));
 
-    if (typeof loadSavedSongs === "function") {
-        loadSavedSongs();
-    }
-
-    const card = playBtn.closest(".card");
-
+const card = playBtn.closest(".card");
     // 🔴 stop any currently playing videos
     document.querySelectorAll("iframe").forEach(frame => {
         frame.src = "";
