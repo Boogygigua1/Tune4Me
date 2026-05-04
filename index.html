@@ -326,6 +326,9 @@ function loadSavedSongs() {
 
         const card = document.createElement("div");
         card.className = "card";
+        card.dataset.song = item.song;
+        card.dataset.artist = item.artist || "Unknown Artist";
+
 
         // highlight active song
         if (activeSong &&
@@ -392,6 +395,10 @@ async function playSong(song, artist, playBtn) {
     // ✅ Track active song
     activeSong = { song, artist };
     localStorage.setItem("activeSong", JSON.stringify(activeSong));
+
+    if (typeof loadSavedSongs === "function") {
+        loadSavedSongs();
+    }
 
     const card = playBtn.closest(".card");
 
@@ -616,7 +623,15 @@ function playSavedSongs(button) {
 
     button.innerText = "⏹ Stop";
 
-    playNextSong(0, "#savedSongs", saved);
+    const savedInDisplayOrder = [...document.querySelectorAll("#savedSongs .card")].map(card => {
+    return {
+        song: card.dataset.song,
+        artist: card.dataset.artist
+    };
+});
+
+playNextSong(0, "#savedSongs", savedInDisplayOrder);
+
 }
 
 // AI 
