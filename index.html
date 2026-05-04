@@ -396,6 +396,25 @@ async function playSong(song, artist, playBtn) {
 activeSong = { song, artist };
 localStorage.setItem("activeSong", JSON.stringify(activeSong));
 
+    document.querySelectorAll(".card").forEach(card => {
+    card.style.border = "";
+    card.style.background = "";
+
+    const tag = card.querySelector(".now-playing-tag");
+    if (tag) tag.remove();
+});
+
+const title = playBtn.closest(".card").querySelector("div");
+const tag = document.createElement("span");
+tag.className = "now-playing-tag";
+tag.textContent = " (Now Playing)";
+tag.style.color = "#4CAF50";
+tag.style.marginLeft = "8px";
+title.appendChild(tag);
+
+playBtn.closest(".card").style.border = "2px solid #4CAF50";
+playBtn.closest(".card").style.background = "#e8f5e9";
+
 const card = playBtn.closest(".card");
     // 🔴 stop any currently playing videos
     document.querySelectorAll("iframe").forEach(frame => {
