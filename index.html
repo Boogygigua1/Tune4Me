@@ -406,6 +406,12 @@ function loadSavedSongs() {
 
 async function playSong(song, artist, playBtn) {
 
+    // 🔴 STOP everything before playing a new song
+    stopPlayback();
+
+    // 🔴 remove all video wrappers (ensures no duplicates)
+    document.querySelectorAll(".video-wrapper").forEach(w => w.remove());
+
     console.log("playSong triggered:", song, artist);
 
     // ✅ Track active song
@@ -573,11 +579,10 @@ function playNextSong(index, containerSelector = "#result", playlist = currentPl
     // clear previous timer
     if (playlistTimer) clearTimeout(playlistTimer);
 
-    const currentDuration = window.currentDurationSeconds || 30;
+const previewDuration = 30; // or 45 if you want
 
 playlistTimer = setTimeout(() => {
 
-    // 🔴 if last song, stop instead of continuing
     if (index + 1 >= playlist.length) {
         stopPlayback();
         return;
@@ -585,7 +590,7 @@ playlistTimer = setTimeout(() => {
 
     playNextSong(index + 1, containerSelector, playlist);
 
-}, currentDuration * 1000);
+}, previewDuration * 1000);
 }
 
 function playAllSongs(button) {
@@ -615,12 +620,17 @@ function stopPlayback() {
         playlistTimer = null;
     }
 
-    // stop videos
+    // stop all videos
     document.querySelectorAll("iframe").forEach(frame => {
         frame.src = "";
     });
 
-    // 🔴 reset ALL buttons cleanly
+    // 🔴 THIS is the missing fix
+    document.querySelectorAll(".video-wrapper").forEach(wrapper => {
+        wrapper.remove();
+    });
+
+    // reset buttons
     document.querySelectorAll(".play-all-btn").forEach(btn => {
         btn.innerText = "▶ Play Preview (45s)";
     });
