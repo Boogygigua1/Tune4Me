@@ -838,12 +838,16 @@ async function continuePlaylist() {
     const style = document.getElementById("style").value;
 
     continueBtn.innerText = "Loading...";
-
-    try {
-const response = await fetch("/api/getPlaylist", {            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mood, style })
-        });
+try {
+    const response = await fetch("/api/getPlaylist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            mood,
+            style,
+            existingSongs: currentPlaylist
+        })
+    });
 
         const data = await response.json();
         const raw = data.choices[0].message.content;
