@@ -51,6 +51,9 @@ Respond EXACTLY in this format:
 One short explanation.
 
 Rules:
+- ONLY recommend real, existing songs by the correct artist
+- Do NOT invent song titles
+- Do NOT pair a real song title with the wrong artist
 - ALWAYS include ${length} songs
 - ALWAYS use format: Song - Artist
 - NEVER repeat any of the songs already listed
