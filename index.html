@@ -664,8 +664,8 @@ const response = await fetch("/api/getPlaylist", {            method: "POST",
             return;
         }
 
-        console.log("PLAYLIST DATA:", data);
-        
+        console.log("PLAYLIST DATA:", JSON.stringify(data, null, 2));
+
         const raw = data.choices[0].message.content;
         const lines = raw.split("\n");
 
