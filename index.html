@@ -513,7 +513,11 @@ async function playNextSong(index, containerSelector = "#result", playlist = cur
     // 🔴 clear previous timer (ONLY once)
     if (playlistTimer) clearTimeout(playlistTimer);
 
-const previewDuration = 45;
+const isSavedMode = containerSelector === "#savedSongs";
+
+const previewDuration = isSavedMode
+    ? (window.currentDurationSeconds || 240) // full song for saved
+    : 45; // preview for new songs
 
 playlistTimer = setTimeout(() => {
 
