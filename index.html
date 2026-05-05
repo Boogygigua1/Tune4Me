@@ -350,13 +350,36 @@ function loadSavedSongs() {
         const slot = document.createElement("div");
         slot.className = "video-slot";
 
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "🗑 Delete";
+        deleteBtn.style.marginLeft = "10px";
+
+        deleteBtn.addEventListener("click", function () {
+            deleteSavedSong(item.song, item.artist || "Unknown Artist");
+        });
+
         card.appendChild(title);
         card.appendChild(artist);
         card.appendChild(button);
+        card.appendChild(deleteBtn);
         card.appendChild(slot);
 
         savedSection.appendChild(card);
-    });
+        }); // end forEach loop
+
+} // end loadSavedSongs function
+
+
+function deleteSavedSong(song, artist) {
+    let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+
+    saved = saved.filter(item =>
+        !(item.song === song && item.artist === artist)
+    );
+
+    localStorage.setItem("savedSongs", JSON.stringify(saved));
+
+    loadSavedSongs();
 }
 
 // PLAYBACK CORE
