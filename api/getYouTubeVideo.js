@@ -4,7 +4,6 @@ export default async function handler(req, res) {
     }
 
     let body;
-
     try {
         body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
     } catch {
@@ -20,45 +19,32 @@ export default async function handler(req, res) {
     try {
         const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
-        if (!YOUTUBE_API_KEY) {
-            return res.status(500).json({ error: "Missing YouTube API key" });
+        const searches = [
+            query,
+            query.replace("official music video", "").trim(),
+            query.replace("official audio", "").trim(),
+            query + " lyrics",
+            query + " song"
+        ];
+
+        for (const searchTerm of searches) {
+            const response = await fetch(
+                `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchTerm)}&key=${YOUTUBE_API_KEY}&maxResults=5&type=video`
+            );
+
+            const data = await response.json();
+
+            if (data.items && data.items.length > 0) {
+                const videoId = data.items[0].id.videoId;
+
+                return res.status(200).json({
+                    videoId,
+                    duration: null
+                });
+            }
         }
 
-        const searchResponse = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=5&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`
-        );
-
-        const searchData = await searchResponse.json();
-
-        if (!searchData.items || searchData.items.length === 0) {
-            return res.status(200).json({ error: "No video found" });
-        }
-
-        const videoIds = searchData.items
-            .map(item => item?.id?.videoId)
-            .filter(Boolean)
-            .join(",");
-
-        if (!videoIds) {
-            return res.status(200).json({ error: "No video found" });
-        }
-
-        const response = await fetch(
-    `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}&maxResults=5&type=video`
-);
-
-        const detailsData = await detailsResponse.json();
-
-        if (!detailsData.items || detailsData.items.length === 0) {
-            return res.status(200).json({ error: "No video details found" });
-        }
-
-        const firstVideo = detailsData.items[0];
-
-        return res.status(200).json({
-            videoId: firstVideo.id,
-            duration: firstVideo.contentDetails?.duration || null
-        });
+        return res.status(200).json({ error: "No video found" });
 
     } catch (error) {
         return res.status(500).json({
