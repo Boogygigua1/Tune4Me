@@ -105,7 +105,7 @@ Tell us how you’re feeling — a word or a full sentence — and Tune4Me creat
 
 <div style="margin-top:10px;">
     <button class="play-all-btn" onclick="playAllSongs(this)">
-        ▶ Play Preview (45s)
+        ▶ Play Preview (30s)
     </button>
 </div>
 
@@ -549,7 +549,7 @@ const isSavedMode = containerSelector === "#savedSongs";
 
 const previewDuration = isSavedMode
     ? 300
-    : 45;
+    : 30;
 
 playlistTimer = setTimeout(() => {
 
@@ -603,7 +603,7 @@ function stopPlayback() {
 
     // reset buttons
     document.querySelectorAll(".play-all-btn").forEach(btn => {
-        btn.innerText = "▶ Play Preview (45s)";
+        btn.innerText = "▶ Play Preview (30s)";
     });
 
     document.querySelectorAll(".play-saved-btn").forEach(btn => {

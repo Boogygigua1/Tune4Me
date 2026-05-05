@@ -51,6 +51,8 @@ Respond EXACTLY in this format:
 One short explanation.
 
 Rules:
+- Recommend songs that are likely available on YouTube
+- Avoid obscure, unreleased, or hard-to-find songs
 - ONLY recommend real, existing songs by the correct artist
 - Do NOT invent song titles
 - Do NOT pair a real song title with the wrong artist
