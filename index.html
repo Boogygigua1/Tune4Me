@@ -539,7 +539,7 @@ async function playNextSong(index, containerSelector = "#result", playlist = cur
 const isSavedMode = containerSelector === "#savedSongs";
 
 const previewDuration = isSavedMode
-    ? 360
+    ? 300
     : 45;
 
 playlistTimer = setTimeout(() => {
