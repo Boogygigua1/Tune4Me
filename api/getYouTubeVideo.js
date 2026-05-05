@@ -34,6 +34,16 @@ export default async function handler(req, res) {
 
             const data = await response.json();
 
+            console.log("YOUTUBE SEARCH TERM:", searchTerm);
+            console.log("YOUTUBE RESPONSE:", data);
+
+            if (data.error) {
+                return res.status(500).json({
+                error: "YouTube API error",
+                details: data.error
+            });
+}
+
             if (data.items && data.items.length > 0) {
                 const videoId = data.items[0].id.videoId;
 
