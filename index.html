@@ -119,6 +119,20 @@ Tell us how you’re feeling — a word or a full sentence — and Tune4Me creat
   </button>
 </div>
 
+<h1 style="margin-bottom:5px;">Tune4Me 🎧</h1>
+
+<p style="margin-top:0; font-size:14px; color:gray;">
+  Music that understands how you feel
+</p>
+
+<p style="font-size:12px; color:#888; margin-top:5px;">
+  Music playback provided by YouTube. Tune4Me does not host or store any media.
+</p>
+
+<p style="font-size:12px; color:#888; margin-top:3px;">
+  Tune4Me generates playlists using AI. All music remains the property of its respective owners.
+</p>
+
 <p style="font-size:13px; color:#888;">Playing from your saved songs</p>
 
 <div id="savedPlayer" style="margin-top:15px;"></div>
@@ -126,10 +140,8 @@ Tell us how you’re feeling — a word or a full sentence — and Tune4Me creat
 <h2>💾 Saved Songs</h2>
 
 <button class="play-saved-btn" onclick="playSavedSongs(this)">
-    ▶ Play Saved Songs
+    ▶ Preview Saved Songs
 </button>
-
-
 
 <button onclick="clearSavedSongs()">🗑 Clear Saved Songs</button>
 <div id="savedSongs"></div>
@@ -552,15 +564,8 @@ const previewDuration = isSavedMode
     : 30;
 
 playlistTimer = setTimeout(() => {
-
-    if (index + 1 >= playlist.length) {
-        stopPlayback();
-        return;
-    }
-
-    playNextSong(index + 1, containerSelector, playlist);
-
-}, (previewDuration + 1) * 1000); // add 1s buffer directly
+    stopPlayback();
+}, (previewDuration + 1) * 1000);
 
 }
 
