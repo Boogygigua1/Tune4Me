@@ -194,11 +194,10 @@ function toggleReadMore(button) {
 
 function saveSong(song, artist) {
 
-    // 🔒 only allow manual save
     if (!song || !artist) return;
 
-    song = (song || "").trim();
-    artist = (artist || "").trim();
+    song = song.trim();
+    artist = artist.trim();
 
     let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
 
@@ -208,38 +207,24 @@ function saveSong(song, artist) {
     );
 
     if (exists) {
-    alert("This song is already saved 👍");
-    return;
-}
+        alert("This song is already saved 👍");
+        return;
+    }
 
-    // check duplicate
-let exists = saved.some(item =>
-    item.song.toLowerCase() === song.toLowerCase() &&
-    item.artist.toLowerCase() === artist.toLowerCase()
-);
+    if (saved.length >= FREE_SAVE_LIMIT) {
+        alert("🔒 Saved song limit reached. Upgrade to save more 🎧");
+        return;
+    }
 
-if (exists) {
-    alert("This song is already saved 👍");
-    return;
-}
+    saved.push({ song, artist });
 
-// check limit
-if (saved.length >= FREE_SAVE_LIMIT) {
-    alert("🔒 Saved song limit reached. Upgrade to save more 🎧");
-    return;
-}
+    localStorage.setItem("savedSongs", JSON.stringify(saved));
 
-// save
-saved.push({ song, artist });
+    if (!isPlayingAll) {
+        loadSavedSongs();
+    }
 
-localStorage.setItem("savedSongs", JSON.stringify(saved));
-
-// 🔴 DO NOT interrupt playback
-if (!isPlayingAll) {
-    loadSavedSongs();
-}
-
-alert("Song saved 🎧");
+    alert("Song saved 🎧");
 }
 
 function saveSongWithVideo(event, song, artist) {
