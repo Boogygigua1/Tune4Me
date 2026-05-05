@@ -606,14 +606,14 @@ function stopPlayback() {
         wrapper.remove();
     });
 
-    // reset buttons
-    document.querySelectorAll(".play-all-btn").forEach(btn => {
-        btn.innerText = "▶ Play Preview (30s)";
-    });
+// reset buttons
+document.querySelectorAll(".play-all-btn").forEach(btn => {
+    btn.innerText = "▶ Preview First Song";
+});
 
-    document.querySelectorAll(".play-saved-btn").forEach(btn => {
-        btn.innerText = "▶ Play Saved Songs";
-    });
+   document.querySelectorAll(".play-saved-btn").forEach(btn => {
+    btn.innerText = "▶ Preview Saved Songs";
+});
 }
 
 function playSavedSongs(button) {
