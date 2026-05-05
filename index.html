@@ -106,7 +106,7 @@
 
     <div style="margin-top:10px;">
         <button class="play-all-btn" onclick="playAllSongs(this)">
-            Preview Playlist
+            Preview First Song (30s)
         </button>
     </div>
 
@@ -139,7 +139,7 @@
     <h2>💾 Saved Songs</h2>
 
     <button class="play-saved-btn" onclick="playSavedSongs(this)">
-        ▶ Preview Saved Songs
+        ▶ Preview First Song
     </button>
 
     <button onclick="clearSavedSongs()">🗑 Clear Saved Songs</button>
@@ -647,7 +647,7 @@
             </p>
 
             document.querySelectorAll(".play-saved-btn").forEach(btn => {
-                btn.innerText = "▶ Preview Saved Songs";
+                btn.innerText = "▶ Preview First Song";
             });
         }
 
