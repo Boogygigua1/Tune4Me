@@ -156,7 +156,7 @@ let DEFAULT_SONG_PLAY_MS = 30000; // 4 minutes so Play All does not cut songs of
 let FREE_PLAY_LIMIT = 15;
 let PRO_PLAY_LIMIT = 150;
 
-let FREE_SAVE_LIMIT = 15;
+let FREE_SAVE_LIMIT = 10;
 
 let playsToday = parseInt(localStorage.getItem("playsToday")) || 0;
 let lastDate = localStorage.getItem("playDate");
@@ -208,8 +208,9 @@ function saveSong(song, artist) {
     );
 
     if (exists) {
-        return; // silent
-    }
+    alert("This song is already saved 👍");
+    return;
+}
 
     saved.push({ song, artist });
 
