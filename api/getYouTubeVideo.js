@@ -43,9 +43,9 @@ export default async function handler(req, res) {
             return res.status(200).json({ error: "No video found" });
         }
 
-        const detailsResponse = await fetch(
-            `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,status&id=${videoIds}&key=${YOUTUBE_API_KEY}`
-        );
+        const response = await fetch(
+    `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}&maxResults=5&type=video`
+);
 
         const detailsData = await detailsResponse.json();
 
