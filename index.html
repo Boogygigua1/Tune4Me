@@ -110,6 +110,10 @@
         </button>
     </div>
 
+    <p style="font-size:11px; color:#888; margin-top:5px;">
+                Preview the first song, or use the play buttons to listen to each one.
+            </p>
+
     <button id="savePlaylistBtn" onclick="savePlaylist(event)" disabled> 💾 Save Playlist</button>
 
     <p style="font-size:11px; color:#888; margin-top:5px;">
@@ -641,10 +645,6 @@
             document.querySelectorAll(".play-all-btn").forEach(btn => {
                 btn.innerText = "▶ Preview First Song (30s)";
             });
-            
-            <p style="font-size:11px; color:#888; margin-top:5px;">
-                Preview the first song, or use the play buttons to listen to each one.
-            </p>
 
             document.querySelectorAll(".play-saved-btn").forEach(btn => {
                 btn.innerText = "▶ Preview First Song";
