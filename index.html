@@ -212,11 +212,34 @@ function saveSong(song, artist) {
     return;
 }
 
-    saved.push({ song, artist });
+    // check duplicate
+let exists = saved.some(item =>
+    item.song.toLowerCase() === song.toLowerCase() &&
+    item.artist.toLowerCase() === artist.toLowerCase()
+);
 
-    localStorage.setItem("savedSongs", JSON.stringify(saved));
+if (exists) {
+    alert("This song is already saved 👍");
+    return;
+}
 
+// check limit
+if (saved.length >= FREE_SAVE_LIMIT) {
+    alert("🔒 Saved song limit reached. Upgrade to save more 🎧");
+    return;
+}
+
+// save
+saved.push({ song, artist });
+
+localStorage.setItem("savedSongs", JSON.stringify(saved));
+
+// 🔴 DO NOT interrupt playback
+if (!isPlayingAll) {
     loadSavedSongs();
+}
+
+alert("Song saved 🎧");
 }
 
 function saveSongWithVideo(event, song, artist) {
