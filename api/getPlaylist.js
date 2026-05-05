@@ -51,6 +51,8 @@ Respond EXACTLY in this format:
 One short explanation.
 
 Rules:
+- Prefer songs between 3.5 and 6.5 minutes when possible
+- Do not exclude good songs only because they are shorter or longer
 - Recommend songs that are likely available on YouTube
 - Avoid obscure, unreleased, or hard-to-find songs
 - ONLY recommend real, existing songs by the correct artist
