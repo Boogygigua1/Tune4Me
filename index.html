@@ -171,7 +171,7 @@
         let FREE_PLAY_LIMIT = 10;
         let PRO_PLAY_LIMIT = 100;
 
-        let FREE_SAVE_LIMIT = 10;
+        let FREE_SAVE_LIMIT = parseInt(localStorage.getItem("saveLimit")) || 10;
 
         let playsToday = parseInt(localStorage.getItem("playsToday")) || 0;
         let lastDate = localStorage.getItem("playDate");
@@ -222,42 +222,17 @@
             );
 
             if (exists) {
-                alert("This song is already saved 👍");
-                return;
-            }
-
-            
-            if (saved.length >= FREE_SAVE_LIMIT) {
-
-    if (!document.getElementById("upgradeBox")) {
-
-        const box = document.createElement("div");
-        box.id = "upgradeBox";
-        box.style.marginTop = "15px";
-        box.style.padding = "15px";
-        box.style.background = "#fff3cd";
-        box.style.borderRadius = "10px";
-
-        box.innerHTML = `
-            <strong>🔒 Save limit reached</strong><br><br>
-
-            You can save up to 10 songs for free.<br><br>
-
-            <strong>$3 = 100 additional saves 🎧</strong><br><br>
-
-            <button onclick="handleUpgrade()" 
-                style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
-                Upgrade for $3
-            </button>
-        `;
-
-        document.getElementById("result").appendChild(box);
-    }
-
+    alert("This song is already saved 👍");
     return;
 }
 
-            saved.push({ song, artist });
+        let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+        if (saved.length >= currentLimit) {
+        return; // stop saving silently
+        }
+
+        saved.push({ song, artist });
 
             localStorage.setItem("savedSongs", JSON.stringify(saved));
 
@@ -319,9 +294,34 @@
                 let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
                 if (saved.length >= currentLimit) {
-                    alert("🔒 Playlist limit reached. Upgrade for more 🎧");
-                    break;
-                }
+
+    if (!document.getElementById("upgradeBox")) {
+
+        const box = document.createElement("div");
+        box.id = "upgradeBox";
+        box.style.marginTop = "15px";
+        box.style.padding = "15px";
+        box.style.background = "#fff3cd";
+        box.style.borderRadius = "10px";
+
+        box.innerHTML = `
+            <strong>🔒 Save limit reached</strong><br><br>
+
+            You can save up to 10 songs for free.<br><br>
+
+            <strong>$3 = 100 additional saves 🎧</strong><br><br>
+
+            <button onclick="handleUpgrade()" 
+                style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
+                Upgrade for $3
+            </button>
+        `;
+
+        document.getElementById("result").appendChild(box);
+    }
+
+    return;
+}
 
                 let exists = saved.some(item =>
                     item.song.toLowerCase() === song.toLowerCase() &&
@@ -891,19 +891,6 @@ result.appendChild(note);
             if (continueCount >= 1) {
                 continueBtn.innerText = "🔒 Upgrade to unlock more";
 
-                if (!document.getElementById("upgradeBox")) {
-                    const box = document.createElement("div");
-                    box.id = "upgradeBox";
-                    box.style.marginTop = "15px";
-                    box.style.padding = "15px";
-                    box.style.background = "#fff3cd";
-                    box.style.borderRadius = "10px";
-                    box.innerHTML = `
-                <strong>Want more songs?</strong><br>
-                Unlock more playlists for $3 🎧
-            `;
-                    result.appendChild(box);
-                }
                 return;
             }
 
