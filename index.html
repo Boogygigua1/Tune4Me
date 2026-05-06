@@ -893,6 +893,20 @@ result.appendChild(note);
             const result = document.getElementById("result");
             const continueBtn = document.getElementById("continueBtn");
 
+                let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+
+    let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+    if (saved.length >= currentLimit) {
+
+        document.getElementById("continueBtn").style.display = "none";
+
+        document.getElementById("savePlaylistBtn").disabled = true;
+
+        alert("🔒 Save limit reached. Upgrade to unlock more songs.");
+
+        return;
+    }
             if (continueCount >= 1) {
                 continueBtn.innerText = "🔒 Upgrade to unlock more";
 
@@ -1039,8 +1053,6 @@ result.appendChild(note);
         }
 
           // $$$$
-
-            // $$$$
 
 window.handleUpgrade = function () {
 
