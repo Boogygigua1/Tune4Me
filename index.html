@@ -205,6 +205,39 @@
 
         // SAVE
 
+        function showUpgradeBox() {
+
+            if (document.getElementById("upgradeBox")) return;
+
+            const box = document.createElement("div");
+
+            box.id = "upgradeBox";
+
+            box.style.marginTop = "15px";
+            box.style.padding = "15px";
+            box.style.background = "#fff3cd";
+            box.style.borderRadius = "10px";
+
+            box.innerHTML = `
+        <strong>🔒 Save limit reached</strong><br><br>
+        You can save up to 10 songs for free.<br><br>
+        <strong>$3 = 100 additional saves 🎧</strong><br><br>
+
+        <button id="upgradeBtn"
+            style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
+            Upgrade for $3
+        </button>
+    `;
+
+            document.getElementById("result").appendChild(box);
+
+            const upgradeBtn = document.getElementById("upgradeBtn");
+
+            if (upgradeBtn) {
+                upgradeBtn.addEventListener("click", handleUpgrade);
+            }
+        }
+
 
         function saveSong(song, artist) {
 
@@ -235,6 +268,8 @@
                 document.getElementById("savePlaylistBtn").disabled = true;
 
                 alert("🔒 Save limit reached.");
+
+                showUpgradeBox();
 
                 return;
             }
@@ -308,32 +343,7 @@
 
                     alert("🔒 Save limit reached.");
 
-                    if (!document.getElementById("upgradeBox")) {
-
-                        const box = document.createElement("div");
-                        box.id = "upgradeBox";
-                        box.style.marginTop = "15px";
-                        box.style.padding = "15px";
-                        box.style.background = "#fff3cd";
-                        box.style.borderRadius = "10px";
-
-                        box.innerHTML = `
-                    <strong>🔒 Save limit reached</strong><br><br>
-                    You can save up to 10 songs for free.<br><br>
-                    <strong>$3 = 100 additional saves 🎧</strong><br><br>
-                    <button id="upgradeBtn"
-                        style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
-                        Upgrade for $3
-                    </button>
-                `;
-
-                        document.getElementById("result").appendChild(box);
-
-                        const upgradeBtn = document.getElementById("upgradeBtn");
-                        if (upgradeBtn) {
-                            upgradeBtn.addEventListener("click", handleUpgrade);
-                        }
-                    }
+                    showUpgradeBox();
 
                     break; // ✔ break OUTSIDE inner if
                 }
@@ -929,6 +939,8 @@
                 document.getElementById("savePlaylistBtn").disabled = true;
 
                 alert("🔒 Save limit reached. Upgrade to unlock more songs.");
+
+                showUpgradeBox();
 
                 return;
             }
