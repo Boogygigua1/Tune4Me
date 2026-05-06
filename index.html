@@ -142,6 +142,10 @@
 
     <h2>💾 Saved Songs</h2>
 
+    <div id="saveCounter" style="font-size:13px; color:#666; margin-bottom:10px;">
+        0 / 10 songs saved
+    </div>
+
     <button class="play-saved-btn" onclick="playSavedSongs(this)">
         ▶ Preview First Song
     </button>
@@ -403,6 +407,12 @@
         function loadSavedSongs() {
 
             let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+            document.getElementById("saveCounter").innerText =
+                saved.length + " / " + currentLimit + " songs saved";
+
             const savedSection = document.getElementById("savedSongs");
 
             savedSection.innerHTML = "";
