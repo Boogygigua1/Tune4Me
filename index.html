@@ -168,8 +168,8 @@
         let activeSong = null;
         let DEFAULT_SONG_PLAY_MS = 30000; // 4 minutes so Play All does not cut songs off after 30 seconds
 
-        let FREE_PLAY_LIMIT = 15;
-        let PRO_PLAY_LIMIT = 150;
+        let FREE_PLAY_LIMIT = 10;
+        let PRO_PLAY_LIMIT = 100;
 
         let FREE_SAVE_LIMIT = 10;
 
@@ -186,12 +186,6 @@
         window.onload = function () {
             loadSavedSongs();
         };
-
-        // $$$$
-
-        function handleUpgrade() {
-            alert("Upgrade flow coming next 💳");
-        }
 
         // HELPERS
 
@@ -247,7 +241,7 @@
         box.innerHTML = `
             <strong>🔒 Save limit reached</strong><br><br>
 
-            You can save up to 15 songs for free.<br><br>
+            You can save up to 10 songs for free.<br><br>
 
             <strong>$3 = 100 additional saves 🎧</strong><br><br>
 
@@ -1051,13 +1045,20 @@ result.appendChild(note);
             }
         }
 
+          // $$$$
+
             function handleUpgrade() {
-    alert("Upgrade flow coming next 💳");
+
+    let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+    currentLimit += 100;
+
+    localStorage.setItem("saveLimit", currentLimit);
+
+    alert("🎉 Upgrade successful! You now have more save space.");
+
 }
-
     </script>
-
-
 
     <p style="font-size:11px; color:#aaa; margin-top:40px; text-align:center;">
         By using this app, you agree to use it for personal, non-commercial purposes.
