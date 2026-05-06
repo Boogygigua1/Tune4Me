@@ -230,9 +230,11 @@
 
             if (saved.length >= currentLimit) {
 
-                alert("🔒 Save limit reached.");
+                document.getElementById("continueBtn").style.display = "none";
 
-                document.getElementById("savePlaylistBtn").click();
+                document.getElementById("savePlaylistBtn").disabled = true;
+
+                alert("🔒 Save limit reached.");
 
                 return;
             }
