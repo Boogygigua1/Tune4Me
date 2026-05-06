@@ -306,31 +306,30 @@
         box.style.borderRadius = "10px";
 
         box.innerHTML = `
-            <strong>🔒 Save limit reached</strong><br><br>
+    <strong>🔒 Save limit reached</strong><br><br>
 
-            You can save up to 10 songs for free.<br><br>
+    You can save up to 10 songs for free.<br><br>
 
-            <strong>$3 = 100 additional saves 🎧</strong><br><br>
+    <strong>$3 = 100 additional saves 🎧</strong><br><br>
 
-            <button id="upgradeBtn" 
-    style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
-    Upgrade for $3
-</button>
-        `;
+    <button id="upgradeBtn"
+        style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
+        Upgrade for $3
+    </button>
+`;
 
-        // ✅ FIRST add to page
+// ✅ add to page
 document.getElementById("result").appendChild(box);
 
-// ✅ THEN attach event
+// ✅ attach event AFTER it's in DOM
 const upgradeBtn = document.getElementById("upgradeBtn");
 
 if (upgradeBtn) {
     upgradeBtn.addEventListener("click", handleUpgrade);
 }
 
+// ✅ STOP the savePlaylist function cleanly
 return;
-}
-
                 let exists = saved.some(item =>
                     item.song.toLowerCase() === song.toLowerCase() &&
                     item.artist.toLowerCase() === artist.toLowerCase()
