@@ -294,7 +294,7 @@
                 // ✅ enforce limit once
                 let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-                if (saved.length >= currentLimit) {
+                if ((saved.length + addedCount) >= currentLimit) {
 
     if (!document.getElementById("upgradeBox")) {
 
