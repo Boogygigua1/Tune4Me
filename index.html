@@ -316,7 +316,9 @@
             for (let { song, artist } of currentPlaylist) {
 
                 // ✅ enforce limit once
-                if (saved.length >= FREE_SAVE_LIMIT) {
+                let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+                if (saved.length >= currentLimit) {
                     alert("🔒 Playlist limit reached. Upgrade for more 🎧");
                     break;
                 }
