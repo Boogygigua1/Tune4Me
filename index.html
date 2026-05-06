@@ -363,12 +363,25 @@
 
             stopPlayback();
 
-            document.getElementById("savePlaylistBtn").disabled = true;
+if (saved.length >= currentLimit) {
 
-            document.getElementById("continueBtn").style.display = "none";
-        }
+    document.getElementById("continueBtn").style.display = "none";
 
-        // LOAD
+    document.getElementById("savePlaylistBtn").disabled = true;
+
+    if (!document.getElementById("upgradeBox")) {
+
+        const box = document.createElement("div");
+        box.id = "upgradeBox";
+
+        // existing upgradeBox code here
+
+    }
+
+    break;
+}
+
+// LOAD
 
         function loadSavedSongs() {
 
