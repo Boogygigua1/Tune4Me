@@ -129,6 +129,11 @@
     transform: translateX(-50%);
     padding:10px;
     z-index:1000;
+
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(6px);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
 ">
 
         <button id="continueBtn" onclick="continuePlaylist()" style="display:none;">
@@ -964,11 +969,6 @@
                 alert("🔒 Save limit reached. Upgrade to unlock more songs.");
 
                 showUpgradeBox();
-
-                return;
-            }
-            if (continueCount >= 1) {
-                continueBtn.innerText = "🔒 Upgrade to unlock more";
 
                 return;
             }
