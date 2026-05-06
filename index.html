@@ -160,13 +160,12 @@
 
         let playlistTimer = null;
 
-        let savedPlaylist = [];
+        let isPlayingAll = false;
 
         let continueCount = parseInt(localStorage.getItem("continueCount")) || 0;
 
-        // 👇 ADD THIS LINE HERE
         let activeSong = null;
-        let DEFAULT_SONG_PLAY_MS = 30000; // 4 minutes so Play All does not cut songs off after 30 seconds
+        let DEFAULT_SONG_PLAY_MS = 30000; // 30 seconds
 
         let FREE_PLAY_LIMIT = 10;
         let PRO_PLAY_LIMIT = 100;
@@ -222,18 +221,21 @@
             );
 
             if (exists) {
-    console.log("Duplicate detected:", song, artist);
-    alert("This song is already saved 👍");
-    return;
-}
+                console.log("Duplicate detected:", song, artist);
+                alert("This song is already saved 👍");
+                return;
+            }
 
-        let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-        if (saved.length >= currentLimit) {
-        return; // stop saving silently
-        }
+            if (saved.length >= currentLimit) {
 
-        saved.push({ song, artist });
+                alert("🔒 Save limit reached.");
+
+                return;
+            }
+
+            saved.push({ song, artist });
 
             localStorage.setItem("savedSongs", JSON.stringify(saved));
 
@@ -267,6 +269,12 @@
 
             if (exists) return;
 
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+            if (saved.length >= currentLimit) {
+                return;
+            }
+
             // ✅ Save ONLY (no video, no API)
             saved.push({ song, artist });
 
@@ -277,33 +285,33 @@
 
         function savePlaylist(event) {
 
-    if (!event || !event.isTrusted) return;
+            if (!event || !event.isTrusted) return;
 
-    if (!currentPlaylist || currentPlaylist.length === 0) {
-        alert("Create a playlist first, then click Save Playlist");
-        return;
-    }
+            if (!currentPlaylist || currentPlaylist.length === 0) {
+                alert("Create a playlist first, then click Save Playlist");
+                return;
+            }
 
-    let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-    let addedCount = 0;
+            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+            let addedCount = 0;
 
-    let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-    for (let { song, artist } of currentPlaylist) {
+            for (let { song, artist } of currentPlaylist) {
 
-        // 🚨 LIMIT CHECK
-        if ((saved.length + addedCount) >= currentLimit) {
+                // 🚨 LIMIT CHECK
+                if ((saved.length + addedCount) >= currentLimit) {
 
-            if (!document.getElementById("upgradeBox")) {
+                    if (!document.getElementById("upgradeBox")) {
 
-                const box = document.createElement("div");
-                box.id = "upgradeBox";
-                box.style.marginTop = "15px";
-                box.style.padding = "15px";
-                box.style.background = "#fff3cd";
-                box.style.borderRadius = "10px";
+                        const box = document.createElement("div");
+                        box.id = "upgradeBox";
+                        box.style.marginTop = "15px";
+                        box.style.padding = "15px";
+                        box.style.background = "#fff3cd";
+                        box.style.borderRadius = "10px";
 
-                box.innerHTML = `
+                        box.innerHTML = `
                     <strong>🔒 Save limit reached</strong><br><br>
                     You can save up to 10 songs for free.<br><br>
                     <strong>$3 = 100 additional saves 🎧</strong><br><br>
@@ -313,39 +321,39 @@
                     </button>
                 `;
 
-                document.getElementById("result").appendChild(box);
+                        document.getElementById("result").appendChild(box);
 
-                const upgradeBtn = document.getElementById("upgradeBtn");
-                if (upgradeBtn) {
-                    upgradeBtn.addEventListener("click", handleUpgrade);
+                        const upgradeBtn = document.getElementById("upgradeBtn");
+                        if (upgradeBtn) {
+                            upgradeBtn.addEventListener("click", handleUpgrade);
+                        }
+                    }
+
+                    break; // ✔ break OUTSIDE inner if
                 }
+
+                // ✅ DUPLICATE CHECK
+                let exists = saved.some(item =>
+                    item.song.toLowerCase() === song.toLowerCase() &&
+                    item.artist.toLowerCase() === artist.toLowerCase()
+                );
+
+                if (exists) continue;
+
+                // ✅ SAVE
+                saved.push({ song, artist });
+                addedCount++;
             }
 
-            break; // ✔ break OUTSIDE inner if
+            localStorage.setItem("savedSongs", JSON.stringify(saved));
+            loadSavedSongs();
+
+            if (addedCount === 0) {
+                alert("All songs are already saved 👍");
+            } else {
+                alert("Saved " + addedCount + " new songs 🎧");
+            }
         }
-
-        // ✅ DUPLICATE CHECK
-        let exists = saved.some(item =>
-            item.song.toLowerCase() === song.toLowerCase() &&
-            item.artist.toLowerCase() === artist.toLowerCase()
-        );
-
-        if (exists) continue;
-
-        // ✅ SAVE
-        saved.push({ song, artist });
-        addedCount++;
-    }
-
-    localStorage.setItem("savedSongs", JSON.stringify(saved));
-    loadSavedSongs();
-
-    if (addedCount === 0) {
-        alert("All songs are already saved 👍");
-    } else {
-        alert("Saved " + addedCount + " new songs 🎧");
-    }
-}
 
         function clearSavedSongs() {
             if (confirm("Clear all saved songs?")) {
@@ -354,22 +362,22 @@
             }
         }
 
-function clearNewList() {
+        function clearNewList() {
 
-    const result = document.getElementById("result");
+            const result = document.getElementById("result");
 
-    result.innerHTML = "";
+            result.innerHTML = "";
 
-    currentPlaylist = [];
+            currentPlaylist = [];
 
-    stopPlayback();
+            stopPlayback();
 
-    document.getElementById("savePlaylistBtn").disabled = true;
+            document.getElementById("savePlaylistBtn").disabled = true;
 
-    document.getElementById("continueBtn").style.display = "none";
+            document.getElementById("continueBtn").style.display = "none";
 
-} // end clearNewList function
-            
+        } // end clearNewList function
+
         // LOAD
 
         function loadSavedSongs() {
@@ -701,6 +709,8 @@ function clearNewList() {
             continueBtn.style.display = "none";
             result.innerHTML = "Loading playlist...";
 
+            document.getElementById("savePlaylistBtn").disabled = true;
+
             if (button) button.disabled = true;
 
             try {
@@ -733,11 +743,11 @@ function clearNewList() {
                 result.innerHTML = "";
 
                 const note = document.createElement("p");
-note.style.fontSize = "11px";
-note.style.color = "#888";
-note.style.marginTop = "10px";
+                note.style.fontSize = "11px";
+                note.style.color = "#888";
+                note.style.marginTop = "10px";
 
-result.appendChild(note);
+                result.appendChild(note);
 
                 let songSection = false;
 
@@ -893,20 +903,20 @@ result.appendChild(note);
             const result = document.getElementById("result");
             const continueBtn = document.getElementById("continueBtn");
 
-                let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
 
-    let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-    if (saved.length >= currentLimit) {
+            if (saved.length >= currentLimit) {
 
-        document.getElementById("continueBtn").style.display = "none";
+                document.getElementById("continueBtn").style.display = "none";
 
-        document.getElementById("savePlaylistBtn").disabled = true;
+                document.getElementById("savePlaylistBtn").disabled = true;
 
-        alert("🔒 Save limit reached. Upgrade to unlock more songs.");
+                alert("🔒 Save limit reached. Upgrade to unlock more songs.");
 
-        return;
-    }
+                return;
+            }
             if (continueCount >= 1) {
                 continueBtn.innerText = "🔒 Upgrade to unlock more";
 
@@ -1052,21 +1062,21 @@ result.appendChild(note);
             }
         }
 
-          // $$$$
+        // $$$$
 
-window.handleUpgrade = function () {
+        window.handleUpgrade = function () {
 
-    let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-    currentLimit += 100;
+            currentLimit += 100;
 
-    localStorage.setItem("saveLimit", currentLimit);
+            localStorage.setItem("saveLimit", currentLimit);
 
-    // update live limit in app
-    FREE_SAVE_LIMIT = currentLimit;
+            // update live limit in app
+            FREE_SAVE_LIMIT = currentLimit;
 
-    alert("🎉 Upgrade successful! You now have more save space.");
-};
+            alert("🎉 Upgrade successful! You now have more save space.");
+        };
     </script>
 
     <p style="font-size:11px; color:#aaa; margin-top:40px; text-align:center;">
