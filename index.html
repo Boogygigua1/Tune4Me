@@ -318,10 +318,17 @@
 </button>
         `;
 
-        document.getElementById("upgradeBtn").addEventListener("click", handleUpgrade);
-    }
+        // ✅ FIRST add to page
+document.getElementById("result").appendChild(box);
 
-    return;
+// ✅ THEN attach event
+const upgradeBtn = document.getElementById("upgradeBtn");
+
+if (upgradeBtn) {
+    upgradeBtn.addEventListener("click", handleUpgrade);
+}
+
+return;
 }
 
                 let exists = saved.some(item =>
