@@ -111,8 +111,8 @@
     </div>
 
     <p style="font-size:11px; color:#888; margin-top:5px;">
-                Preview the first song, or use the play buttons to listen to each one.
-            </p>
+        Preview the first song, or use the play buttons to listen to each one.
+    </p>
 
     <button id="savePlaylistBtn" onclick="savePlaylist(event)" disabled> 💾 Save Playlist</button>
 
@@ -234,16 +234,16 @@
 
             if (saved.length >= FREE_SAVE_LIMIT) {
 
-    if (!document.getElementById("upgradeBox")) {
+                if (!document.getElementById("upgradeBox")) {
 
-        const box = document.createElement("div");
-        box.id = "upgradeBox";
-        box.style.marginTop = "15px";
-        box.style.padding = "15px";
-        box.style.background = "#fff3cd";
-        box.style.borderRadius = "10px";
+                    const box = document.createElement("div");
+                    box.id = "upgradeBox";
+                    box.style.marginTop = "15px";
+                    box.style.padding = "15px";
+                    box.style.background = "#fff3cd";
+                    box.style.borderRadius = "10px";
 
-        box.innerHTML = `
+                    box.innerHTML = `
     <strong>🔒 Save limit reached</strong><br><br>
 
     You can save up to 10 songs for free.<br><br>
@@ -257,11 +257,11 @@
     </button>
 `;
 
-        document.getElementById("result").appendChild(box);
-    }
+                    document.getElementById("result").appendChild(box);
+                }
 
-    return;
-}
+                return;
+            }
 
             saved.push({ song, artist });
 
@@ -930,7 +930,12 @@
                 label.style.margin = "15px 0 5px";
                 label.style.fontSize = "13px";
                 label.style.color = "#888";
-                label.textContent = "More songs based on your mood:";
+
+                label.innerHTML = `
+    <strong>Need more songs? 🎧</strong><br>
+    $3 = 100 additional saves
+`;
+
                 result.appendChild(label);
 
                 let songSection = false;
