@@ -1098,6 +1098,11 @@
 
                 continueBtn.innerText = "▶ Add More Songs";
 
+                continueBtn.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
             } catch (err) {
                 continueBtn.innerText = "Error, try again";
             }

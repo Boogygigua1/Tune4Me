@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
     const mood = body?.mood || "";
     const style = body?.style || "";
-    const length = body?.length || 5;
+    const length = body?.length || 10;
     const existingSongs = body?.existingSongs || [];
 
     console.log("BODY RECEIVED:", req.body);
