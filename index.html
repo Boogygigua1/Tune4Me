@@ -328,9 +328,10 @@ if (upgradeBtn) {
     upgradeBtn.addEventListener("click", handleUpgrade);
 }
 
-// ✅ STOP the savePlaylist function cleanly
-return;
-                let exists = saved.some(item =>
+// ✔ correct
+break;
+
+                    let exists = saved.some(item =>
                     item.song.toLowerCase() === song.toLowerCase() &&
                     item.artist.toLowerCase() === artist.toLowerCase()
                 );
