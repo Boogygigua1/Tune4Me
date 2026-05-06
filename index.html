@@ -301,7 +301,7 @@
 
                 // 🚨 LIMIT CHECK
                 if ((saved.length + addedCount) > currentLimit) {
-                
+
                     alert("🔒 Save limit reached.");
 
                     if (!document.getElementById("upgradeBox")) {
@@ -891,7 +891,12 @@
                 continueBtn.style.display = "inline-block";
                 continueBtn.innerText = "▶ Add More Songs";
 
-                document.getElementById("savePlaylistBtn").disabled = false;
+                let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+
+                let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+                document.getElementById("savePlaylistBtn").disabled =
+                    saved.length >= currentLimit;
 
             } catch (err) {
                 console.log("PLAYLIST ERROR:", err);
