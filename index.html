@@ -731,6 +731,14 @@
 
                 result.innerHTML = "";
 
+                const note = document.createElement("p");
+note.style.fontSize = "11px";
+note.style.color = "#888";
+note.style.marginTop = "10px";
+note.textContent = "Saved songs are stored locally on your device.";
+
+result.appendChild(note);
+
                 let songSection = false;
 
                 lines.forEach((line, i) => {
