@@ -1046,13 +1046,16 @@ result.appendChild(note);
 
           // $$$$
 
-            function handleUpgrade() {
+            window.handleUpgrade = function() {
 
     let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
     currentLimit += 100;
 
     localStorage.setItem("saveLimit", currentLimit);
+
+    // ✅ update live limit in app
+    FREE_SAVE_LIMIT = currentLimit;
 
     alert("🎉 Upgrade successful! You now have more save space.");
 
