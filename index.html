@@ -312,13 +312,13 @@
 
             <strong>$3 = 100 additional saves 🎧</strong><br><br>
 
-            <button onclick="handleUpgrade()" 
-                style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
-                Upgrade for $3
-            </button>
+            <button id="upgradeBtn" 
+    style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
+    Upgrade for $3
+</button>
         `;
 
-        document.getElementById("result").appendChild(box);
+        document.getElementById("upgradeBtn").addEventListener("click", handleUpgrade);
     }
 
     return;
