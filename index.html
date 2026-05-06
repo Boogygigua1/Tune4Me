@@ -207,7 +207,11 @@
 
         function showUpgradeBox() {
 
-            if (document.getElementById("upgradeBox")) return;
+            const oldBox = document.getElementById("upgradeBox");
+
+            if (oldBox) {
+                oldBox.remove();
+            }
 
             const box = document.createElement("div");
 
