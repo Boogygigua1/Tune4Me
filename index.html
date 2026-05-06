@@ -29,12 +29,18 @@
             font-size: 16px;
         }
 
+
         button {
             padding: 12px 16px;
             margin-top: 10px;
-            background-color: #4CAF50;
+
+            background: rgba(76, 175, 80, 0.72);
+            backdrop-filter: blur(4px);
+
             color: white;
-            border: none;
+
+            border: 1px solid rgba(255, 255, 255, 0.25);
+
             cursor: pointer;
             border-radius: 6px;
         }
@@ -130,14 +136,22 @@
     padding:10px;
     z-index:1000;
 
-    background: rgba(255,255,255,0.75);
-    backdrop-filter: blur(6px);
+    background: rgba(255,255,255,0.45);
+    backdrop-filter: blur(8px);
     border-radius: 14px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+
+    display:flex;
+    gap:10px;
+    align-items:center;
 ">
 
         <button id="continueBtn" onclick="continuePlaylist()" style="display:none;">
-            ▶ Add More Songs
+            ▶ Add More
+        </button>
+
+        <button id="floatingSaveBtn" onclick="savePlaylist(event)">
+            💾 Save Playlist
         </button>
 
     </div>
