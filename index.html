@@ -746,6 +746,10 @@
 
                 result.innerHTML = "";
 
+                stopPlayback();
+                isPlayingAll = false;
+                currentPlaylist = [];
+
                 const note = document.createElement("p");
                 note.style.fontSize = "11px";
                 note.style.color = "#888";
