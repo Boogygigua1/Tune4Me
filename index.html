@@ -354,35 +354,21 @@
             }
         }
 
-        function clearNewList() {
-            const result = document.getElementById("result");
+function clearNewList() {
 
-            result.innerHTML = "";
+    const result = document.getElementById("result");
 
-            currentPlaylist = [];
+    result.innerHTML = "";
 
-            stopPlayback();
+    currentPlaylist = [];
 
-            if (saved.length >= currentLimit) {
+    stopPlayback();
 
     document.getElementById("savePlaylistBtn").disabled = true;
 
     document.getElementById("continueBtn").style.display = "none";
 
-    return;
-}
-
-localStorage.setItem("savedSongs", JSON.stringify(saved));
-
-loadSavedSongs();
-
-if (addedCount === 0) {
-    alert("All songs are already saved 👍");
-} else {
-    alert("Saved " + addedCount + " new songs 🎧");
-}
-
-}
+} // end clearNewList function
             
         // LOAD
 
