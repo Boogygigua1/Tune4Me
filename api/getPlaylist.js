@@ -48,11 +48,17 @@ THEN:
 Create a playlist that feels emotionally intentional and human-curated.
 
 The playlist must follow this emotional progression:
-1. Validation
-2. Reflection
-3. Nostalgia or familiarity
-4. Unexpected emotional connection
-5. Hopeful transition or release
+
+1. Emotional validation
+2. Reflection/introspection
+3. Familiar emotional connection
+4. Nostalgic memory trigger
+5. Hidden gem or unexpected match
+6. Deep emotional immersion
+7. Emotional tension release
+8. Comfort or reassurance
+9. Regaining emotional energy
+10. Hopeful transition or empowerment
 
 The user already has these songs:
 ${existingSongList}
