@@ -53,11 +53,12 @@ export default async function handler(req, res) {
 
                 const validVideo = data.items.find(item =>
                     item.id?.videoId &&
+                    !item.snippet.channelTitle.toLowerCase().includes("vevo") &&
                     !item.snippet.title.toLowerCase().includes("live") &&
                     !item.snippet.title.toLowerCase().includes("shorts") &&
                     !item.snippet.title.toLowerCase().includes("reaction")
                 );
-
+                
                 if (validVideo) {
                     return res.status(200).json({
                         videoId: validVideo.id.videoId,
