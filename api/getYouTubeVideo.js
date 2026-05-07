@@ -4,8 +4,12 @@ export default async function handler(req, res) {
     }
 
     let body;
+
     try {
-        body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+        body =
+            typeof req.body === "string"
+                ? JSON.parse(req.body)
+                : req.body;
     } catch {
         return res.status(400).json({ error: "Invalid JSON body" });
     }
@@ -28,6 +32,7 @@ export default async function handler(req, res) {
         ];
 
         for (const searchTerm of searches) {
+
             const response = await fetch(
                 `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchTerm)}&key=${YOUTUBE_API_KEY}&maxResults=5&type=video`
             );
@@ -39,24 +44,35 @@ export default async function handler(req, res) {
 
             if (data.error) {
                 return res.status(500).json({
-                error: "YouTube API error",
-                details: data.error
-            });
-}
+                    error: "YouTube API error",
+                    details: data.error
+                });
+            }
 
             if (data.items && data.items.length > 0) {
-                const videoId = data.items[0].id.videoId;
 
-                return res.status(200).json({
-                    videoId,
-                    duration: null
-                });
+                const validVideo = data.items.find(item =>
+                    item.id?.videoId &&
+                    !item.snippet.title.toLowerCase().includes("live") &&
+                    !item.snippet.title.toLowerCase().includes("shorts") &&
+                    !item.snippet.title.toLowerCase().includes("reaction")
+                );
+
+                if (validVideo) {
+                    return res.status(200).json({
+                        videoId: validVideo.id.videoId,
+                        duration: null
+                    });
+                }
             }
         }
 
-        return res.status(200).json({ error: "No video found" });
+        return res.status(200).json({
+            error: "No video found"
+        });
 
     } catch (error) {
+
         return res.status(500).json({
             error: "Server error",
             details: error.message
