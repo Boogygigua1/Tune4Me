@@ -3,6 +3,7 @@ console.log("Force rebuild");
 export default async function handler(req, res) {
     let body;
 
+    
     try {
         body = typeof req.body === "string"
             ? JSON.parse(req.body)
@@ -93,6 +94,22 @@ Identify:
 
 THEN:
 Create a playlist that feels emotionally intentional and human-curated.
+
+THEN:
+Create a playlist that feels emotionally intentional and human-curated.
+
+The playlist should balance:
+- emotional connection
+- festival energy
+- cultural authenticity
+- emotional progression
+- nighttime atmosphere
+- memorable crowd moments
+- cinematic feeling
+
+Avoid playlists that become too sleepy, repetitive, overly acoustic, or emotionally flat unless the user specifically requests that mood.
+
+The playlist must follow this emotional progression:
 
 The playlist must follow this emotional progression:
 
