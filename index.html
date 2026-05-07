@@ -373,7 +373,7 @@
             for (let { song, artist } of currentPlaylist) {
 
                 // 🚨 LIMIT CHECK
-                if ((saved.length + addedCount) > currentLimit) {
+                if (saved.length >= currentLimit) {
 
                     alert("🔒 Save limit reached.");
 
