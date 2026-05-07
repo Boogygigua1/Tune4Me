@@ -90,19 +90,6 @@
         onkeydown="handleKey(event)">
     <br><br>
 
-    <p style="margin: 5px 0;">Choose a music style (optional)</p>
-
-    <select id="style" onchange="autoLaunch()">
-        <option value="any">Any</option>
-        <option value="acoustic">Acoustic</option>
-        <option value="hip hop">Hip Hop</option>
-        <option value="pop">Pop</option>
-        <option value="rock">Rock</option>
-        <option value="soul">Soul</option>
-
-        <option value="instrumental">Instrumental</option>
-    </select>
-
     <button onclick="showMood()">Create Playlist</button>
 
     <button onclick="clearNewList()">🗑 Clear List</button>
@@ -756,7 +743,6 @@
         async function showMood(button) {
 
             const mood = document.getElementById("moodInput").value.trim();
-            const style = document.getElementById("style").value;
 
             continueCount = 0;
             localStorage.setItem("continueCount", continueCount);
@@ -775,7 +761,7 @@
                 const response = await fetch("/api/getPlaylist", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ mood, style })
+                    body: JSON.stringify({ mood })
                 });
 
                 const text = await response.text();
@@ -991,7 +977,7 @@
             localStorage.setItem("continueCount", continueCount);
 
             const mood = document.getElementById("moodInput").value.trim();
-            const style = document.getElementById("style").value;
+
 
             continueBtn.innerText = "Loading...";
             try {
@@ -1000,7 +986,6 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         mood,
-                        style,
                         existingSongs: currentPlaylist
                     })
                 });

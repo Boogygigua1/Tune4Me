@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     }
 
     const mood = body?.mood || "";
-    const style = body?.style || "";
+    
     const length = body?.length || 10;
     const existingSongs = body?.existingSongs || [];
 
@@ -31,7 +31,9 @@ export default async function handler(req, res) {
             messages: [
                 {
                     role: "user",
-                    content: `You are a music assistant.
+                    content: `You are an emotionally intelligent music curator.
+
+Your job is to recommend songs that feel deeply personal, emotionally accurate, nostalgic, cinematic, meaningful, and sometimes unexpectedly perfect.
 
 The user already has these songs:
 ${existingSongList}
@@ -51,22 +53,23 @@ Respond EXACTLY in this format:
 One short explanation.
 
 Rules:
-- Prefer songs between 3.5 and 6.5 minutes when possible
-- Do not exclude good songs only because they are shorter or longer
-- Recommend songs that are likely available on YouTube
-- Avoid obscure, unreleased, or hard-to-find songs
-- ONLY recommend real, existing songs by the correct artist
-- Do NOT invent song titles
-- Do NOT pair a real song title with the wrong artist
+- Recommend REAL songs only
+- NEVER invent songs or artists
+- Prefer emotionally powerful songs over generic mainstream choices
+- Mix recognizable songs with overlooked or forgotten gems
+- Avoid repetitive Spotify-style recommendations
+- Avoid overly obvious songs unless they perfectly fit the mood
+- Prioritize emotional atmosphere and emotional storytelling
+- Include songs people may have forgotten existed
+- Vary decades and artist selection naturally
+- Recommendations should feel human-curated, not algorithmic
+- Recommend songs likely available on YouTube
+- NEVER repeat any songs already listed
 - ALWAYS include ${length} songs
 - ALWAYS use format: Song - Artist
-- NEVER repeat any of the songs already listed
-- NEVER skip the songs section
-- NEVER leave it empty
-- Each song must be different
+- Each song must feel emotionally intentional
 
-Mood: ${mood}
-Style: ${style}`
+Mood: ${mood}`
                 }
             ]
         })
