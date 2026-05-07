@@ -529,9 +529,6 @@
 
             const card = playBtn.closest(".card");
             // 🔴 stop any currently playing videos
-            document.querySelectorAll("iframe").forEach(frame => {
-                frame.src = "";
-            });
 
             let slot = card.querySelector(".video-slot");
 
@@ -569,8 +566,8 @@
                     return;
                 }
 
-                if (!data.videoId) {
-                    slot.innerHTML = "Video unavailable";
+                if (!data.videoId || data.videoId === "undefined") {
+                    slot.innerHTML = "⚠ Video unavailable. Try another song.";
                     return;
                 }
 
