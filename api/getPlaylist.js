@@ -46,7 +46,9 @@ export default async function handler(req, res) {
                     content: isMusicQuestion
                         ? `You are a highly accurate music expert.
 
-Answer the user's music question directly.
+Answer the user's music question directly and conversationally.
+
+If appropriate, suggest similar artists or songs.
 
 User input:
 ${mood}`
@@ -55,29 +57,8 @@ ${mood}`
 FIRST:
 Interpret the user's emotional state deeply before selecting songs.
 
-Identify:
-- emotional tone
-- loneliness level
-- nostalgia level
-- emotional conflict
-- desire for comfort vs empowerment
-- emotional energy level
-
 THEN:
 Create a playlist that feels emotionally intentional and human-curated.
-
-The playlist must follow this emotional progression:
-
-1. Emotional validation
-2. Reflection/introspection
-3. Familiar emotional connection
-4. Nostalgic memory trigger
-5. Hidden gem or unexpected match
-6. Deep emotional immersion
-7. Emotional tension release
-8. Comfort or reassurance
-9. Regaining emotional energy
-10. Hopeful transition or empowerment
 
 The user already has these songs:
 ${existingSongList}
@@ -99,14 +80,7 @@ One short paragraph only.
 Rules:
 - Recommend REAL songs only
 - NEVER invent songs or artists
-- Avoid generic Spotify-style recommendations
-- Avoid repetitive artists
-- Prefer emotionally specific songs
-- Mix familiar songs with forgotten gems
-- Avoid obvious songs unless emotionally perfect
-- Songs must feel intentionally selected
-- Recommendations should feel personal, cinematic, nostalgic, and emotionally accurate
-- NEVER repeat any songs already listed
+- NEVER repeat songs
 - ALWAYS include ${length} songs
 - ALWAYS use format: Song - Artist
 
