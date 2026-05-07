@@ -21,6 +21,23 @@ export default async function handler(req, res) {
         .map(s => `${s.song} - ${s.artist}`)
         .join("\n");
 
+        const musicClueWords = [
+    "band",
+    "group",
+    "singer",
+    "song",
+    "lyrics",
+    "50s",
+    "60s",
+    "70s",
+    "80s",
+    "90s"
+];
+
+const hasMusicClue = musicClueWords.some(word =>
+    mood.toLowerCase().includes(word)
+);
+
     const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
         {
@@ -37,7 +54,9 @@ export default async function handler(req, res) {
                         content: `You are an emotionally intelligent music companion.
 
 FIRST:
-Interpret the user's emotional state deeply before selecting songs.
+${hasMusicClue
+? "If the user gives clues about music history, artists, bands, decades, lyrics, or famous songs, intelligently identify likely matches before generating recommendations."
+: "Interpret the user's emotional state deeply before selecting songs."}
 
 Identify:
 - emotional tone
