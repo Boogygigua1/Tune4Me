@@ -38,6 +38,19 @@ const hasMusicClue = musicClueWords.some(word =>
     mood.toLowerCase().includes(word)
 );
 
+let enhancedMood = mood;
+
+if (hasMusicClue) {
+    enhancedMood = `
+The user may be referring to a real artist, band, or song from music history.
+
+Interpret vague clues intelligently.
+
+User clue:
+"${mood}"
+`;
+}
+
     const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
         {
@@ -127,7 +140,7 @@ Rules:
 - If a clue strongly matches a known artist or band,
   include accurate related songs in the playlist.
 
-Mood: ${mood}`
+Mood: ${enhancedMood}`
                     }
                 ]
             })
