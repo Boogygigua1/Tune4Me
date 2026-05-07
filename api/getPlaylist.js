@@ -95,9 +95,6 @@ Identify:
 THEN:
 Create a playlist that feels emotionally intentional and human-curated.
 
-THEN:
-Create a playlist that feels emotionally intentional and human-curated.
-
 The playlist should balance:
 - emotional connection
 - festival energy
@@ -108,8 +105,6 @@ The playlist should balance:
 - cinematic feeling
 
 Avoid playlists that become too sleepy, repetitive, overly acoustic, or emotionally flat unless the user specifically requests that mood.
-
-The playlist must follow this emotional progression:
 
 The playlist must follow this emotional progression:
 
