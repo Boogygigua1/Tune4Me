@@ -112,10 +112,20 @@ Avoid therapy-style emotional analysis.
 - Song Title - Artist
 
 3. 🧠 Why this fits:
-Write naturally like a real friend explaining the choices.
-Avoid poetic AI language.
-Avoid describing every song individually.
-Keep it short, warm, and conversational.
+Write like a genuine music fan talking casually.
+
+Sound human, relaxed, and natural.
+Avoid therapy language.
+Avoid inspirational language.
+Avoid phrases like:
+"emotional journey"
+"validating feelings"
+"all the feels"
+"deep immersion"
+"hopeful transition"
+
+Do not overexplain the playlist.
+Keep it short and authentic.
 
 Rules:
 - Recommend REAL songs only
