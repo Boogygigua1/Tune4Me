@@ -31,7 +31,19 @@ export default async function handler(req, res) {
     "60s",
     "70s",
     "80s",
-    "90s"
+    "90s",
+    "2000s",
+    "2010s",
+    "2020s",
+    "festival",
+    "concert",
+    "outside lands",
+    "coachella",
+    "indie",
+    "edm",
+    "alternative",
+    "playlist",
+    "vibes"
 ];
 
 const hasMusicClue = musicClueWords.some(word =>
@@ -64,7 +76,7 @@ User clue:
                 messages: [
                     {
                         role: "user",
-                        content: `You are an emotionally intelligent music companion.
+                        content: `You are an expert human music curator with deep knowledge of music culture, festival culture, nostalgia, underground music discovery, emotional storytelling, and generational music trends.
 
 FIRST:
 ${hasMusicClue
