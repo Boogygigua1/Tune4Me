@@ -68,7 +68,9 @@ ${existingSongList}
 
 Respond EXACTLY in this format:
 
-1. One short emotional interpretation sentence.
+1. One casual sentence about the overall vibe or mood.
+Sound natural and conversational.
+Avoid therapy-style emotional analysis.
 
 2. 🎧 Songs:
 - Song Title - Artist
@@ -78,7 +80,10 @@ Respond EXACTLY in this format:
 - Song Title - Artist
 
 3. 🧠 Why this fits:
-One short paragraph only.
+Write naturally like a real friend explaining the choices.
+Avoid poetic AI language.
+Avoid describing every song individually.
+Keep it short, warm, and conversational.
 
 Rules:
 - Recommend REAL songs only
@@ -94,9 +99,13 @@ Rules:
 - ALWAYS include ${length} songs
 - ALWAYS use format: Song - Artist
 
-- If the user references a real artist, band, decade, lyric, or music clue,
-  intelligently incorporate accurate related songs and artists into the playlist.
+- If the user gives a vague clue about a real artist, band, song, lyric, or decade,
+  try to intelligently identify it before generating recommendations.
 
+- Recognize famous classic artists, bands, and music history references naturally.
+
+- If a clue strongly matches a known artist or band,
+  include accurate related songs in the playlist.
 Mood: ${mood}`
                     }
                 ]
