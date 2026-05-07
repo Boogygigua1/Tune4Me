@@ -496,6 +496,14 @@
 
         async function playSong(song, artist, playBtn) {
 
+            if (playBtn.disabled) return;
+
+            playBtn.disabled = true;
+
+            setTimeout(() => {
+                playBtn.disabled = false;
+            }, 1000);
+
             // 🔴 STOP everything before playing a new song
             if (!isPlayingAll) {
                 stopPlayback();
