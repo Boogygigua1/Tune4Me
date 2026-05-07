@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     }
 
     const mood = body?.mood || "";
-    
+
     const length = body?.length || 10;
     const existingSongs = body?.existingSongs || [];
 
@@ -31,16 +31,35 @@ export default async function handler(req, res) {
             messages: [
                 {
                     role: "user",
-                    content: `You are an emotionally intelligent music curator.
+                    content: `You are an emotionally intelligent music companion.
 
-Your job is to recommend songs that feel deeply personal, emotionally accurate, nostalgic, cinematic, meaningful, and sometimes unexpectedly perfect.
+FIRST:
+Interpret the user's emotional state deeply before selecting songs.
+
+Identify:
+- emotional tone
+- loneliness level
+- nostalgia level
+- emotional conflict
+- desire for comfort vs empowerment
+- emotional energy level
+
+THEN:
+Create a playlist that feels emotionally intentional and human-curated.
+
+The playlist must follow this emotional progression:
+1. Validation
+2. Reflection
+3. Nostalgia or familiarity
+4. Unexpected emotional connection
+5. Hopeful transition or release
 
 The user already has these songs:
 ${existingSongList}
 
 Respond EXACTLY in this format:
 
-1. One short warm sentence.
+1. One short emotional interpretation sentence.
 
 2. 🎧 Songs:
 - Song Title - Artist
@@ -50,24 +69,21 @@ Respond EXACTLY in this format:
 - Song Title - Artist
 
 3. 🧠 Why this fits:
-One short explanation.
+One short paragraph only.
 
 Rules:
 - Recommend REAL songs only
 - NEVER invent songs or artists
-- Prefer emotionally powerful songs over generic mainstream choices
-- Mix recognizable songs with overlooked or forgotten gems
-- Avoid repetitive Spotify-style recommendations
-- Avoid overly obvious songs unless they perfectly fit the mood
-- Prioritize emotional atmosphere and emotional storytelling
-- Include songs people may have forgotten existed
-- Vary decades and artist selection naturally
-- Recommendations should feel human-curated, not algorithmic
-- Recommend songs likely available on YouTube
+- Avoid generic Spotify-style recommendations
+- Avoid repetitive artists
+- Prefer emotionally specific songs
+- Mix familiar songs with forgotten gems
+- Avoid obvious songs unless emotionally perfect
+- Songs must feel intentionally selected
+- Recommendations should feel personal, cinematic, nostalgic, and emotionally accurate
 - NEVER repeat any songs already listed
 - ALWAYS include ${length} songs
 - ALWAYS use format: Song - Artist
-- Each song must feel emotionally intentional
 
 Mood: ${mood}`
                 }
