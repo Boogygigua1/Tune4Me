@@ -112,23 +112,13 @@ Avoid therapy-style emotional analysis.
 - Song Title - Artist
 
 3. 🧠 Why this fits:
-Write like a genuine music fan talking casually.
+Briefly explain the vibe in a casual, natural way.
 
-Sound human, relaxed, and natural.
-Avoid therapy language.
-Avoid inspirational language.
-Avoid phrases like:
-"emotional journey"
-"validating feelings"
-"all the feels"
-"deep immersion"
-"hopeful transition"
+Keep it short.
+1-2 sentences maximum.
 
-Do not overexplain the playlist.
-Keep it VERY short.
-1-3 sentences maximum.
-
-Sound like someone casually talking about music with a friend.
+Sound like a real music fan talking to a friend.
+Avoid overly dramatic or therapy-style language.
 
 Rules:
 - Recommend REAL songs only
