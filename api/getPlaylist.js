@@ -99,13 +99,15 @@ Rules:
 - ALWAYS include ${length} songs
 - ALWAYS use format: Song - Artist
 
-- If the user gives a vague clue about a real artist, band, song, lyric, or decade,
-  try to intelligently identify it before generating recommendations.
+- Recognize vague, incomplete, misspelled, or conversational references to real artists, bands, songs, and music history.
 
-- Recognize famous classic artists, bands, and music history references naturally.
+- Users may describe music imperfectly from memory instead of using exact names.
+
+- Use contextual reasoning and best-match thinking before generating recommendations.
 
 - If a clue strongly matches a known artist or band,
   include accurate related songs in the playlist.
+
 Mood: ${mood}`
                     }
                 ]
