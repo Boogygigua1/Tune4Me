@@ -20,6 +20,18 @@ export default async function handler(req, res) {
         .map(s => `${s.song} - ${s.artist}`)
         .join("\n");
 
+    const lowerMood = mood.toLowerCase();
+
+    const isMusicQuestion =
+        lowerMood.includes("who") ||
+        lowerMood.includes("what") ||
+        lowerMood.includes("band") ||
+        lowerMood.includes("artist") ||
+        lowerMood.includes("song") ||
+        lowerMood.includes("group") ||
+        lowerMood.includes("brothers") ||
+        lowerMood.includes("singer");
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -31,7 +43,14 @@ export default async function handler(req, res) {
             messages: [
                 {
                     role: "user",
-                    content: `You are an emotionally intelligent music companion.
+                    content: isMusicQuestion
+                        ? `You are a highly accurate music expert.
+
+Answer the user's music question directly.
+
+User input:
+${mood}`
+                        : `You are an emotionally intelligent music companion.
 
 FIRST:
 Interpret the user's emotional state deeply before selecting songs.
