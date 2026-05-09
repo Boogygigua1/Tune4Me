@@ -91,6 +91,12 @@ Identify:
 - emotional conflict
 - desire for comfort vs empowerment
 - emotional energy level
+- danceability level
+- club/festival energy
+- rhythmic intensity
+- underground electronic influence
+- late-night momentum
+- movement-driving pulse
 
 THEN:
 Create a playlist that feels emotionally intentional and human-curated.
@@ -104,7 +110,12 @@ The playlist should balance:
 - memorable crowd moments
 - cinematic feeling
 
-Avoid playlists that become too sleepy, repetitive, overly acoustic, or emotionally flat unless the user specifically requests that mood.
+Avoid playlists that become too sleepy, acoustic, folk-heavy, indie-drifting, or emotionally flat unless specifically requested.
+
+When the vibe suggests nightlife, momentum, adrenaline, underground energy, neon atmosphere, warehouse atmosphere, motion, futuristic emotion, or after-hours energy:
+- strongly prioritize house, techno, electronic, indie dance, progressive electronic, melodic techno, festival electronica, synth-driven tracks, and rhythm-forward music
+- prefer songs with movement and pulse over acoustic introspection
+- maintain emotional intelligence without losing rhythmic momentum
 
 The playlist must follow this emotional progression:
 
