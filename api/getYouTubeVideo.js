@@ -24,11 +24,12 @@ export default async function handler(req, res) {
         const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
         const searches = [
-            query + " song",
-            query + " official audio",
-            query + " music video",
-            query + " lyrics"
+            `"${query}" official audio`,
+            `"${query}" song`,
+            `"${query}" music`,
+            query + " official audio"
         ];
+
         for (const searchTerm of searches) {
 
             const response = await fetch(
