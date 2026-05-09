@@ -582,7 +582,18 @@
                 }
 
                 if (!data.videoId || data.videoId === "undefined") {
-                    slot.innerHTML = "⚠ Video unavailable. Try another song.";
+
+                    const youtubeSearch =
+                        "https://www.youtube.com/results?search_query=" +
+                        encodeURIComponent(song + " " + artist);
+
+                    slot.innerHTML = `
+        ⚠ Preview unavailable.<br><br>
+        <a href="${youtubeSearch}" target="_blank">
+            ▶ Open on YouTube
+        </a>
+    `;
+
                     return;
                 }
 
