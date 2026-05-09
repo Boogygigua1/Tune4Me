@@ -245,7 +245,21 @@
 
             localStorage.setItem("songFeedback", JSON.stringify(feedback));
 
-            alert(rating === "good" ? "Glad this fit 🎧" : "Thanks — I’ll use that feedback.");
+            if (rating === "bad") {
+                let avoidSongs = JSON.parse(localStorage.getItem("avoidSongs")) || [];
+
+                let exists = avoidSongs.some(item =>
+                    item.song.toLowerCase() === song.toLowerCase() &&
+                    item.artist.toLowerCase() === artist.toLowerCase()
+                );
+
+                if (!exists) {
+                    avoidSongs.push({ song, artist });
+                    localStorage.setItem("avoidSongs", JSON.stringify(avoidSongs));
+                }
+            }
+
+            alert(rating === "good" ? "Glad this fit 🎧" : "Got it — I’ll avoid that one.");
         }
 
         // SAVE
@@ -846,11 +860,6 @@
                 currentPlaylist = [];
 
                 result.innerHTML = "";
-
-
-                stopPlayback();
-                isPlayingAll = false;
-                currentPlaylist = [];
 
                 const note = document.createElement("p");
                 note.style.fontSize = "11px";
