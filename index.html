@@ -583,21 +583,35 @@
 
                 if (!data.videoId || data.videoId === "undefined") {
 
-                    const youtubeSearch =
-                        "https://www.youtube.com/results?search_query=" +
-                        encodeURIComponent(song + " " + artist);
-
                     slot.innerHTML = `
-        ⚠ Preview limit reached for today.
-You can still save songs and return tomorrow when previews reset.<br><br>
-
-        You can try again tomorrow, listen from your saved list,
-        or open the song on YouTube:<br><br>
-
-        <a href="${youtubeSearch}" target="_blank" rel="noopener noreferrer">
-    ▶ Open this song search on YouTube
-</a>
+        ⚠ Preview unavailable right now.<br><br>
+        This may happen if the daily YouTube preview limit has been reached.
+        You can still save songs and try previews again tomorrow.<br><br>
+        Use “Open Playlist on YouTube” to continue listening.
     `;
+
+                    let ytFallbackBtn = document.getElementById("ytFallbackBtn");
+
+                    if (!ytFallbackBtn) {
+                        ytFallbackBtn = document.createElement("button");
+                        ytFallbackBtn.id = "ytFallbackBtn";
+                        ytFallbackBtn.textContent = "▶ Open Playlist on YouTube";
+                        ytFallbackBtn.style.marginTop = "15px";
+
+                        ytFallbackBtn.addEventListener("click", () => {
+                            const searches = currentPlaylist
+                                .map(item => `${item.song} ${item.artist}`)
+                                .join("\n");
+
+                            const url =
+                                "https://www.youtube.com/results?search_query=" +
+                                encodeURIComponent(searches);
+
+                            window.open(url, "_blank");
+                        });
+
+                        document.getElementById("result").prepend(ytFallbackBtn);
+                    }
 
                     return;
                 }
