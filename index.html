@@ -95,6 +95,26 @@
                 Read more
             </button>
         </p>
+
+        <div style="margin-top:10px;">
+            <button onclick="togglePhilosophy(this)"
+                style="background:none; color:#8a63ff; border:none; padding:0; cursor:pointer; font-size:14px; opacity:0.9;">
+
+                ✨ Our Philosophy
+            </button>
+
+            <div id="philosophyText"
+                style="display:none; margin-top:10px; font-size:14px; line-height:1.6; color:#555;">
+
+                Tune4Me was built around a simple idea:
+                sometimes people don’t know what they want to hear —
+                they just know how they feel.
+
+                No endless scrolling.
+                No pressure.
+                Just music that fits your moment 🎧
+            </div>
+        </div>
     </div>
 
     <input type="text" id="moodInput" placeholder="Describe how you're feeling (in a word or full sentence)"
@@ -231,6 +251,20 @@
 
             moreText.style.display = isHidden ? "inline" : "none";
             button.innerText = isHidden ? "Read less" : "Read more";
+        }
+
+        function togglePhilosophy(button) {
+
+            const text = document.getElementById("philosophyText");
+
+            const isHidden =
+                text.style.display === "none" || text.style.display === "";
+
+            text.style.display = isHidden ? "block" : "none";
+
+            button.innerText = isHidden
+                ? "Hide Philosophy"
+                : "✨ Our Philosophy";
         }
 
         function saveFeedback(song, artist, rating) {
