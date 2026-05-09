@@ -833,6 +833,7 @@ You can still save songs and return tomorrow when previews reset.<br><br>
 
                 result.innerHTML = "";
 
+
                 stopPlayback();
                 isPlayingAll = false;
                 currentPlaylist = [];
@@ -1018,6 +1019,30 @@ You can still save songs and return tomorrow when previews reset.<br><br>
                         result.appendChild(card);
                     }
                 });
+
+                const youtubeBtn = document.createElement("button");
+
+                youtubeBtn.textContent = "▶ Search Playlist on YouTube";
+
+                youtubeBtn.style.marginBottom = "15px";
+
+                youtubeBtn.addEventListener("click", () => {
+
+                    const searches = currentPlaylist
+                        .map(item =>
+                            `${item.song} ${item.artist}`
+                        )
+                        .join("\n");
+
+                    const url =
+                        "https://www.youtube.com/results?search_query=" +
+                        encodeURIComponent(searches);
+
+                    window.open(url, "_blank");
+
+                });
+
+                result.appendChild(youtubeBtn);
 
                 if (button) button.disabled = false;
 
