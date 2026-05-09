@@ -967,8 +967,33 @@
                             saveFeedback(song, artist, "bad");
                         });
 
+                        goodBtn.style.fontSize = "12px";
+                        goodBtn.style.padding = "6px 8px";
+                        goodBtn.style.marginLeft = "auto";
+
+                        badBtn.style.fontSize = "12px";
+                        badBtn.style.padding = "6px 8px";
+
+                        const deleteBtn = document.createElement("button");
+
+                        deleteBtn.textContent = "🗑";
+
+                        deleteBtn.style.fontSize = "12px";
+                        deleteBtn.style.padding = "6px 8px";
+
+                        deleteBtn.addEventListener("click", () => {
+
+                            card.remove();
+
+                            currentPlaylist = currentPlaylist.filter(item =>
+                                !(item.song === song && item.artist === artist)
+                            );
+
+                        });
+
                         controls.appendChild(goodBtn);
                         controls.appendChild(badBtn);
+                        controls.appendChild(deleteBtn);
 
                         card.appendChild(title);
                         card.appendChild(artistDiv);
