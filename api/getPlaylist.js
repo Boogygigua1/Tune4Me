@@ -3,7 +3,7 @@ console.log("Force rebuild");
 export default async function handler(req, res) {
     let body;
 
-    
+
     try {
         body = typeof req.body === "string"
             ? JSON.parse(req.body)
@@ -15,6 +15,8 @@ export default async function handler(req, res) {
     const mood = body?.mood || "";
     const length = body?.length || 10;
     const existingSongs = body?.existingSongs || [];
+    const avoidSongs = body?.avoidSongs || [];
+    const likedSongs = body?.likedSongs || [];
 
     console.log("BODY RECEIVED:", req.body);
 
@@ -22,39 +24,47 @@ export default async function handler(req, res) {
         .map(s => `${s.song} - ${s.artist}`)
         .join("\n");
 
-        const musicClueWords = [
-    "band",
-    "group",
-    "singer",
-    "song",
-    "lyrics",
-    "50s",
-    "60s",
-    "70s",
-    "80s",
-    "90s",
-    "2000s",
-    "2010s",
-    "2020s",
-    "festival",
-    "concert",
-    "outside lands",
-    "coachella",
-    "indie",
-    "edm",
-    "alternative",
-    "playlist",
-    "vibes"
-];
+    const avoidSongList = avoidSongs
+        .map(s => `${s.song} - ${s.artist}`)
+        .join("\n");
 
-const hasMusicClue = musicClueWords.some(word =>
-    mood.toLowerCase().includes(word)
-);
+    const likedSongList = likedSongs
+        .map(s => `${s.song} - ${s.artist}`)
+        .join("\n");
 
-let enhancedMood = mood;
+    const musicClueWords = [
+        "band",
+        "group",
+        "singer",
+        "song",
+        "lyrics",
+        "50s",
+        "60s",
+        "70s",
+        "80s",
+        "90s",
+        "2000s",
+        "2010s",
+        "2020s",
+        "festival",
+        "concert",
+        "outside lands",
+        "coachella",
+        "indie",
+        "edm",
+        "alternative",
+        "playlist",
+        "vibes"
+    ];
 
-if (hasMusicClue) {
-    enhancedMood = `
+    const hasMusicClue = musicClueWords.some(word =>
+        mood.toLowerCase().includes(word)
+    );
+
+    let enhancedMood = mood;
+
+    if (hasMusicClue) {
+        enhancedMood = `
 The user may be referring to a real artist, band, or song from music history.
 
 Interpret vague clues intelligently.
@@ -62,7 +72,7 @@ Interpret vague clues intelligently.
 User clue:
 "${mood}"
 `;
-}
+    }
 
     const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
@@ -81,8 +91,8 @@ User clue:
 
 FIRST:
 ${hasMusicClue
-? "If the user gives clues about music history, artists, bands, decades, lyrics, or famous songs, intelligently identify likely matches before generating recommendations."
-: "Interpret the user's emotional state deeply before selecting songs."}
+                                ? "If the user gives clues about music history, artists, bands, decades, lyrics, or famous songs, intelligently identify likely matches before generating recommendations."
+                                : "Interpret the user's emotional state deeply before selecting songs."}
 
 Identify:
 - emotional tone
@@ -132,6 +142,17 @@ The playlist must follow this emotional progression:
 
 The user already has these songs:
 ${existingSongList}
+
+The user disliked or rejected these songs:
+${avoidSongList}
+
+Do NOT recommend these songs again.
+Avoid recommending songs that are extremely similar in sound, mood, or artist style unless clearly justified.
+
+The user strongly liked these songs:
+${likedSongList}
+
+Learn from these preferences and recommend songs with similar emotional, cultural, rhythmic, or atmospheric qualities.
 
 Respond EXACTLY in this format:
 
