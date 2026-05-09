@@ -588,10 +588,16 @@
                         encodeURIComponent(song + " " + artist);
 
                     slot.innerHTML = `
-        ⚠ Preview unavailable.<br><br>
-        <a href="${youtubeSearch}" target="_blank">
-            ▶ Open on YouTube
-        </a>
+        ⚠ Preview unavailable right now.<br><br>
+        This can happen when the daily YouTube preview limit is reached
+        or when a video cannot be embedded here.<br><br>
+
+        You can try again tomorrow, listen from your saved list,
+        or open the song on YouTube:<br><br>
+
+        <a href="${youtubeSearch}" target="_blank" rel="noopener noreferrer">
+    ▶ Open this song search on YouTube
+</a>
     `;
 
                     return;
