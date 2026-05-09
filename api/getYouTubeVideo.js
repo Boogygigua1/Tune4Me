@@ -24,13 +24,11 @@ export default async function handler(req, res) {
         const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
         const searches = [
-            query,
-            query.replace("official music video", "").trim(),
-            query.replace("official audio", "").trim(),
-            query + " lyrics",
-            query + " song"
+            query + " song",
+            query + " official audio",
+            query + " music video",
+            query + " lyrics"
         ];
-
         for (const searchTerm of searches) {
 
             const response = await fetch(
@@ -58,7 +56,7 @@ export default async function handler(req, res) {
                     !item.snippet.title.toLowerCase().includes("shorts") &&
                     !item.snippet.title.toLowerCase().includes("reaction")
                 );
-                
+
                 if (validVideo) {
                     return res.status(200).json({
                         videoId: validVideo.id.videoId,

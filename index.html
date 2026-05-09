@@ -233,6 +233,21 @@
             button.innerText = isHidden ? "Read less" : "Read more";
         }
 
+        function saveFeedback(song, artist, rating) {
+            let feedback = JSON.parse(localStorage.getItem("songFeedback")) || [];
+
+            feedback.push({
+                song,
+                artist,
+                rating,
+                date: new Date().toISOString()
+            });
+
+            localStorage.setItem("songFeedback", JSON.stringify(feedback));
+
+            alert(rating === "good" ? "Glad this fit 🎧" : "Thanks — I’ll use that feedback.");
+        }
+
         // SAVE
 
         function showUpgradeBox() {
@@ -935,15 +950,30 @@
 
                         const slot = document.createElement("div");
                         slot.className = "video-slot";
-
                         controls.appendChild(playBtn);
                         controls.appendChild(saveBtn);
+
+                        const goodBtn = document.createElement("button");
+                        goodBtn.textContent = "👍 Good";
+
+                        goodBtn.addEventListener("click", () => {
+                            saveFeedback(song, artist, "good");
+                        });
+
+                        const badBtn = document.createElement("button");
+                        badBtn.textContent = "👎 Bad";
+
+                        badBtn.addEventListener("click", () => {
+                            saveFeedback(song, artist, "bad");
+                        });
+
+                        controls.appendChild(goodBtn);
+                        controls.appendChild(badBtn);
 
                         card.appendChild(title);
                         card.appendChild(artistDiv);
                         card.appendChild(controls);
                         card.appendChild(slot);
-
                         result.appendChild(card);
                     }
                 });
@@ -1171,7 +1201,6 @@
     <p style="font-size:11px; color:#aaa; margin-top:40px; text-align:center;">
         By using this app, you agree to use it for personal, non-commercial purposes.
     </p>
-
 </body>
 
 </html>
