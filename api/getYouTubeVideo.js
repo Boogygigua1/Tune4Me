@@ -41,7 +41,7 @@ export default async function handler(req, res) {
             console.log("YOUTUBE RESPONSE:", data);
 
             if (data.error) {
-                return res.status(500).json({
+                return res.status(200).json({
                     error: "YouTube API error",
                     details: data.error
                 });
