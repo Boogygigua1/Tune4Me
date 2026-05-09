@@ -1191,7 +1191,7 @@
 
                     controls.appendChild(playBtn);
                     controls.appendChild(saveBtn);
-                    
+
                     controls.appendChild(goodBtn);
                     controls.appendChild(badBtn);
                     controls.appendChild(deleteBtn);
@@ -1218,7 +1218,8 @@
                 });
 
             } catch (err) {
-                console.log(err);
+                console.error("CONTINUE PLAYLIST ERROR:", err);
+                alert("Continue error: " + err.message);
                 continueBtn.innerText = "Error, try again";
             }
         }
