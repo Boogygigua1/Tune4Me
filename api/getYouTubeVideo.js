@@ -16,6 +16,8 @@ export default async function handler(req, res) {
 
     const query = body?.query;
 
+    const cacheKey = "yt_" + query.toLowerCase();
+
     global.videoCache = global.videoCache || {};
 
     if (global.videoCache[cacheKey]) {
@@ -27,8 +29,6 @@ export default async function handler(req, res) {
             cached: true
         });
     }
-
-    const cacheKey = "yt_" + query.toLowerCase();
 
     if (!query) {
         return res.status(400).json({ error: "Missing query" });
