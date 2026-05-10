@@ -1050,24 +1050,6 @@
                         controls.appendChild(playBtn);
                         controls.appendChild(saveBtn);
 
-                        const ytBtn = document.createElement("button");
-
-                        ytBtn.textContent = "▶ YouTube";
-
-                        ytBtn.style.fontSize = "12px";
-
-                        ytBtn.addEventListener("click", () => {
-
-                            const ytQuery = encodeURIComponent(
-                                `${song} ${artist} official audio`
-                            );
-
-                            window.open(
-                                `https://www.youtube.com/results?search_query=${ytQuery}`,
-                                "_blank"
-                            );
-                        });
-
                         controls.appendChild(ytBtn);
 
                         const goodBtn = document.createElement("button");
@@ -1362,24 +1344,6 @@
 
                     controls.appendChild(playBtn);
                     controls.appendChild(saveBtn);
-
-                    const ytBtn = document.createElement("button");
-
-                    ytBtn.textContent = "▶ YouTube";
-
-                    ytBtn.style.fontSize = "12px";
-
-                    ytBtn.addEventListener("click", () => {
-
-                        const ytQuery = encodeURIComponent(
-                            `${song} ${artist} official audio`
-                        );
-
-                        window.open(
-                            `https://www.youtube.com/results?search_query=${ytQuery}`,
-                            "_blank"
-                        );
-                    });
 
                     controls.appendChild(ytBtn);
 
