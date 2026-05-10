@@ -1050,6 +1050,26 @@
                         controls.appendChild(playBtn);
                         controls.appendChild(saveBtn);
 
+                        const ytBtn = document.createElement("button");
+
+                        ytBtn.textContent = "▶ YouTube";
+
+                        ytBtn.style.fontSize = "12px";
+
+                        ytBtn.addEventListener("click", () => {
+
+                            const ytQuery = encodeURIComponent(
+                                `${song} ${artist} official audio`
+                            );
+
+                            window.open(
+                                `https://www.youtube.com/results?search_query=${ytQuery}`,
+                                "_blank"
+                            );
+                        });
+
+                        controls.appendChild(ytBtn);
+
                         const goodBtn = document.createElement("button");
                         goodBtn.textContent = "👍 Good";
 
@@ -1103,6 +1123,32 @@
                         controls.appendChild(goodBtn);
                         controls.appendChild(badBtn);
                         controls.appendChild(deleteBtn);
+
+                        const ytBar = document.createElement("button");
+
+                        ytBar.textContent = "▶ Listen on YouTube";
+
+                        ytBar.style.width = "100%";
+                        ytBar.style.marginTop = "10px";
+                        ytBar.style.fontSize = "13px";
+                        ytBar.style.opacity = "0.85";
+                        ytBar.style.background = "#f3f3f3";
+                        ytBar.style.color = "#444";
+                        ytBar.style.border = "1px solid #ddd";
+
+                        ytBar.addEventListener("click", () => {
+
+                            const ytQuery = encodeURIComponent(
+                                `${song} ${artist} official audio`
+                            );
+
+                            window.open(
+                                `https://www.youtube.com/results?search_query=${ytQuery}`,
+                                "_blank"
+                            );
+                        });
+
+                        card.appendChild(ytBar);
 
                         card.appendChild(title);
                         card.appendChild(artistDiv);
@@ -1317,9 +1363,55 @@
                     controls.appendChild(playBtn);
                     controls.appendChild(saveBtn);
 
+                    const ytBtn = document.createElement("button");
+
+                    ytBtn.textContent = "▶ YouTube";
+
+                    ytBtn.style.fontSize = "12px";
+
+                    ytBtn.addEventListener("click", () => {
+
+                        const ytQuery = encodeURIComponent(
+                            `${song} ${artist} official audio`
+                        );
+
+                        window.open(
+                            `https://www.youtube.com/results?search_query=${ytQuery}`,
+                            "_blank"
+                        );
+                    });
+
+                    controls.appendChild(ytBtn);
+
                     controls.appendChild(goodBtn);
                     controls.appendChild(badBtn);
                     controls.appendChild(deleteBtn);
+
+                    const ytBar = document.createElement("button");
+
+                    ytBar.textContent = "▶ Listen on YouTube";
+
+                    ytBar.style.width = "100%";
+                    ytBar.style.marginTop = "10px";
+                    ytBar.style.fontSize = "13px";
+                    ytBar.style.opacity = "0.85";
+                    ytBar.style.background = "#f3f3f3";
+                    ytBar.style.color = "#444";
+                    ytBar.style.border = "1px solid #ddd";
+
+                    ytBar.addEventListener("click", () => {
+
+                        const ytQuery = encodeURIComponent(
+                            `${song} ${artist} official audio`
+                        );
+
+                        window.open(
+                            `https://www.youtube.com/results?search_query=${ytQuery}`,
+                            "_blank"
+                        );
+                    });
+
+                    card.appendChild(ytBar);
 
                     card.appendChild(title);
                     card.appendChild(artistDiv);
