@@ -18,6 +18,16 @@ export default async function handler(req, res) {
 
     global.videoCache = global.videoCache || {};
 
+    if (global.videoCache[cacheKey]) {
+
+        console.log("CACHE HIT:", query);
+
+        return res.status(200).json({
+            videoId: global.videoCache[cacheKey],
+            cached: true
+        });
+    }
+
     const cacheKey = "yt_" + query.toLowerCase();
 
     if (!query) {
@@ -63,9 +73,15 @@ export default async function handler(req, res) {
                 );
 
                 if (validVideo) {
+
+                    global.videoCache[cacheKey] = validVideo.id.videoId;
+
+                    console.log("CACHE STORE:", query);
+
                     return res.status(200).json({
                         videoId: validVideo.id.videoId,
-                        duration: null
+                        duration: null,
+                        cached: false
                     });
                 }
             }
