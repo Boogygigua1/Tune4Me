@@ -469,6 +469,8 @@ Keep building your soundtrack ✨
             let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
             let addedCount = 0;
 
+            let hitLimit = false;
+
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
             for (let { song, artist } of currentPlaylist) {
