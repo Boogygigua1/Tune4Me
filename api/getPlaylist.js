@@ -177,7 +177,7 @@ Sound natural and conversational.
 Avoid therapy-style emotional analysis.
 
 2. 🎧 Songs:
-- Song Title - Artist
+${forcedAnchorSong}
 - Song Title - Artist
 - Song Title - Artist
 - Song Title - Artist
