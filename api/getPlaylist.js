@@ -231,7 +231,7 @@ Examples:
 - If a clue strongly matches a known artist or band,
   include accurate related songs in the playlist.
 
-  - Preserve exact artist names, punctuation, capitalization, and formatting.
+- Preserve exact artist names, punctuation, capitalization, and formatting.
 
 - Never shorten, simplify, or partially output artist names.
 
