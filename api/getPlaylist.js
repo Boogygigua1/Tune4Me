@@ -29,6 +29,11 @@ export default async function handler(req, res) {
         artistReference = parts[1]?.trim();
     }
 
+    const forcedAnchorSong =
+        songReference && artistReference
+            ? `- ${songReference} - ${artistReference}`
+            : "";
+
     console.log("BODY RECEIVED:", req.body);
 
     const existingSongList = existingSongs
