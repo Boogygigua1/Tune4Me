@@ -1261,10 +1261,13 @@
                     let song = "";
                     let artist = "";
 
-                    if (clean.includes("-")) {
-                        const parts = clean.split("-");
-                        song = parts[0]?.trim();
-                        artist = parts[1]?.trim();
+                    if (clean.includes(" - ")) {
+
+                        const parts = clean.split(" - ");
+
+                        song = parts.shift()?.trim();
+                        artist = parts.join(" - ").trim();
+
                     } else {
                         const nextLine = lines[i + 1];
                         if (nextLine && !nextLine.includes("🎵") && !nextLine.includes("🧠")) {
