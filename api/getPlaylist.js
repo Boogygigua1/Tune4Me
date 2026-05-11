@@ -202,17 +202,25 @@ Rules:
 
   IMPORTANT:
 
-If the user directly references a real song, artist, band, or music scene:
+If the user directly references a real song, artist, band, album, genre, or music scene:
 
-- ALWAYS include at least 1-3 songs directly connected to that artist, song, genre, movement, or emotional atmosphere.
+- FIRST acknowledge the emotional and musical anchor directly.
 
-- The playlist should FIRST validate the user's musical reference before expanding outward into discovery.
+- Include 1-3 direct or closely connected matches from the referenced artist, song, scene, or emotional atmosphere.
 
-- Users should feel understood immediately.
+- The playlist should feel like:
+  "I understand what you mean — now let me take you somewhere from there."
 
-- Do not drift too quickly into only loosely similar recommendations.
+- Users should immediately feel understood before the playlist becomes exploratory.
 
-- If a user mentions a specific artist or song, at least part of the playlist should clearly acknowledge that reference directly.
+- Do NOT abandon the user's original reference too quickly.
+
+- Balance:
+  • familiarity
+  • emotional validation
+  • discovery
+  • surprise
+  • atmosphere
 
 Mood: ${enhancedMood}`
                     }
