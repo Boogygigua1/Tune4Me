@@ -167,6 +167,12 @@ Musical identity comes BEFORE emotional progression.
 
 - Era authenticity should remain stronger than progression pressure when nostalgia is central to the request.
 
+- When a request references classic film, Americana, folk, soul, emotional realism, or older cultural nostalgia, preserve the emotional and musical textures of that era.
+
+- Avoid interpreting nighttime, loneliness, nostalgia, or cinematic atmosphere as modern synthwave, EDM, indie-electronic, or nightlife energy unless explicitly requested.
+
+- Emotional realism and cultural authenticity are more important than modern atmospheric reinterpretation.
+
 The playlist must follow this emotional progression:
 
 1. Emotional validation
