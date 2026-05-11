@@ -1187,21 +1187,6 @@ Keep building your soundtrack ✨
 
             let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
 
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
-
-            if (saved.length >= currentLimit) {
-
-                document.getElementById("continueBtn").style.display = "none";
-
-                document.getElementById("savePlaylistBtn").disabled = true;
-
-                alert("🔒 Save limit reached. Upgrade to unlock more songs.");
-
-                showUpgradeBox();
-
-                return;
-            }
-
             continueCount++;
             localStorage.setItem("continueCount", continueCount);
 
