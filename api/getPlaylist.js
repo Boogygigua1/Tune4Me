@@ -212,6 +212,19 @@ Rules:
 
 - Recognize vague, incomplete, misspelled, or conversational references to real artists, bands, songs, and music history.
 
+- Some user references may represent larger cultural, cinematic, emotional, or generational associations instead of direct song searches.
+
+- Understand famous emotional associations connected to films, festivals, eras, nightlife, internet culture, scenes, and iconic songs.
+
+- If a cultural reference strongly implies a famous emotional anchor song, include it naturally in the playlist.
+
+Examples:
+- "Midnight Cowboy" may imply "Everybody's Talkin'"
+- "Drive soundtrack" may imply synthwave or neon-night artists
+- "Outside Lands" may imply current festival culture and emotionally atmospheric artists
+
+- Prioritize cultural understanding over literal keyword matching when appropriate.
+
 - Users may describe music imperfectly from memory instead of using exact names.
 
 - Use contextual reasoning and best-match thinking before generating recommendations.
