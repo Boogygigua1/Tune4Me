@@ -244,7 +244,7 @@ Examples:
 
 - Maintain official artist formatting exactly as commonly recognized.
 
-  IMPORTANT:
+IMPORTANT:
 
 If the user directly references a real song, artist, band, album, genre, or music scene:
 
