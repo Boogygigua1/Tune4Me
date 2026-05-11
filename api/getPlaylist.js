@@ -161,6 +161,12 @@ Do NOT drift too far into unrelated emotional interpretations, cinematic electro
 
 Musical identity comes BEFORE emotional progression.
 
+- If the user's reference strongly implies a specific era, cultural moment, or nostalgic time period, preserve the musical identity of that era throughout most of the playlist.
+
+- Do not modernize the playlist too aggressively unless the user explicitly requests reinterpretation, remix energy, or modern crossover discovery.
+
+- Era authenticity should remain stronger than progression pressure when nostalgia is central to the request.
+
 The playlist must follow this emotional progression:
 
 1. Emotional validation
