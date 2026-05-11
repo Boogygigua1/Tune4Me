@@ -178,6 +178,9 @@ Avoid therapy-style emotional analysis.
 
 2. 🎧 Songs:
 ${forcedAnchorSong}
+
+Continue the playlist naturally from this anchor song.
+
 - Song Title - Artist
 - Song Title - Artist
 - Song Title - Artist
