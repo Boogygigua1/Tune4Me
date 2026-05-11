@@ -231,6 +231,19 @@ Examples:
 - If a clue strongly matches a known artist or band,
   include accurate related songs in the playlist.
 
+  - Preserve exact artist names, punctuation, capitalization, and formatting.
+
+- Never shorten, simplify, or partially output artist names.
+
+Examples:
+- a-ha
+- blink-182
+- AC/DC
+- Earth, Wind & Fire
+- Florence + The Machine
+
+- Maintain official artist formatting exactly as commonly recognized.
+
   IMPORTANT:
 
 If the user directly references a real song, artist, band, album, genre, or music scene:
