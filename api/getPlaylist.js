@@ -23,7 +23,13 @@ export default async function handler(req, res) {
 
     if (mood.toLowerCase().includes(" by ")) {
 
-        const parts = mood.split(" by ");
+        if (mood.toLowerCase().includes(" by ")) {
+
+            const parts = mood.split(" by ");
+
+            songReference = parts[0]?.trim();
+            artistReference = parts[1]?.trim();
+        }
 
         songReference = parts[0]?.trim();
         artistReference = parts[1]?.trim();
