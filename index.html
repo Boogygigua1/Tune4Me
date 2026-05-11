@@ -399,6 +399,13 @@ Keep building your soundtrack ✨
 
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
+            if (saved.length >= currentLimit) {
+
+                showUpgradeBox();
+
+                return;
+            }
+
             saved.push({ song, artist });
 
             localStorage.setItem("savedSongs", JSON.stringify(saved));
@@ -436,6 +443,9 @@ Keep building your soundtrack ✨
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
             if (saved.length >= currentLimit) {
+
+                showUpgradeBox();
+
                 return;
             }
 
