@@ -200,6 +200,20 @@ Rules:
 - If a clue strongly matches a known artist or band,
   include accurate related songs in the playlist.
 
+  IMPORTANT:
+
+If the user directly references a real song, artist, band, or music scene:
+
+- ALWAYS include at least 1-3 songs directly connected to that artist, song, genre, movement, or emotional atmosphere.
+
+- The playlist should FIRST validate the user's musical reference before expanding outward into discovery.
+
+- Users should feel understood immediately.
+
+- Do not drift too quickly into only loosely similar recommendations.
+
+- If a user mentions a specific artist or song, at least part of the playlist should clearly acknowledge that reference directly.
+
 Mood: ${enhancedMood}`
                     }
                 ]
