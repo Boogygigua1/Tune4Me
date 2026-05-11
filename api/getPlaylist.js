@@ -21,18 +21,11 @@ export default async function handler(req, res) {
     let songReference = "";
     let artistReference = "";
 
-    if (mood.toLowerCase().includes(" by ")) {
+    const byMatch = mood.match(/(.+)\s+by\s+(.+)/i);
 
-        if (mood.toLowerCase().includes(" by ")) {
-
-            const parts = mood.split(" by ");
-
-            songReference = parts[0]?.trim();
-            artistReference = parts[1]?.trim();
-        }
-
-        songReference = parts[0]?.trim();
-        artistReference = parts[1]?.trim();
+    if (byMatch) {
+        songReference = byMatch[1]?.trim();
+        artistReference = byMatch[2]?.trim();
     }
 
     const forcedAnchorSong =
