@@ -478,6 +478,8 @@ Keep building your soundtrack ✨
                 // 🚨 LIMIT CHECK
                 if (saved.length >= currentLimit) {
 
+                    hitLimit = true;
+
                     showUpgradeBox();
 
                     break;
@@ -517,170 +519,170 @@ Keep building your soundtrack ✨
             }
         }
 
-            function clearSavedSongs() {
-                if (confirm("Clear all saved songs?")) {
-                    localStorage.removeItem("savedSongs");
-                    loadSavedSongs();
-                }
-            }
-
-            function clearNewList() {
-
-                const result = document.getElementById("result");
-
-                result.innerHTML = "";
-
-                currentPlaylist = [];
-
-                stopPlayback();
-
-                document.getElementById("savePlaylistBtn").disabled = true;
-
-                document.getElementById("continueBtn").style.display = "none";
-
-            } // end clearNewList function
-
-            // LOAD
-
-            function loadSavedSongs() {
-
-                let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-
-                let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
-
-                document.getElementById("saveCounter").innerText =
-                    saved.length + " / " + currentLimit + " songs saved";
-
-                const savedSection = document.getElementById("savedSongs");
-
-                savedSection.innerHTML = "";
-
-                saved.slice().reverse().forEach(item => {
-
-                    const card = document.createElement("div");
-                    card.className = "card";
-                    card.dataset.song = item.song;
-                    card.dataset.artist = item.artist || "Unknown Artist";
-
-                    const title = document.createElement("div");
-                    title.style.fontWeight = "bold";
-                    title.textContent = "🎵 " + item.song;
-
-                    const artist = document.createElement("div");
-                    artist.style.fontSize = "14px";
-                    artist.style.color = "gray";
-                    artist.textContent = item.artist || "Unknown Artist";
-
-                    const button = document.createElement("button");
-                    button.textContent = "▶ Play";
-                    button.className = "play-song-btn";
-
-                    // ✅ SAFE event binding (no inline JS)
-                    button.addEventListener("click", function () {
-                        playSong(item.song, item.artist || "Unknown Artist", button);
-                    });
-
-                    const slot = document.createElement("div");
-                    slot.className = "video-slot";
-
-                    const deleteBtn = document.createElement("button");
-                    deleteBtn.textContent = "🗑 Delete";
-                    deleteBtn.style.marginLeft = "10px";
-
-                    deleteBtn.addEventListener("click", function () {
-                        deleteSavedSong(item.song, item.artist || "Unknown Artist");
-                    });
-
-                    card.appendChild(title);
-                    card.appendChild(artist);
-                    card.appendChild(button);
-                    card.appendChild(deleteBtn);
-                    card.appendChild(slot);
-
-                    savedSection.appendChild(card);
-                }); // end forEach loop
-
-            } // end loadSavedSongs function
-
-
-            function deleteSavedSong(song, artist) {
-                let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-
-                saved = saved.filter(item =>
-                    !(item.song === song && item.artist === artist)
-                );
-
-                localStorage.setItem("savedSongs", JSON.stringify(saved));
-
+        function clearSavedSongs() {
+            if (confirm("Clear all saved songs?")) {
+                localStorage.removeItem("savedSongs");
                 loadSavedSongs();
             }
+        }
 
-            // PLAYBACK CORE
+        function clearNewList() {
 
-            async function playSong(song, artist, playBtn) {
+            const result = document.getElementById("result");
 
-                if (playBtn.disabled) return;
+            result.innerHTML = "";
 
-                playBtn.disabled = true;
+            currentPlaylist = [];
 
-                setTimeout(() => {
-                    playBtn.disabled = false;
-                }, 1000);
+            stopPlayback();
 
-                // 🔴 STOP everything before playing a new song
-                if (!isPlayingAll) {
-                    stopPlayback();
-                }
+            document.getElementById("savePlaylistBtn").disabled = true;
 
-                // 🔴 remove all video wrappers (ensures no duplicates)
-                document.querySelectorAll(".video-wrapper").forEach(w => w.remove());
+            document.getElementById("continueBtn").style.display = "none";
 
-                console.log("playSong triggered:", song, artist);
+        } // end clearNewList function
 
-                // ✅ Track active song
+        // LOAD
 
-                const card = playBtn.closest(".card");
-                // 🔴 stop any currently playing videos
+        function loadSavedSongs() {
 
-                let slot = card.querySelector(".video-slot");
+            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
 
-                if (!slot) {
-                    slot = document.createElement("div");
-                    slot.className = "video-slot";
-                    card.appendChild(slot);
-                }
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-                // 🔴 remove ALL previous video wrappers (THIS fixes X button issue)
-                slot.querySelectorAll(".video-wrapper").forEach(w => w.remove());
+            document.getElementById("saveCounter").innerText =
+                saved.length + " / " + currentLimit + " songs saved";
 
+            const savedSection = document.getElementById("savedSongs");
+
+            savedSection.innerHTML = "";
+
+            saved.slice().reverse().forEach(item => {
+
+                const card = document.createElement("div");
+                card.className = "card";
+                card.dataset.song = item.song;
+                card.dataset.artist = item.artist || "Unknown Artist";
+
+                const title = document.createElement("div");
+                title.style.fontWeight = "bold";
+                title.textContent = "🎵 " + item.song;
+
+                const artist = document.createElement("div");
+                artist.style.fontSize = "14px";
+                artist.style.color = "gray";
+                artist.textContent = item.artist || "Unknown Artist";
+
+                const button = document.createElement("button");
+                button.textContent = "▶ Play";
+                button.className = "play-song-btn";
+
+                // ✅ SAFE event binding (no inline JS)
+                button.addEventListener("click", function () {
+                    playSong(item.song, item.artist || "Unknown Artist", button);
+                });
+
+                const slot = document.createElement("div");
+                slot.className = "video-slot";
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "🗑 Delete";
+                deleteBtn.style.marginLeft = "10px";
+
+                deleteBtn.addEventListener("click", function () {
+                    deleteSavedSong(item.song, item.artist || "Unknown Artist");
+                });
+
+                card.appendChild(title);
+                card.appendChild(artist);
+                card.appendChild(button);
+                card.appendChild(deleteBtn);
+                card.appendChild(slot);
+
+                savedSection.appendChild(card);
+            }); // end forEach loop
+
+        } // end loadSavedSongs function
+
+
+        function deleteSavedSong(song, artist) {
+            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+
+            saved = saved.filter(item =>
+                !(item.song === song && item.artist === artist)
+            );
+
+            localStorage.setItem("savedSongs", JSON.stringify(saved));
+
+            loadSavedSongs();
+        }
+
+        // PLAYBACK CORE
+
+        async function playSong(song, artist, playBtn) {
+
+            if (playBtn.disabled) return;
+
+            playBtn.disabled = true;
+
+            setTimeout(() => {
+                playBtn.disabled = false;
+            }, 1000);
+
+            // 🔴 STOP everything before playing a new song
+            if (!isPlayingAll) {
+                stopPlayback();
+            }
+
+            // 🔴 remove all video wrappers (ensures no duplicates)
+            document.querySelectorAll(".video-wrapper").forEach(w => w.remove());
+
+            console.log("playSong triggered:", song, artist);
+
+            // ✅ Track active song
+
+            const card = playBtn.closest(".card");
+            // 🔴 stop any currently playing videos
+
+            let slot = card.querySelector(".video-slot");
+
+            if (!slot) {
+                slot = document.createElement("div");
+                slot.className = "video-slot";
+                card.appendChild(slot);
+            }
+
+            // 🔴 remove ALL previous video wrappers (THIS fixes X button issue)
+            slot.querySelectorAll(".video-wrapper").forEach(w => w.remove());
+
+            try {
+                const query = (song + " " + artist).trim();
+
+                console.log("FETCH START:", query);
+
+                const response = await fetch("/api/getYouTubeVideo", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        query: query
+                    })
+                });
+
+                const text = await response.text();
+
+                console.log("FETCH RESPONSE:", text);
+
+                let data;
                 try {
-                    const query = (song + " " + artist).trim();
+                    data = JSON.parse(text);
+                } catch {
+                    slot.innerHTML = "Server response error";
+                    return;
+                }
 
-                    console.log("FETCH START:", query);
+                if (!data.videoId || data.videoId === "undefined") {
 
-                    const response = await fetch("/api/getYouTubeVideo", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            query: query
-                        })
-                    });
-
-                    const text = await response.text();
-
-                    console.log("FETCH RESPONSE:", text);
-
-                    let data;
-                    try {
-                        data = JSON.parse(text);
-                    } catch {
-                        slot.innerHTML = "Server response error";
-                        return;
-                    }
-
-                    if (!data.videoId || data.videoId === "undefined") {
-
-                        slot.innerHTML = `
+                    slot.innerHTML = `
         ⚠ Preview unavailable right now.<br><br>
         This may happen if the daily YouTube preview limit has been reached.
         You can still save songs and try previews again tomorrow.<br><br>
@@ -688,564 +690,332 @@ Keep building your soundtrack ✨
         Enjoy your day 🎧
     `;
 
-                        let ytFallbackBtn = document.getElementById("ytFallbackBtn");
+                    let ytFallbackBtn = document.getElementById("ytFallbackBtn");
 
-                        if (!ytFallbackBtn) {
-                            ytFallbackBtn = document.createElement("button");
-                            ytFallbackBtn.id = "ytFallbackBtn";
-                            ytFallbackBtn.textContent = "▶ Open Playlist on YouTube";
-                            ytFallbackBtn.style.marginTop = "15px";
+                    if (!ytFallbackBtn) {
+                        ytFallbackBtn = document.createElement("button");
+                        ytFallbackBtn.id = "ytFallbackBtn";
+                        ytFallbackBtn.textContent = "▶ Open Playlist on YouTube";
+                        ytFallbackBtn.style.marginTop = "15px";
 
-                            ytFallbackBtn.addEventListener("click", () => {
-                                const searches = currentPlaylist
-                                    .map(item => `${item.song} ${item.artist}`)
-                                    .join("\n");
+                        ytFallbackBtn.addEventListener("click", () => {
+                            const searches = currentPlaylist
+                                .map(item => `${item.song} ${item.artist}`)
+                                .join("\n");
 
-                                const url =
-                                    "https://www.youtube.com/results?search_query=" +
-                                    encodeURIComponent(searches);
+                            const url =
+                                "https://www.youtube.com/results?search_query=" +
+                                encodeURIComponent(searches);
 
-                                window.open(url, "_blank");
-                            });
+                            window.open(url, "_blank");
+                        });
 
-                            document.getElementById("result").prepend(ytFallbackBtn);
-                        }
-
-                        return;
+                        document.getElementById("result").prepend(ytFallbackBtn);
                     }
 
-                    // 🔴 convert ISO duration
-                    function parseDuration(iso) {
-                        const match = iso.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
-                        const minutes = parseInt(match[1] || 0);
-                        const seconds = parseInt(match[2] || 0);
-                        return minutes * 60 + seconds;
-                    }
-
-                    let durationSeconds = 30;
-
-                    if (data.duration) {
-                        durationSeconds = parseDuration(data.duration);
-                    }
-
-                    // 🔴 store duration globally for playNextSong
-                    window.currentDurationSeconds = durationSeconds;
-
-                    const embedUrl =
-                        "https://www.youtube-nocookie.com/embed/" +
-                        data.videoId +
-                        "?autoplay=1&rel=0&modestbranding=1&playsinline=1";
-
-                    const wrapper = document.createElement("div");
-                    wrapper.className = "video-wrapper";
-                    wrapper.style.position = "relative";
-                    wrapper.style.marginTop = "10px";
-
-                    const closeBtn = document.createElement("button");
-                    closeBtn.textContent = "✖";
-                    closeBtn.style.position = "absolute";
-                    closeBtn.style.top = "10px";
-                    closeBtn.style.right = "-10px";
-                    closeBtn.style.zIndex = "20";
-
-                    closeBtn.addEventListener("click", () => {
-                        wrapper.remove();
-                    });
-
-                    const iframe = document.createElement("iframe");
-                    iframe.width = "100%";
-                    iframe.height = "200";
-                    iframe.src = embedUrl;
-                    iframe.setAttribute("allow", "autoplay; encrypted-media");
-                    iframe.setAttribute("frameborder", "0");
-
-                    wrapper.appendChild(closeBtn);
-                    wrapper.appendChild(iframe);
-
-                    // 🔴 ONLY append (no innerHTML wipe here)
-                    slot.appendChild(wrapper);
-
-                } catch (err) {
-                    console.error("playSong error:", err);
-                    slot.innerHTML = "Error loading video";
-                }
-            }
-
-            // PLAYBACK ENG
-
-            async function playNextSong(index, containerSelector = "#result", playlist = currentPlaylist) {
-
-                if (!isPlayingAll || index >= playlist.length) {
-                    isPlayingAll = false;
                     return;
                 }
 
-                const { song, artist } = playlist[index];
-
-                const buttons = document.querySelectorAll(containerSelector + " .play-song-btn");
-
-                const currentBtn = [...buttons].find(btn => {
-                    const card = btn.closest(".card");
-                    const title = card?.querySelector("div")?.textContent || "";
-                    return title.includes(song);
-                });
-
-                if (!currentBtn) {
-                    console.log("No button at index:", index);
-                    isPlayingAll = false;
-                    return;
+                // 🔴 convert ISO duration
+                function parseDuration(iso) {
+                    const match = iso.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
+                    const minutes = parseInt(match[1] || 0);
+                    const seconds = parseInt(match[2] || 0);
+                    return minutes * 60 + seconds;
                 }
 
-                // track active song
-                activeSong = { song, artist };
+                let durationSeconds = 30;
 
-                // play the song
-                await playSong(song, artist, currentBtn);
-
-                // 🔴 clear previous timer (ONLY once)
-                if (playlistTimer) clearTimeout(playlistTimer);
-
-                const isSavedMode = containerSelector === "#savedSongs";
-
-                const previewDuration = isSavedMode
-                    ? 300
-                    : 30;
-
-                playlistTimer = setTimeout(() => {
-                    stopPlayback();
-                }, (previewDuration + 1) * 1000);
-
-            }
-
-            function playAllSongs(button) {
-
-                // 🔴 toggle OFF
-                if (isPlayingAll) {
-                    stopPlayback();
-                    return;
+                if (data.duration) {
+                    durationSeconds = parseDuration(data.duration);
                 }
 
-                // 🔴 toggle ON
-                stopPlayback(); // ensure clean start
+                // 🔴 store duration globally for playNextSong
+                window.currentDurationSeconds = durationSeconds;
 
-                isPlayingAll = true;
+                const embedUrl =
+                    "https://www.youtube-nocookie.com/embed/" +
+                    data.videoId +
+                    "?autoplay=1&rel=0&modestbranding=1&playsinline=1";
 
-                button.innerText = "⏹ Stop";
+                const wrapper = document.createElement("div");
+                wrapper.className = "video-wrapper";
+                wrapper.style.position = "relative";
+                wrapper.style.marginTop = "10px";
 
-                playNextSong(0, "#result", currentPlaylist);
-            }
+                const closeBtn = document.createElement("button");
+                closeBtn.textContent = "✖";
+                closeBtn.style.position = "absolute";
+                closeBtn.style.top = "10px";
+                closeBtn.style.right = "-10px";
+                closeBtn.style.zIndex = "20";
 
-            function stopPlayback() {
-                isPlayingAll = false;
-
-                // stop timer
-                if (playlistTimer) {
-                    clearTimeout(playlistTimer);
-                    playlistTimer = null;
-                }
-
-                // stop all videos
-                document.querySelectorAll("iframe").forEach(frame => {
-                    frame.src = "";
-                });
-
-                // 🔴 THIS is the missing fix
-                document.querySelectorAll(".video-wrapper").forEach(wrapper => {
+                closeBtn.addEventListener("click", () => {
                     wrapper.remove();
                 });
 
-                // reset buttons
-                document.querySelectorAll(".play-all-btn").forEach(btn => {
-                    btn.innerText = "▶ Preview First Song (30s)";
-                });
+                const iframe = document.createElement("iframe");
+                iframe.width = "100%";
+                iframe.height = "200";
+                iframe.src = embedUrl;
+                iframe.setAttribute("allow", "autoplay; encrypted-media");
+                iframe.setAttribute("frameborder", "0");
 
-                document.querySelectorAll(".play-saved-btn").forEach(btn => {
-                    btn.innerText = "▶ Preview First Song";
-                });
+                wrapper.appendChild(closeBtn);
+                wrapper.appendChild(iframe);
+
+                // 🔴 ONLY append (no innerHTML wipe here)
+                slot.appendChild(wrapper);
+
+            } catch (err) {
+                console.error("playSong error:", err);
+                slot.innerHTML = "Error loading video";
+            }
+        }
+
+        // PLAYBACK ENG
+
+        async function playNextSong(index, containerSelector = "#result", playlist = currentPlaylist) {
+
+            if (!isPlayingAll || index >= playlist.length) {
+                isPlayingAll = false;
+                return;
             }
 
-            function playSavedSongs(button) {
+            const { song, artist } = playlist[index];
 
-                const saved = JSON.parse(localStorage.getItem("savedSongs") || "[]");
+            const buttons = document.querySelectorAll(containerSelector + " .play-song-btn");
 
-                if (!saved.length) {
-                    alert("No saved songs");
-                    return;
-                }
+            const currentBtn = [...buttons].find(btn => {
+                const card = btn.closest(".card");
+                const title = card?.querySelector("div")?.textContent || "";
+                return title.includes(song);
+            });
 
-                // 🔴 toggle OFF
-                if (isPlayingAll) {
-                    stopPlayback();
-                    return;
-                }
+            if (!currentBtn) {
+                console.log("No button at index:", index);
+                isPlayingAll = false;
+                return;
+            }
 
-                // 🔴 toggle ON
+            // track active song
+            activeSong = { song, artist };
+
+            // play the song
+            await playSong(song, artist, currentBtn);
+
+            // 🔴 clear previous timer (ONLY once)
+            if (playlistTimer) clearTimeout(playlistTimer);
+
+            const isSavedMode = containerSelector === "#savedSongs";
+
+            const previewDuration = isSavedMode
+                ? 300
+                : 30;
+
+            playlistTimer = setTimeout(() => {
                 stopPlayback();
+            }, (previewDuration + 1) * 1000);
 
-                isPlayingAll = true;
+        }
 
-                button.innerText = "⏹ Stop";
+        function playAllSongs(button) {
 
-                const savedInDisplayOrder = [...document.querySelectorAll("#savedSongs .card")].map(card => {
-                    return {
-                        song: card.dataset.song,
-                        artist: card.dataset.artist
-                    };
-                });
-
-                playNextSong(0, "#savedSongs", savedInDisplayOrder);
-
+            // 🔴 toggle OFF
+            if (isPlayingAll) {
+                stopPlayback();
+                return;
             }
 
-            // AI 
+            // 🔴 toggle ON
+            stopPlayback(); // ensure clean start
 
-            async function showMood(button) {
+            isPlayingAll = true;
 
-                const mood = document.getElementById("moodInput").value.trim();
+            button.innerText = "⏹ Stop";
 
-                continueCount = 0;
-                localStorage.setItem("continueCount", continueCount);
+            playNextSong(0, "#result", currentPlaylist);
+        }
 
-                const result = document.getElementById("result");
-                const continueBtn = document.getElementById("continueBtn");
+        function stopPlayback() {
+            isPlayingAll = false;
 
-                continueBtn.style.display = "none";
-                result.innerHTML = "Loading playlist...";
+            // stop timer
+            if (playlistTimer) {
+                clearTimeout(playlistTimer);
+                playlistTimer = null;
+            }
 
-                document.getElementById("savePlaylistBtn").disabled = true;
+            // stop all videos
+            document.querySelectorAll("iframe").forEach(frame => {
+                frame.src = "";
+            });
 
-                if (button) button.disabled = true;
+            // 🔴 THIS is the missing fix
+            document.querySelectorAll(".video-wrapper").forEach(wrapper => {
+                wrapper.remove();
+            });
 
+            // reset buttons
+            document.querySelectorAll(".play-all-btn").forEach(btn => {
+                btn.innerText = "▶ Preview First Song (30s)";
+            });
+
+            document.querySelectorAll(".play-saved-btn").forEach(btn => {
+                btn.innerText = "▶ Preview First Song";
+            });
+        }
+
+        function playSavedSongs(button) {
+
+            const saved = JSON.parse(localStorage.getItem("savedSongs") || "[]");
+
+            if (!saved.length) {
+                alert("No saved songs");
+                return;
+            }
+
+            // 🔴 toggle OFF
+            if (isPlayingAll) {
+                stopPlayback();
+                return;
+            }
+
+            // 🔴 toggle ON
+            stopPlayback();
+
+            isPlayingAll = true;
+
+            button.innerText = "⏹ Stop";
+
+            const savedInDisplayOrder = [...document.querySelectorAll("#savedSongs .card")].map(card => {
+                return {
+                    song: card.dataset.song,
+                    artist: card.dataset.artist
+                };
+            });
+
+            playNextSong(0, "#savedSongs", savedInDisplayOrder);
+
+        }
+
+        // AI 
+
+        async function showMood(button) {
+
+            const mood = document.getElementById("moodInput").value.trim();
+
+            continueCount = 0;
+            localStorage.setItem("continueCount", continueCount);
+
+            const result = document.getElementById("result");
+            const continueBtn = document.getElementById("continueBtn");
+
+            continueBtn.style.display = "none";
+            result.innerHTML = "Loading playlist...";
+
+            document.getElementById("savePlaylistBtn").disabled = true;
+
+            if (button) button.disabled = true;
+
+            try {
+                const response = await fetch("/api/getPlaylist", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        mood,
+                        avoidSongs: JSON.parse(localStorage.getItem("avoidSongs")) || [],
+                        likedSongs: JSON.parse(localStorage.getItem("likedSongs")) || []
+                    })
+                });
+
+                const text = await response.text();
+
+                let data;
                 try {
-                    const response = await fetch("/api/getPlaylist", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            mood,
-                            avoidSongs: JSON.parse(localStorage.getItem("avoidSongs")) || [],
-                            likedSongs: JSON.parse(localStorage.getItem("likedSongs")) || []
-                        })
-                    });
+                    data = JSON.parse(text);
+                } catch {
+                    result.innerHTML = "Bad playlist response";
+                    if (button) button.disabled = false;
+                    return;
+                }
 
-                    const text = await response.text();
+                console.log("PLAYLIST DATA:", JSON.stringify(data, null, 2));
 
-                    let data;
-                    try {
-                        data = JSON.parse(text);
-                    } catch {
-                        result.innerHTML = "Bad playlist response";
-                        if (button) button.disabled = false;
+                const raw = data.choices[0].message.content;
+                const lines = raw.split("\n");
+
+                stopPlayback();
+                isPlayingAll = false;
+                currentPlaylist = [];
+
+                result.innerHTML = "";
+
+                const note = document.createElement("p");
+                note.style.fontSize = "11px";
+                note.style.color = "#888";
+                note.style.marginTop = "10px";
+
+                result.appendChild(note);
+
+                let songSection = false;
+
+                lines.forEach((line, i) => {
+
+                    if (!line.trim()) return;
+
+                    // Intro
+                    if (line.startsWith("1.")) {
+                        const card = document.createElement("div");
+                        card.className = "card";
+                        card.innerHTML = `<strong>${line.replace("1.", "")}</strong>`;
+                        result.appendChild(card);
+                        songSection = false;
                         return;
                     }
 
-                    console.log("PLAYLIST DATA:", JSON.stringify(data, null, 2));
+                    // Song header
+                    if (line.includes("🎧 Songs")) {
+                        const card = document.createElement("div");
+                        card.className = "card";
+                        card.innerHTML = `<strong>🎧 Songs:</strong>`;
+                        result.appendChild(card);
+                        songSection = true;
+                        return;
+                    }
 
-                    const raw = data.choices[0].message.content;
-                    const lines = raw.split("\n");
+                    // ✅ FIXED Explanation (multi-line safe)
+                    if (line.includes("🧠")) {
 
-                    stopPlayback();
-                    isPlayingAll = false;
-                    currentPlaylist = [];
+                        let explanation = "";
+                        let j = i + 1;
 
-                    result.innerHTML = "";
-
-                    const note = document.createElement("p");
-                    note.style.fontSize = "11px";
-                    note.style.color = "#888";
-                    note.style.marginTop = "10px";
-
-                    result.appendChild(note);
-
-                    let songSection = false;
-
-                    lines.forEach((line, i) => {
-
-                        if (!line.trim()) return;
-
-                        // Intro
-                        if (line.startsWith("1.")) {
-                            const card = document.createElement("div");
-                            card.className = "card";
-                            card.innerHTML = `<strong>${line.replace("1.", "")}</strong>`;
-                            result.appendChild(card);
-                            songSection = false;
-                            return;
+                        while (
+                            j < lines.length &&
+                            lines[j].trim() &&
+                            !lines[j].includes("🎧") &&
+                            !lines[j].includes("🎵")
+                        ) {
+                            explanation += lines[j].trim() + " ";
+                            j++;
                         }
 
-                        // Song header
-                        if (line.includes("🎧 Songs")) {
-                            const card = document.createElement("div");
-                            card.className = "card";
-                            card.innerHTML = `<strong>🎧 Songs:</strong>`;
-                            result.appendChild(card);
-                            songSection = true;
-                            return;
-                        }
+                        const card = document.createElement("div");
+                        card.className = "card";
 
-                        // ✅ FIXED Explanation (multi-line safe)
-                        if (line.includes("🧠")) {
-
-                            let explanation = "";
-                            let j = i + 1;
-
-                            while (
-                                j < lines.length &&
-                                lines[j].trim() &&
-                                !lines[j].includes("🎧") &&
-                                !lines[j].includes("🎵")
-                            ) {
-                                explanation += lines[j].trim() + " ";
-                                j++;
-                            }
-
-                            const card = document.createElement("div");
-                            card.className = "card";
-
-                            card.innerHTML = `
+                        card.innerHTML = `
                     <strong>🧠 Why this fits:</strong><br>
                     ${explanation.trim()}
                 `;
 
-                            result.appendChild(card);
-                            songSection = false;
+                        result.appendChild(card);
+                        songSection = false;
 
-                            return;
-                        }
+                        return;
+                    }
 
-                        // Songs
-                        if (songSection) {
-
-                            let clean = line
-                                .replace(/🎵/g, "")
-                                .replace(/\*\*/g, "")
-                                .replace(/^-/, "")
-                                .trim();
-
-                            let song = "";
-                            let artist = "";
-
-                            if (clean.includes(" - ")) {
-
-                                const parts = clean.split(" - ");
-
-                                song = parts.shift()?.trim();
-                                artist = parts.join(" - ").trim();
-                            } else {
-                                const nextLine = lines[i + 1];
-                                if (nextLine && !nextLine.includes("🎵") && !nextLine.includes("🧠")) {
-                                    song = clean;
-                                    artist = nextLine.trim();
-                                } else {
-                                    return;
-                                }
-                            }
-
-                            if (!song) return;
-                            if (!artist) artist = "Unknown Artist";
-
-                            currentPlaylist.push({ song, artist });
-
-                            const card = document.createElement("div");
-                            card.className = "card";
-
-                            const title = document.createElement("div");
-                            title.style.fontWeight = "bold";
-                            title.textContent = "🎵 " + song;
-
-                            const artistDiv = document.createElement("div");
-                            artistDiv.style.fontSize = "14px";
-                            artistDiv.style.color = "gray";
-                            artistDiv.textContent = artist;
-
-                            const controls = document.createElement("div");
-                            controls.style.marginTop = "10px";
-                            controls.style.display = "flex";
-                            controls.style.gap = "10px";
-                            controls.style.flexWrap = "wrap";
-
-                            const playBtn = document.createElement("button");
-                            playBtn.textContent = "▶ Play";
-                            playBtn.className = "play-song-btn";
-                            playBtn.addEventListener("click", () => {
-                                playSong(song, artist, playBtn);
-                            });
-
-                            const saveBtn = document.createElement("button");
-                            saveBtn.textContent = "💾 Save";
-                            saveBtn.className = "save-song-btn";
-                            saveBtn.addEventListener("click", (e) => {
-                                e.stopPropagation();
-                                saveSong(song, artist);
-                            });
-
-                            const slot = document.createElement("div");
-                            slot.className = "video-slot";
-                            controls.appendChild(playBtn);
-                            controls.appendChild(saveBtn);
-
-                            const goodBtn = document.createElement("button");
-                            goodBtn.textContent = "👍 Good";
-
-                            goodBtn.addEventListener("click", () => {
-                                saveFeedback(song, artist, "good");
-                            });
-
-                            const badBtn = document.createElement("button");
-                            badBtn.textContent = "👎 Bad";
-
-                            badBtn.addEventListener("click", () => {
-                                saveFeedback(song, artist, "bad");
-                            });
-
-                            goodBtn.style.fontSize = "12px";
-                            goodBtn.style.padding = "6px 8px";
-                            goodBtn.style.marginLeft = "auto";
-
-                            badBtn.style.fontSize = "12px";
-                            badBtn.style.padding = "6px 8px";
-
-                            const deleteBtn = document.createElement("button");
-
-                            deleteBtn.textContent = "🗑";
-
-                            deleteBtn.style.fontSize = "12px";
-                            deleteBtn.style.padding = "6px 8px";
-
-                            deleteBtn.addEventListener("click", () => {
-
-                                card.remove();
-
-                                currentPlaylist = currentPlaylist.filter(item =>
-                                    !(item.song === song && item.artist === artist)
-                                );
-
-                                let avoidSongs = JSON.parse(localStorage.getItem("avoidSongs")) || [];
-
-                                let exists = avoidSongs.some(item =>
-                                    item.song.toLowerCase() === song.toLowerCase() &&
-                                    item.artist.toLowerCase() === artist.toLowerCase()
-                                );
-
-                                if (!exists) {
-                                    avoidSongs.push({ song, artist });
-                                    localStorage.setItem("avoidSongs", JSON.stringify(avoidSongs));
-                                }
-
-                            });
-
-                            controls.appendChild(goodBtn);
-                            controls.appendChild(badBtn);
-                            controls.appendChild(deleteBtn);
-
-                            const ytBar = document.createElement("button");
-
-                            ytBar.textContent = "▶ Listen on YouTube";
-
-                            ytBar.style.width = "100%";
-                            ytBar.style.marginTop = "10px";
-                            ytBar.style.fontSize = "13px";
-                            ytBar.style.opacity = "0.85";
-                            ytBar.style.background = "#f3f3f3";
-                            ytBar.style.color = "#444";
-                            ytBar.style.border = "1px solid #ddd";
-
-                            ytBar.addEventListener("click", () => {
-
-                                const ytQuery = encodeURIComponent(
-                                    `${song} ${artist} official audio`
-                                );
-
-                                window.open(
-                                    `https://www.youtube.com/results?search_query=${ytQuery}`,
-                                    "_blank"
-                                );
-                            });
-
-                            card.appendChild(ytBar);
-
-                            card.appendChild(title);
-                            card.appendChild(artistDiv);
-                            card.appendChild(controls);
-                            card.appendChild(slot);
-                            result.appendChild(card);
-                        }
-                    });
-
-
-                    if (button) button.disabled = false;
-
-                    continueBtn.style.display = "inline-block";
-                    continueBtn.innerText = "▶ Add More Songs";
-
-                    let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-
-                    let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
-
-                    document.getElementById("savePlaylistBtn").disabled =
-                        saved.length >= currentLimit;
-
-                } catch (err) {
-                    console.log("PLAYLIST ERROR:", err);
-                    result.innerHTML = "Error loading playlist";
-                    if (button) button.disabled = false;
-                }
-            }
-
-            async function continuePlaylist() {
-
-                const result = document.getElementById("result");
-                const continueBtn = document.getElementById("continueBtn");
-
-                continueCount++;
-                localStorage.setItem("continueCount", continueCount);
-
-                const mood = document.getElementById("moodInput").value.trim();
-
-
-                continueBtn.innerText = "Loading...";
-                try {
-                    const response = await fetch("/api/getPlaylist", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            mood,
-                            existingSongs: currentPlaylist,
-                            avoidSongs: JSON.parse(localStorage.getItem("avoidSongs")) || [],
-                            likedSongs: JSON.parse(localStorage.getItem("likedSongs")) || []
-                        })
-                    });
-
-                    const data = await response.json();
-                    const raw = data.choices[0].message.content;
-                    const lines = raw.split("\n");
-
-                    const label = document.createElement("div");
-                    label.style.margin = "15px 0 5px";
-                    label.style.fontSize = "13px";
-                    label.style.color = "#888";
-
-                    label.innerHTML = `
-    <strong>Need more songs? 🎧</strong><br>
-    $3 = 100 additional saves
-`;
-
-                    result.appendChild(label);
-
-                    let songSection = false;
-
-                    lines.forEach((line, i) => {
-
-                        if (line.includes("🎧 Songs")) {
-                            songSection = true;
-                            return;
-                        }
-
-                        if (line.includes("🧠")) {
-                            songSection = false;
-                            return;
-                        }
-
-                        if (!songSection) return;
+                    // Songs
+                    if (songSection) {
 
                         let clean = line
                             .replace(/🎵/g, "")
@@ -1262,7 +1032,6 @@ Keep building your soundtrack ✨
 
                             song = parts.shift()?.trim();
                             artist = parts.join(" - ").trim();
-
                         } else {
                             const nextLine = lines[i + 1];
                             if (nextLine && !nextLine.includes("🎵") && !nextLine.includes("🧠")) {
@@ -1276,9 +1045,8 @@ Keep building your soundtrack ✨
                         if (!song) return;
                         if (!artist) artist = "Unknown Artist";
 
-                        currentPlaylist.unshift({ song, artist });
+                        currentPlaylist.push({ song, artist });
 
-                        // ✅ safe card build
                         const card = document.createElement("div");
                         card.className = "card";
 
@@ -1314,32 +1082,39 @@ Keep building your soundtrack ✨
 
                         const slot = document.createElement("div");
                         slot.className = "video-slot";
+                        controls.appendChild(playBtn);
+                        controls.appendChild(saveBtn);
 
                         const goodBtn = document.createElement("button");
-                        goodBtn.textContent = "👍";
-                        goodBtn.style.fontSize = "12px";
-                        goodBtn.style.padding = "6px 8px";
-                        goodBtn.style.marginLeft = "auto";
+                        goodBtn.textContent = "👍 Good";
 
                         goodBtn.addEventListener("click", () => {
                             saveFeedback(song, artist, "good");
                         });
 
                         const badBtn = document.createElement("button");
-                        badBtn.textContent = "👎";
-                        badBtn.style.fontSize = "12px";
-                        badBtn.style.padding = "6px 8px";
+                        badBtn.textContent = "👎 Bad";
 
                         badBtn.addEventListener("click", () => {
                             saveFeedback(song, artist, "bad");
                         });
 
+                        goodBtn.style.fontSize = "12px";
+                        goodBtn.style.padding = "6px 8px";
+                        goodBtn.style.marginLeft = "auto";
+
+                        badBtn.style.fontSize = "12px";
+                        badBtn.style.padding = "6px 8px";
+
                         const deleteBtn = document.createElement("button");
+
                         deleteBtn.textContent = "🗑";
+
                         deleteBtn.style.fontSize = "12px";
                         deleteBtn.style.padding = "6px 8px";
 
                         deleteBtn.addEventListener("click", () => {
+
                             card.remove();
 
                             currentPlaylist = currentPlaylist.filter(item =>
@@ -1357,10 +1132,8 @@ Keep building your soundtrack ✨
                                 avoidSongs.push({ song, artist });
                                 localStorage.setItem("avoidSongs", JSON.stringify(avoidSongs));
                             }
-                        });
 
-                        controls.appendChild(playBtn);
-                        controls.appendChild(saveBtn);
+                        });
 
                         controls.appendChild(goodBtn);
                         controls.appendChild(badBtn);
@@ -1396,72 +1169,301 @@ Keep building your soundtrack ✨
                         card.appendChild(artistDiv);
                         card.appendChild(controls);
                         card.appendChild(slot);
+                        result.appendChild(card);
+                    }
+                });
 
-                        const firstCard = result.querySelector(".card");
 
-                        if (firstCard) {
-                            result.insertBefore(card, firstCard);
-                        } else {
-                            result.appendChild(card);
-                        }
-                    });
+                if (button) button.disabled = false;
 
-                    continueBtn.innerText = "▶ Add More Songs";
+                continueBtn.style.display = "inline-block";
+                continueBtn.innerText = "▶ Add More Songs";
 
-                    continueBtn.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center"
-                    });
-
-                } catch (err) {
-                    console.error("CONTINUE PLAYLIST ERROR:", err);
-                    continueBtn.innerText = "Error, try again";
-                }
-            }
-
-            // $$$$
-
-            window.handleUpgrade = function () {
-
-                const oldBox = document.getElementById("upgradeBox");
-
-                if (oldBox) {
-                    oldBox.remove();
-                }
-
-                document.getElementById("continueBtn").style.display = "inline-block";
-
-                document.getElementById("savePlaylistBtn").disabled = false;
-
-                const continueBtn = document.getElementById("continueBtn");
-
-                if (continueBtn) {
-                    continueBtn.innerText = "▶ Add More Songs";
-                    continueBtn.style.display = "inline-block";
-                }
+                let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
 
                 let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-                if (currentLimit < 100) {
-                    currentLimit = 100;
-                } else if (currentLimit < 200) {
-                    currentLimit = 200;
-                } else if (currentLimit < 300) {
-                    currentLimit = 300;
-                } else {
-                    alert("🎧 You’ve unlocked the full Tune4Me archive.");
-                    return;
-                }
+                document.getElementById("savePlaylistBtn").disabled =
+                    saved.length >= currentLimit;
 
-                localStorage.setItem("saveLimit", currentLimit);
+            } catch (err) {
+                console.log("PLAYLIST ERROR:", err);
+                result.innerHTML = "Error loading playlist";
+                if (button) button.disabled = false;
+            }
+        }
 
-                // update live limit in app
-                FREE_SAVE_LIMIT = currentLimit;
+        async function continuePlaylist() {
 
-                loadSavedSongs();
+            const result = document.getElementById("result");
+            const continueBtn = document.getElementById("continueBtn");
 
-                alert("🎧 Your music archive has expanded.");
-            };
+            continueCount++;
+            localStorage.setItem("continueCount", continueCount);
+
+            const mood = document.getElementById("moodInput").value.trim();
+
+
+            continueBtn.innerText = "Loading...";
+            try {
+                const response = await fetch("/api/getPlaylist", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        mood,
+                        existingSongs: currentPlaylist,
+                        avoidSongs: JSON.parse(localStorage.getItem("avoidSongs")) || [],
+                        likedSongs: JSON.parse(localStorage.getItem("likedSongs")) || []
+                    })
+                });
+
+                const data = await response.json();
+                const raw = data.choices[0].message.content;
+                const lines = raw.split("\n");
+
+                const label = document.createElement("div");
+                label.style.margin = "15px 0 5px";
+                label.style.fontSize = "13px";
+                label.style.color = "#888";
+
+                label.innerHTML = `
+    <strong>Need more songs? 🎧</strong><br>
+    $3 = 100 additional saves
+`;
+
+                result.appendChild(label);
+
+                let songSection = false;
+
+                lines.forEach((line, i) => {
+
+                    if (line.includes("🎧 Songs")) {
+                        songSection = true;
+                        return;
+                    }
+
+                    if (line.includes("🧠")) {
+                        songSection = false;
+                        return;
+                    }
+
+                    if (!songSection) return;
+
+                    let clean = line
+                        .replace(/🎵/g, "")
+                        .replace(/\*\*/g, "")
+                        .replace(/^-/, "")
+                        .trim();
+
+                    let song = "";
+                    let artist = "";
+
+                    if (clean.includes(" - ")) {
+
+                        const parts = clean.split(" - ");
+
+                        song = parts.shift()?.trim();
+                        artist = parts.join(" - ").trim();
+
+                    } else {
+                        const nextLine = lines[i + 1];
+                        if (nextLine && !nextLine.includes("🎵") && !nextLine.includes("🧠")) {
+                            song = clean;
+                            artist = nextLine.trim();
+                        } else {
+                            return;
+                        }
+                    }
+
+                    if (!song) return;
+                    if (!artist) artist = "Unknown Artist";
+
+                    currentPlaylist.unshift({ song, artist });
+
+                    // ✅ safe card build
+                    const card = document.createElement("div");
+                    card.className = "card";
+
+                    const title = document.createElement("div");
+                    title.style.fontWeight = "bold";
+                    title.textContent = "🎵 " + song;
+
+                    const artistDiv = document.createElement("div");
+                    artistDiv.style.fontSize = "14px";
+                    artistDiv.style.color = "gray";
+                    artistDiv.textContent = artist;
+
+                    const controls = document.createElement("div");
+                    controls.style.marginTop = "10px";
+                    controls.style.display = "flex";
+                    controls.style.gap = "10px";
+                    controls.style.flexWrap = "wrap";
+
+                    const playBtn = document.createElement("button");
+                    playBtn.textContent = "▶ Play";
+                    playBtn.className = "play-song-btn";
+                    playBtn.addEventListener("click", () => {
+                        playSong(song, artist, playBtn);
+                    });
+
+                    const saveBtn = document.createElement("button");
+                    saveBtn.textContent = "💾 Save";
+                    saveBtn.className = "save-song-btn";
+                    saveBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        saveSong(song, artist);
+                    });
+
+                    const slot = document.createElement("div");
+                    slot.className = "video-slot";
+
+                    const goodBtn = document.createElement("button");
+                    goodBtn.textContent = "👍";
+                    goodBtn.style.fontSize = "12px";
+                    goodBtn.style.padding = "6px 8px";
+                    goodBtn.style.marginLeft = "auto";
+
+                    goodBtn.addEventListener("click", () => {
+                        saveFeedback(song, artist, "good");
+                    });
+
+                    const badBtn = document.createElement("button");
+                    badBtn.textContent = "👎";
+                    badBtn.style.fontSize = "12px";
+                    badBtn.style.padding = "6px 8px";
+
+                    badBtn.addEventListener("click", () => {
+                        saveFeedback(song, artist, "bad");
+                    });
+
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.textContent = "🗑";
+                    deleteBtn.style.fontSize = "12px";
+                    deleteBtn.style.padding = "6px 8px";
+
+                    deleteBtn.addEventListener("click", () => {
+                        card.remove();
+
+                        currentPlaylist = currentPlaylist.filter(item =>
+                            !(item.song === song && item.artist === artist)
+                        );
+
+                        let avoidSongs = JSON.parse(localStorage.getItem("avoidSongs")) || [];
+
+                        let exists = avoidSongs.some(item =>
+                            item.song.toLowerCase() === song.toLowerCase() &&
+                            item.artist.toLowerCase() === artist.toLowerCase()
+                        );
+
+                        if (!exists) {
+                            avoidSongs.push({ song, artist });
+                            localStorage.setItem("avoidSongs", JSON.stringify(avoidSongs));
+                        }
+                    });
+
+                    controls.appendChild(playBtn);
+                    controls.appendChild(saveBtn);
+
+                    controls.appendChild(goodBtn);
+                    controls.appendChild(badBtn);
+                    controls.appendChild(deleteBtn);
+
+                    const ytBar = document.createElement("button");
+
+                    ytBar.textContent = "▶ Listen on YouTube";
+
+                    ytBar.style.width = "100%";
+                    ytBar.style.marginTop = "10px";
+                    ytBar.style.fontSize = "13px";
+                    ytBar.style.opacity = "0.85";
+                    ytBar.style.background = "#f3f3f3";
+                    ytBar.style.color = "#444";
+                    ytBar.style.border = "1px solid #ddd";
+
+                    ytBar.addEventListener("click", () => {
+
+                        const ytQuery = encodeURIComponent(
+                            `${song} ${artist} official audio`
+                        );
+
+                        window.open(
+                            `https://www.youtube.com/results?search_query=${ytQuery}`,
+                            "_blank"
+                        );
+                    });
+
+                    card.appendChild(ytBar);
+
+                    card.appendChild(title);
+                    card.appendChild(artistDiv);
+                    card.appendChild(controls);
+                    card.appendChild(slot);
+
+                    const firstCard = result.querySelector(".card");
+
+                    if (firstCard) {
+                        result.insertBefore(card, firstCard);
+                    } else {
+                        result.appendChild(card);
+                    }
+                });
+
+                continueBtn.innerText = "▶ Add More Songs";
+
+                continueBtn.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+            } catch (err) {
+                console.error("CONTINUE PLAYLIST ERROR:", err);
+                continueBtn.innerText = "Error, try again";
+            }
+        }
+
+        // $$$$
+
+        window.handleUpgrade = function () {
+
+            const oldBox = document.getElementById("upgradeBox");
+
+            if (oldBox) {
+                oldBox.remove();
+            }
+
+            document.getElementById("continueBtn").style.display = "inline-block";
+
+            document.getElementById("savePlaylistBtn").disabled = false;
+
+            const continueBtn = document.getElementById("continueBtn");
+
+            if (continueBtn) {
+                continueBtn.innerText = "▶ Add More Songs";
+                continueBtn.style.display = "inline-block";
+            }
+
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+            if (currentLimit < 100) {
+                currentLimit = 100;
+            } else if (currentLimit < 200) {
+                currentLimit = 200;
+            } else if (currentLimit < 300) {
+                currentLimit = 300;
+            } else {
+                alert("🎧 You’ve unlocked the full Tune4Me archive.");
+                return;
+            }
+
+            localStorage.setItem("saveLimit", currentLimit);
+
+            // update live limit in app
+            FREE_SAVE_LIMIT = currentLimit;
+
+            loadSavedSongs();
+
+            alert("🎧 Your music archive has expanded.");
+        };
 
     </script>
 
