@@ -353,13 +353,17 @@
             box.style.borderRadius = "10px";
 
             box.innerHTML = `
-        <strong>🔒 Save limit reached</strong><br><br>
-        You can save up to 10 songs for free.<br><br>
-        <strong>$3 = 100 additional saves 🎧</strong><br><br>
+        <strong>🎧 Your free collection is full</strong><br><br>
+
+Tune4Me works best as a personal emotional music archive.<br><br>
+
+Unlock 100 total saves for $3.<br><br>
+
+Keep building your soundtrack ✨
 
         <button id="upgradeBtn"
             style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
-            Upgrade for $3
+            Unlock 100 Songs 🎧
         </button>
     `;
 
@@ -394,19 +398,6 @@
             }
 
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
-
-            if (saved.length >= currentLimit) {
-
-                document.getElementById("continueBtn").style.display = "none";
-
-                document.getElementById("savePlaylistBtn").disabled = true;
-
-                alert("🔒 Save limit reached.");
-
-                showUpgradeBox();
-
-                return;
-            }
 
             saved.push({ song, artist });
 
@@ -1447,7 +1438,16 @@
 
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-            currentLimit += 100;
+            if (currentLimit < 100) {
+                currentLimit = 100;
+            } else if (currentLimit < 200) {
+                currentLimit = 200;
+            } else if (currentLimit < 300) {
+                currentLimit = 300;
+            } else {
+                alert("🎧 You’ve unlocked the full Tune4Me archive.");
+                return;
+            }
 
             localStorage.setItem("saveLimit", currentLimit);
 
@@ -1456,7 +1456,7 @@
 
             loadSavedSongs();
 
-            alert("🎉 Upgrade successful! You now have more save space.");
+            alert("🎧 Your music archive has expanded.");
         };
 
     </script>
