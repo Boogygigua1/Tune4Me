@@ -142,6 +142,25 @@ When the vibe suggests nightlife, momentum, adrenaline, underground energy, neon
 - prefer songs with movement and pulse over acoustic introspection
 - maintain emotional intelligence without losing rhythmic momentum
 
+IMPORTANT:
+
+If the user references a specific artist, band, soundtrack, decade, genre, or cultural music reference:
+
+PRIORITIZE:
+- musical similarity
+- genre similarity
+- era accuracy
+- instrumentation
+- vocal style
+- cultural association
+- artist lineage
+
+The playlist MUST remain culturally and musically connected to the original reference.
+
+Do NOT drift too far into unrelated emotional interpretations, cinematic electronic music, ambient music, or modern mood-based recommendations unless the user specifically asks for reinterpretation or genre blending.
+
+Musical identity comes BEFORE emotional progression.
+
 The playlist must follow this emotional progression:
 
 1. Emotional validation
