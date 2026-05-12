@@ -386,7 +386,12 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
             const upgradeBtn = document.getElementById("upgradeBtn");
 
             if (upgradeBtn) {
-                upgradeBtn.addEventListener("click", handleUpgrade);
+                upgradeBtn.addEventListener("click", () => {
+                    window.open(
+                        "https://buy.stripe.com/test_placeholder",
+                        "_blank"
+                    );
+                });
             }
         }
 
