@@ -119,9 +119,9 @@ Identify:
 - danceability level
 - club/festival energy
 - rhythmic intensity
-- underground electronic influence
-- late-night momentum
-- movement-driving pulse
+- rhythmic emotional movement when appropriate
+- atmospheric momentum when appropriate
+- underground or electronic influence only when culturally relevant
 
 THEN:
 Create a playlist that feels emotionally intentional and human-curated.
