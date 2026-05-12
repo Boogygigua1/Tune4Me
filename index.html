@@ -3,6 +3,8 @@
 
 <head>
 
+    <title>Tune4Me – Music That Understands Your Moment</title>
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -11,7 +13,7 @@
     <meta name="theme-color" content="#000000">
 
     <link rel="icon" href="/favicon.ico">
-    
+
     <style>
         * {
             font-family: Arial, sans-serif;
@@ -244,7 +246,14 @@
         let FREE_PLAY_LIMIT = 10;
         let PRO_PLAY_LIMIT = 100;
 
-        let FREE_SAVE_LIMIT = parseInt(localStorage.getItem("saveLimit")) || 10;
+        let savedSongs = JSON.parse(localStorage.getItem("savedSongs")) || [];
+
+        let grandfatheredCount = savedSongs.length;
+
+        let FREE_SAVE_LIMIT = Math.max(
+            parseInt(localStorage.getItem("saveLimit")) || 25,
+            grandfatheredCount
+        );
 
         let playsToday = parseInt(localStorage.getItem("playsToday")) || 0;
         let lastDate = localStorage.getItem("playDate");
@@ -358,13 +367,13 @@
             box.style.borderRadius = "10px";
 
             box.innerHTML = `
-        <strong>🎧 Your free collection is full</strong><br><br>
+        <strong>🎧 Your Tune4Me archive is full</strong><br><br>
 
-Tune4Me works best as a personal emotional music archive.<br><br>
+Your saved songs and playlists are always preserved.<br><br>
 
-Unlock 100 total saves for $3.<br><br>
+Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
 
-Keep building your soundtrack ✨
+✨ 100 additional saves for $3
 
         <button id="upgradeBtn"
             style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
@@ -556,7 +565,7 @@ Keep building your soundtrack ✨
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
             document.getElementById("saveCounter").innerText =
-                saved.length + " / " + currentLimit + " songs saved";
+                saved.length + " saved songs";
 
             const savedSection = document.getElementById("savedSongs");
 
