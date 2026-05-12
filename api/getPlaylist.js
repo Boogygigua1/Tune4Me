@@ -207,7 +207,7 @@ Avoid repeating recommendation patterns the user has already rejected.
 
 Liked songs should heavily influence future emotional tone, genre direction, cultural texture, and atmospheric style.
 
-User feedback is more important than generic playlist assumptions.
+User feedback should strongly influence recommendations, but should not override culturally or emotionally important aspects of the user's current reference or request.
 
 Respond EXACTLY in this format:
 
