@@ -7,6 +7,9 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
 
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#000000">
+
     <style>
         * {
             font-family: Arial, sans-serif;
@@ -1277,6 +1280,13 @@ Keep building your soundtrack ✨
 
                     if (!song) return;
                     if (!artist) artist = "Unknown Artist";
+
+                    const alreadyExists = currentPlaylist.some(item =>
+                        item.song.toLowerCase() === song.toLowerCase() &&
+                        item.artist.toLowerCase() === artist.toLowerCase()
+                    );
+
+                    if (alreadyExists) return;
 
                     currentPlaylist.unshift({ song, artist });
 
