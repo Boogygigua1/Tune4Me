@@ -137,8 +137,7 @@ The playlist should balance:
 
 Avoid playlists that become too sleepy, acoustic, folk-heavy, indie-drifting, or emotionally flat unless specifically requested.
 
-When the vibe suggests nightlife, momentum, adrenaline, underground energy, neon atmosphere, warehouse atmosphere, motion, futuristic emotion, or after-hours energy:
-- strongly prioritize house, techno, electronic, indie dance, progressive electronic, melodic techno, festival electronica, synth-driven tracks, and rhythm-forward music
+When the user EXPLICITLY suggests nightlife, club culture, rave energy, festival atmosphere, futuristic emotion, warehouse atmosphere, or electronic momentum:- strongly prioritize house, techno, electronic, indie dance, progressive electronic, melodic techno, festival electronica, synth-driven tracks, and rhythm-forward music
 - prefer songs with movement and pulse over acoustic introspection
 - maintain emotional intelligence without losing rhythmic momentum
 
