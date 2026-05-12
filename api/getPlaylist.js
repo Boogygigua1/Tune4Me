@@ -131,8 +131,8 @@ The playlist should balance:
 - festival energy
 - cultural authenticity
 - emotional progression
-- nighttime atmosphere
-- memorable crowd moments
+- nighttime emotional atmosphere
+- emotionally memorable moments
 - cinematic feeling
 
 Avoid playlists that become too sleepy, acoustic, folk-heavy, indie-drifting, or emotionally flat unless specifically requested.
