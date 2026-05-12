@@ -573,7 +573,7 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
             document.getElementById("saveCounter").innerText =
-                saved.length + " saved songs";
+                saved.length + " songs in your archive 🎧";
 
             const savedSection = document.getElementById("savedSongs");
 
@@ -927,6 +927,10 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
 
             const mood = document.getElementById("moodInput").value.trim();
 
+            if (!mood) {
+                alert("Tell Tune4Me how you're feeling first 🎧");
+                return;
+            }
             continueCount = 0;
             localStorage.setItem("continueCount", continueCount);
 
@@ -1235,10 +1239,7 @@ Building something intentional.
             continueCount++;
             localStorage.setItem("continueCount", continueCount);
 
-            localStorage.setItem("lastMood", mood);
-
             const mood = document.getElementById("moodInput").value.trim();
-
 
             continueBtn.innerText = "Loading...";
             try {
