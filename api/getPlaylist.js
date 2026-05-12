@@ -201,7 +201,13 @@ Avoid recommending songs that are extremely similar in sound, mood, or artist st
 The user strongly liked these songs:
 ${likedSongList}
 
-Learn from these preferences and recommend songs with similar emotional, cultural, rhythmic, or atmospheric qualities.
+Strongly prioritize learning from the user's liked and disliked songs.
+
+Avoid repeating recommendation patterns the user has already rejected.
+
+Liked songs should heavily influence future emotional tone, genre direction, cultural texture, and atmospheric style.
+
+User feedback is more important than generic playlist assumptions.
 
 Respond EXACTLY in this format:
 
