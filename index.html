@@ -147,6 +147,9 @@
         onkeydown="handleKey(event)">
     <br><br>
 
+    <div id="lastMood" style="font-size:12px; color:#888; margin-top:-10px; margin-bottom:10px;">
+    </div>
+
     <button onclick="showMood()">Create Playlist</button>
 
     <button onclick="clearNewList()">🗑 Clear List</button>
@@ -930,8 +933,20 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
             const result = document.getElementById("result");
             const continueBtn = document.getElementById("continueBtn");
 
+            const lastMood = document.getElementById("lastMood");
+
             continueBtn.style.display = "none";
-            result.innerHTML = "Loading playlist...";
+
+            if (lastMood) {
+                lastMood.innerText = "Last vibe: " + mood;
+            }
+
+            result.innerHTML = `
+<div style="padding:20px; line-height:1.6;">
+🎧 Listening to your vibe...<br><br>
+Building something intentional.
+</div>
+`;
 
             document.getElementById("savePlaylistBtn").disabled = true;
 
@@ -1219,6 +1234,8 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
 
             continueCount++;
             localStorage.setItem("continueCount", continueCount);
+
+            localStorage.setItem("lastMood", mood);
 
             const mood = document.getElementById("moodInput").value.trim();
 
