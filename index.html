@@ -378,11 +378,25 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
 
 ✨ 100 additional saves for $3
 
-        <button id="upgradeBtn"
-            style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
-            Unlock 100 Songs 🎧
-        </button>
-    `;
+<br><br>
+
+<div style="
+font-size:13px;
+color:#666;
+line-height:1.5;
+background:#f8f8f8;
+padding:10px;
+border-radius:8px;
+margin-bottom:10px;
+">
+Tune4Me Plus is temporarily unavailable while payment setup is being finalized during beta testing 🎧
+</div>
+
+<button id="upgradeBtn"
+    style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
+    Unlock 100 Songs 🎧
+</button>
+`;
 
             document.getElementById("result").appendChild(box);
 
@@ -390,9 +404,8 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
 
             if (upgradeBtn) {
                 upgradeBtn.addEventListener("click", () => {
-                    window.open(
-                        "https://buy.stripe.com/test_placeholder",
-                        "_blank"
+                    alert(
+                        "Tune4Me Plus is temporarily unavailable while payment setup is being finalized during beta testing 🎧"
                     );
                 });
             }
