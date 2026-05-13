@@ -207,11 +207,13 @@
         Questions, bugs, billing issues, or suggestions are always welcome.
     </p>
 
-    <input type="text" id="supportName" placeholder="Your name" style="width:100%; margin-bottom:10px;">
+    <form action="https://formspree.io/f/xojrboej" method="POST">
 
-    <input type="text" id="supportContact" placeholder="Email or phone number" style="width:100%; margin-bottom:10px;">
+    <input type="text" id="supportName" name="name" placeholder="Your name" style="width:100%; margin-bottom:10px;">
 
-    <select id="supportTopic" style="width:100%; margin-bottom:10px; padding:10px;">
+    <input type="text" id="supportContact" name="contact" placeholder="Email or phone number" style="width:100%; margin-bottom:10px;">
+
+    <select id="supportTopic" name="topic" style="width:100%; margin-bottom:10px; padding:10px;">
         <option>Billing</option>
         <option>Bug</option>
         <option>Suggestion</option>
@@ -219,7 +221,7 @@
         <option>Other</option>
     </select>
 
-    <textarea id="supportMessage" placeholder="Short message..." maxlength="400" style="
+    <textarea id="supportMessage" name="message" placeholder="Short message..." maxlength="400" style="
             width:100%;
             height:100px;
             padding:10px;
@@ -232,9 +234,11 @@
 
     <br><br>
 
-    <button onclick="submitSupportForm()">
-        Send 🎧
-    </button>
+        <button type="submit">
+            Send 🎧
+        </button>
+
+    </form>
 
     <!-- TERMS / BETA INFO -->
 
@@ -1654,26 +1658,7 @@ Building something intentional.
             alert("🎧 Your music archive has expanded.");
         };
 
-        function submitSupportForm() {
-            const name = document.getElementById("supportName").value.trim();
-            const contact = document.getElementById("supportContact").value.trim();
-            const topic = document.getElementById("supportTopic").value;
-            const message = document.getElementById("supportMessage").value.trim();
-
-            if (!name || !contact || !message) {
-                alert("Please complete all fields 🎧");
-                return;
-            }
-
-            console.log({ name, contact, topic, message });
-
-            alert("Thanks — your message was received 🎧");
-
-            document.getElementById("supportName").value = "";
-            document.getElementById("supportContact").value = "";
-            document.getElementById("supportMessage").value = "";
-        }
-
+        
     </script>
 </body>
 
