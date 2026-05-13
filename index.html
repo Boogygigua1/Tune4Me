@@ -281,6 +281,7 @@
         }
 
         function toggleReadMore(button) {
+
             const moreText = document.getElementById("moreText");
 
             const isHidden = moreText.style.display === "none" || moreText.style.display === "";
@@ -301,6 +302,20 @@
             button.innerText = isHidden
                 ? "Hide Philosophy"
                 : "✨ Our Philosophy";
+        }
+
+        function toggleLegal(button) {
+
+            const text = document.getElementById("legalText");
+
+            const isHidden =
+                text.style.display === "none" || text.style.display === "";
+
+            text.style.display = isHidden ? "block" : "none";
+
+            button.innerText = isHidden
+                ? "Hide Beta & AI Info"
+                : "ℹ Important Beta & AI Info";
         }
 
         function saveFeedback(song, artist, rating) {
@@ -1524,9 +1539,57 @@ Building something intentional.
 
     </script>
 
-    <p style="font-size:11px; color:#aaa; margin-top:40px; text-align:center;">
-        By using this app, you agree to use it for personal, non-commercial purposes.
-    </p>
+    <!-- TERMS / BETA INFO -->
+
+    <button onclick="toggleLegal(this)" style="
+background:none;
+color:#888;
+border:none;
+font-size:11px;
+cursor:pointer;
+margin-top:30px;
+opacity:0.85;
+">
+
+        ℹ Important Beta & AI Info
+
+    </button>
+
+    <div id="legalText" style="
+display:none;
+font-size:11px;
+color:#999;
+margin-top:10px;
+text-align:center;
+line-height:1.6;
+padding:10px;
+max-width:500px;
+margin-left:auto;
+margin-right:auto;
+">
+
+        Tune4Me is currently an experimental beta experience designed for personal music discovery and emotional
+        exploration.
+        <br><br>
+
+        Recommendations are generated using AI and may not always be accurate or available.
+        <br><br>
+
+        Music playback and previews are provided through YouTube.
+        Tune4Me does not host or store copyrighted media.
+        All music remains the property of its respective owners.
+        <br><br>
+
+        Saved songs are stored locally on your device unless otherwise stated.
+        <br><br>
+
+        Tune4Me is not a medical, mental health, or crisis service.
+        <br><br>
+
+        By using this app, you agree to use it for personal, non-commercial purposes and not misuse the platform during
+        beta testing 🎧
+
+    </div>
 </body>
 
 </html>
