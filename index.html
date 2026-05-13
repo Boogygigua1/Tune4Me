@@ -201,45 +201,6 @@
         Tune4Me generates playlists using AI. All music remains the property of its respective owners.
     </p>
 
-    <h3 style="margin-top:0;">Support & Feedback 🎧</h3>
-
-    <p style="font-size:13px; color:#666; line-height:1.5;">
-        Questions, bugs, billing issues, or suggestions are always welcome.
-    </p>
-
-    <form action="https://formspree.io/f/xojrboej" method="POST">
-
-        <input type="text" id="supportName" name="name" placeholder="Your name" style="width:100%; margin-bottom:10px;">
-
-        <input type="text" id="supportContact" name="contact" placeholder="Email or phone number"
-            style="width:100%; margin-bottom:10px;">
-
-        <select id="supportTopic" name="topic" style="width:100%; margin-bottom:10px; padding:10px;">
-            <option>Billing</option>
-            <option>Bug</option>
-            <option>Suggestion</option>
-            <option>Music Recommendation</option>
-            <option>Other</option>
-        </select>
-
-        <textarea id="supportMessage" name="message" placeholder="Short message..." maxlength="400" style="
-            width:100%;
-            height:100px;
-            padding:10px;
-            border-radius:8px;
-            border:1px solid #ccc;
-            resize:none;
-            font-size:14px;
-            box-sizing:border-box;
-        "></textarea>
-
-        <br><br>
-
-        <button type="submit">
-            Send 🎧
-        </button>
-
-    </form>
 
     <!-- TERMS / BETA INFO -->
 
@@ -303,19 +264,55 @@ margin-right:auto;
 
     <div id="savedPlayer" style="margin-top:15px;"></div>
 
-    <h2>💾 Saved Songs</h2>
-
-    <div id="saveCounter" style="font-size:13px; color:#666; margin-bottom:10px;">
-        0 / 10 songs saved
-    </div>
+    <div id="saveCounter"></div>
 
     <button class="play-saved-btn" onclick="playSavedSongs(this)">
         ▶ Preview First Song
     </button>
 
     <button onclick="clearSavedSongs()">🗑 Clear Saved Songs</button>
+
     <div id="savedSongs"></div>
 
+    <h3 style="margin-top:30px;">Support & Feedback 🎧</h3>
+
+    <p style="font-size:13px; color:#666; line-height:1.5;">
+        Questions, bugs, billing issues, or suggestions are always welcome.
+    </p>
+
+    <form action="https://formspree.io/f/xojrboej" method="POST">
+
+        <input type="text" id="supportName" name="name" placeholder="Your name" style="width:100%; margin-bottom:10px;">
+
+        <input type="text" id="supportContact" name="contact" placeholder="Email or phone number"
+            style="width:100%; margin-bottom:10px;">
+
+        <select id="supportTopic" name="topic" style="width:100%; margin-bottom:10px; padding:10px;">
+            <option>Billing</option>
+            <option>Bug</option>
+            <option>Suggestion</option>
+            <option>Music Recommendation</option>
+            <option>Other</option>
+        </select>
+
+        <textarea id="supportMessage" name="message" placeholder="Short message..." maxlength="400" style="
+            width:100%;
+            height:100px;
+            padding:10px;
+            border-radius:8px;
+            border:1px solid #ccc;
+            resize:none;
+            font-size:14px;
+            box-sizing:border-box;
+        "></textarea>
+
+        <br><br>
+
+        <button type="submit">
+            Send 🎧
+        </button>
+
+    </form>
 
     <script>
 
