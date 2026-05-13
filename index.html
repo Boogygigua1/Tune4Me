@@ -213,6 +213,55 @@ margin-top:30px;
 opacity:0.85;
 ">
 
+        <div style="
+margin-top:30px;
+padding:15px;
+background:white;
+border-radius:12px;
+max-width:500px;
+margin-left:auto;
+margin-right:auto;
+box-shadow:0 2px 8px rgba(0,0,0,0.06);
+">
+
+            <h3 style="margin-top:0;">Support & Feedback 🎧</h3>
+
+            <p style="font-size:13px; color:#666; line-height:1.5;">
+                Questions, bugs, billing issues, or suggestions are always welcome.
+            </p>
+
+            <input type="text" id="supportName" placeholder="Your name" style="width:100%; margin-bottom:10px;">
+
+            <input type="text" id="supportContact" placeholder="Email or phone number"
+                style="width:100%; margin-bottom:10px;">
+
+            <select id="supportTopic" style="width:100%; margin-bottom:10px; padding:10px;">
+                <option>Billing</option>
+                <option>Bug</option>
+                <option>Suggestion</option>
+                <option>Music Recommendation</option>
+                <option>Other</option>
+            </select>
+
+            <textarea id="supportMessage" placeholder="Short message..." maxlength="400" style="
+            width:100%;
+            height:100px;
+            padding:10px;
+            border-radius:8px;
+            border:1px solid #ccc;
+            resize:none;
+            font-size:14px;
+            box-sizing:border-box;
+        "></textarea>
+
+            <br><br>
+
+            <button onclick="submitSupportForm()">
+                Send 🎧
+            </button>
+
+        </div>
+
         ▼ Important Beta & AI Info
 
     </button>
@@ -483,8 +532,8 @@ Tune4Me Plus payments are currently in beta testing 🎧
             if (upgradeBtn) {
                 upgradeBtn.addEventListener("click", () => {
                     window.open(
-                        "https://buy.stripe.com/test_dRm6oHdbi0H0bi45x22Nq00https://buy.stripe.com/dRm6oHdbi0H0bi45x22Nq00",
-                        "_blank"
+                        "https://buy.stripe.com/dRm6oHdbi0H0bi45x22Nq00",
+                        "_self"
                     );
                 });
             }
@@ -1570,6 +1619,7 @@ Building something intentional.
             }
         }
 
+
         // $$$$
 
         window.handleUpgrade = function () {
@@ -1603,6 +1653,55 @@ Building something intentional.
                 currentLimit = 200;
             } else if (currentLimit < 300) {
                 currentLimit = 300;
+            } else {
+                alert("🎧 You’ve unlocked the full Tune4Me archive.");
+                return;
+            }
+
+            localStorage.setItem("saveLimit", currentLimit);
+
+            // update live limit in app
+            FREE_SAVE_LIMIT = currentLimit;
+
+            loadSavedSongs();
+
+            alert("🎧 Your music archive has expanded.");
+        };
+
+
+        // $$$$
+
+        window.handleUpgrade = function () {
+
+            const oldBox = document.getElementById("upgradeBox");
+
+            if (oldBox) {
+                oldBox.remove();
+            }
+
+            document.getElementById("continueBtn").style.display = "inline-block";
+
+            const saveBtn3 = document.getElementById("savePlaylistBtn");
+
+            if (saveBtn3) {
+                saveBtn3.disabled = false;
+            }
+
+            const continueBtn = document.getElementById("continueBtn");
+
+            if (continueBtn) {
+                continueBtn.innerText = "▶ Add More Songs";
+                continueBtn.style.display = "inline-block";
+            }
+
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+            if (currentLimit < 110) {
+                currentLimit = 110;
+            } else if (currentLimit < 210) {
+                currentLimit = 210;
+            } else if (currentLimit < 310) {
+                currentLimit = 310;
             } else {
                 alert("🎧 You’ve unlocked the full Tune4Me archive.");
                 return;
