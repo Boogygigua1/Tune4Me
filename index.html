@@ -1028,7 +1028,11 @@ Building something intentional.
 </div>
 `;
 
-            document.getElementById("savePlaylistBtn").disabled = true;
+            const saveBtn = document.getElementById("savePlaylistBtn");
+
+            if (saveBtn) {
+                saveBtn.disabled = true;
+            }
 
             if (button) button.disabled = true;
 
