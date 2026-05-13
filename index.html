@@ -318,6 +318,14 @@ margin-right:auto;
 
         window.onload = function () {
             loadSavedSongs();
+
+            const saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+            const currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+            if (saved.length < currentLimit) {
+                const oldBox = document.getElementById("upgradeBox");
+                if (oldBox) oldBox.remove();
+            }
         };
 
         // HELPERS
