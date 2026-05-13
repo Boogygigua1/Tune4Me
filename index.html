@@ -484,7 +484,7 @@ Your saved songs and playlists are always preserved.<br><br>
 
 Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
 
-✨ 100 additional saves for $3
+✨ Unlock space for 100 more saved songs for $3 🎧
 
 ✨ Support Tune4Me Plus and continue expanding your emotional music archive 🎧
 
@@ -550,13 +550,11 @@ Tune4Me Plus payments are currently in beta testing 🎧
 
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-            let totalUsed = parseInt(localStorage.getItem("totalUsed")) || 0;
-
-            if (totalUsed >= currentLimit) {
+            if (saved.length >= currentLimit) {
 
                 if (currentLimit >= 310) {
 
-                    alert("🎧 You’ve used your full Tune4Me archive.");
+                    alert("🎧 Your Tune4Me archive is full.");
 
                 } else {
 
@@ -569,10 +567,6 @@ Tune4Me Plus payments are currently in beta testing 🎧
             saved.push({ song, artist });
 
             localStorage.setItem("savedSongs", JSON.stringify(saved));
-
-            totalUsed++;
-
-            localStorage.setItem("totalUsed", totalUsed);
 
             if (!isPlayingAll) {
                 loadSavedSongs();
@@ -670,6 +664,7 @@ Tune4Me Plus payments are currently in beta testing 🎧
 
                 // ✅ SAVE
                 saved.push({ song, artist });
+
                 addedCount++;
             }
 
@@ -700,7 +695,7 @@ Tune4Me Plus payments are currently in beta testing 🎧
         }
 
         function clearSavedSongs() {
-            if (confirm("Clear all saved songs?")) {
+            if (confirm("Clear all saved songs?\n\nThis will free space in your Tune4Me archive 🎧")) {
                 localStorage.removeItem("savedSongs");
                 loadSavedSongs();
             }
@@ -1434,7 +1429,7 @@ Building something intentional.
 
                 label.innerHTML = `
     <strong>Need more songs? 🎧</strong><br>
-    $3 = 100 additional saves
+    $3 = Unlock space for 100 more saved songs 🎧
 `;
 
                 result.appendChild(label);
