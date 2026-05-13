@@ -26,23 +26,32 @@
     </button>
 
     <script>
-        let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-        if (currentLimit < 310) {
-            currentLimit = currentLimit + 100;
+    const upgraded = sessionStorage.getItem("upgradeApplied");
 
-            if (currentLimit > 310) {
-                currentLimit = 310;
-            }
+    if (!upgraded) {
 
-            localStorage.setItem("saveLimit", currentLimit);
-            localStorage.setItem("tune4mePlus", "active");
+        let currentLimit =
+            parseInt(localStorage.getItem("saveLimit")) || 10;
+
+        currentLimit += 100;
+
+        if (currentLimit > 310) {
+            currentLimit = 310;
         }
 
-        function goBack() {
-            window.location.href = "/";
-        }
-    </script>
+        localStorage.setItem("saveLimit", currentLimit);
+
+        localStorage.setItem("tune4mePlus", "active");
+
+        sessionStorage.setItem("upgradeApplied", "true");
+    }
+
+    function goBack() {
+        window.location.href = "/";
+    }
+
+</script>
 
 </body>
 
