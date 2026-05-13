@@ -48,14 +48,14 @@
             padding: 12px 16px;
             margin-top: 10px;
 
-            background: rgba(76, 175, 80, 0.35);
+            background: rgba(76, 175, 80, 0.55);
             backdrop-filter: blur(6px);
 
             color: white;
 
             border: 1px solid rgba(255, 255, 255, 0.25);
 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
             cursor: pointer;
             border-radius: 6px;
@@ -630,7 +630,11 @@ Tune4Me Plus is temporarily unavailable while payment setup is being finalized d
 
             stopPlayback();
 
-            document.getElementById("savePlaylistBtn").disabled = true;
+            const saveBtn = document.getElementById("savePlaylistBtn");
+
+            if (saveBtn) {
+                saveBtn.disabled = true;
+            }
 
             document.getElementById("continueBtn").style.display = "none";
 
@@ -1293,7 +1297,11 @@ Building something intentional.
 
                 let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-                document.getElementById("savePlaylistBtn").disabled = false;
+                const saveBtn2 = document.getElementById("savePlaylistBtn");
+
+                if (saveBtn2) {
+                    saveBtn2.disabled = false;
+                }
 
             } catch (err) {
                 console.log("PLAYLIST ERROR:", err);
@@ -1548,7 +1556,11 @@ Building something intentional.
 
             document.getElementById("continueBtn").style.display = "inline-block";
 
-            document.getElementById("savePlaylistBtn").disabled = false;
+            const saveBtn3 = document.getElementById("savePlaylistBtn");
+
+            if (saveBtn3) {
+                saveBtn3.disabled = false;
+            }
 
             const continueBtn = document.getElementById("continueBtn");
 
