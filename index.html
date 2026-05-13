@@ -550,11 +550,13 @@ Tune4Me Plus payments are currently in beta testing 🎧
 
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-            if (saved.length >= currentLimit) {
+            let totalUsed = parseInt(localStorage.getItem("totalUsed")) || 0;
+
+            if (totalUsed >= currentLimit) {
 
                 if (currentLimit >= 310) {
 
-                    alert("🎧 You’ve unlocked the full Tune4Me archive.");
+                    alert("🎧 You’ve used your full Tune4Me archive.");
 
                 } else {
 
