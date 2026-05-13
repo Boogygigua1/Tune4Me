@@ -561,7 +561,9 @@ Tune4Me Plus is temporarily unavailable while payment setup is being finalized d
 
         function savePlaylist(event) {
 
-            if (!event || !event.isTrusted) return;
+            if (event) {
+                event.preventDefault();
+            }
 
             if (!currentPlaylist || currentPlaylist.length === 0) {
                 alert("Create a playlist first, then click Save Playlist");
