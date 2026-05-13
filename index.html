@@ -457,6 +457,11 @@ Tune4Me Plus is temporarily unavailable while payment setup is being finalized d
 
             document.getElementById("result").appendChild(box);
 
+            box.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
             const upgradeBtn = document.getElementById("upgradeBtn");
 
             if (upgradeBtn) {
