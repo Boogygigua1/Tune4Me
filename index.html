@@ -570,6 +570,10 @@ Tune4Me Plus payments are currently in beta testing 🎧
 
             localStorage.setItem("savedSongs", JSON.stringify(saved));
 
+            totalUsed++;
+
+            localStorage.setItem("totalUsed", totalUsed);
+
             if (!isPlayingAll) {
                 loadSavedSongs();
             }
