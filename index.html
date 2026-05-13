@@ -1301,8 +1301,7 @@ Building something intentional.
 
                 let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-                document.getElementById("savePlaylistBtn").disabled =
-                    saved.length >= currentLimit;
+                document.getElementById("savePlaylistBtn").disabled = false;
 
             } catch (err) {
                 console.log("PLAYLIST ERROR:", err);
