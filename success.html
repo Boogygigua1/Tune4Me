@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tune4Me Plus Activated</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body style="font-family: Arial, sans-serif; text-align:center; padding:30px; background:#f4f4f4;">
+
+    <h1>🎧 Tune4Me Plus Activated</h1>
+
+    <p>Your music archive has been expanded by 100 additional saves.</p>
+
+    <p>Thank you for supporting Tune4Me during beta testing.</p>
+
+    <button onclick="goBack()" style="
+        padding:12px 16px;
+        border:none;
+        border-radius:6px;
+        background:#4CAF50;
+        color:white;
+        cursor:pointer;
+    ">
+        Return to Tune4Me
+    </button>
+
+    <script>
+
+        localStorage.setItem("saveLimit", "110");
+
+        function goBack() {
+            window.location.href = "index.html";
+        }
+
+    </script>
+
+</body>
+</html>

@@ -669,7 +669,7 @@ Support Tune4Me Plus during beta testing and expand your music archive 🎧
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
             document.getElementById("saveCounter").innerText =
-                saved.length + " songs in your archive 🎧";
+                saved.length + " / " + currentLimit + " songs saved 🎧";
 
             const savedSection = document.getElementById("savedSongs");
 
