@@ -1654,6 +1654,26 @@ Building something intentional.
             alert("🎧 Your music archive has expanded.");
         };
 
+        function submitSupportForm() {
+            const name = document.getElementById("supportName").value.trim();
+            const contact = document.getElementById("supportContact").value.trim();
+            const topic = document.getElementById("supportTopic").value;
+            const message = document.getElementById("supportMessage").value.trim();
+
+            if (!name || !contact || !message) {
+                alert("Please complete all fields 🎧");
+                return;
+            }
+
+            console.log({ name, contact, topic, message });
+
+            alert("Thanks — your message was received 🎧");
+
+            document.getElementById("supportName").value = "";
+            document.getElementById("supportContact").value = "";
+            document.getElementById("supportMessage").value = "";
+        }
+
     </script>
 </body>
 
