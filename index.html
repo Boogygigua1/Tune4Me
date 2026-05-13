@@ -209,19 +209,20 @@
 
     <form action="https://formspree.io/f/xojrboej" method="POST">
 
-    <input type="text" id="supportName" name="name" placeholder="Your name" style="width:100%; margin-bottom:10px;">
+        <input type="text" id="supportName" name="name" placeholder="Your name" style="width:100%; margin-bottom:10px;">
 
-    <input type="text" id="supportContact" name="contact" placeholder="Email or phone number" style="width:100%; margin-bottom:10px;">
+        <input type="text" id="supportContact" name="contact" placeholder="Email or phone number"
+            style="width:100%; margin-bottom:10px;">
 
-    <select id="supportTopic" name="topic" style="width:100%; margin-bottom:10px; padding:10px;">
-        <option>Billing</option>
-        <option>Bug</option>
-        <option>Suggestion</option>
-        <option>Music Recommendation</option>
-        <option>Other</option>
-    </select>
+        <select id="supportTopic" name="topic" style="width:100%; margin-bottom:10px; padding:10px;">
+            <option>Billing</option>
+            <option>Bug</option>
+            <option>Suggestion</option>
+            <option>Music Recommendation</option>
+            <option>Other</option>
+        </select>
 
-    <textarea id="supportMessage" name="message" placeholder="Short message..." maxlength="400" style="
+        <textarea id="supportMessage" name="message" placeholder="Short message..." maxlength="400" style="
             width:100%;
             height:100px;
             padding:10px;
@@ -232,7 +233,7 @@
             box-sizing:border-box;
         "></textarea>
 
-    <br><br>
+        <br><br>
 
         <button type="submit">
             Send 🎧
@@ -1637,16 +1638,11 @@ Building something intentional.
 
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-            if (currentLimit < 110) {
-                currentLimit = 110;
-            } else if (currentLimit < 210) {
-                currentLimit = 210;
-            } else if (currentLimit < 310) {
+            currentLimit += 100;
+
+            if (currentLimit > 310) {
                 currentLimit = 310;
-            } else {
-                alert("🎧 You’ve unlocked the full Tune4Me archive.");
-                return;
-            }
+            } 
 
             localStorage.setItem("saveLimit", currentLimit);
 
@@ -1658,7 +1654,7 @@ Building something intentional.
             alert("🎧 Your music archive has expanded.");
         };
 
-        
+
     </script>
 </body>
 
