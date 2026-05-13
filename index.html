@@ -602,7 +602,14 @@ Tune4Me Plus payments are currently in beta testing 🎧
 
             if (saved.length >= currentLimit) {
 
-                showUpgradeBox();
+                if (currentLimit >= 310) {
+
+                    alert("🎧 You’ve reached the full Tune4Me archive limit.");
+
+                } else {
+
+                    showUpgradeBox();
+                }
 
                 return;
             }
@@ -640,7 +647,9 @@ Tune4Me Plus payments are currently in beta testing 🎧
 
                     hitLimit = true;
 
-                    showUpgradeBox();
+                    if (currentLimit < 310) {
+                        showUpgradeBox();
+                    }
 
                     break;
                 }
@@ -663,15 +672,20 @@ Tune4Me Plus payments are currently in beta testing 🎧
 
             if (hitLimit) {
 
-                alert("🎧 Your current archive limit has been reached.");
+                if (currentLimit >= 310) {
 
-                showUpgradeBox();
+                    alert("🎧 You’ve reached the full Tune4Me archive limit.");
+
+                } else {
+
+                    alert("🎧 Your current archive limit has been reached.");
+
+                    showUpgradeBox();
+                }
 
             } else if (addedCount === 0) {
 
-                alert("🎧 Your current archive limit has been reached.");
-
-                showUpgradeBox();
+                alert("No new songs were added 🎧");
 
             } else {
 
