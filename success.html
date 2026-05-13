@@ -26,13 +26,22 @@
     </button>
 
     <script>
+        let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-        localStorage.setItem("saveLimit", "110");
+        if (currentLimit < 310) {
+            currentLimit = currentLimit + 100;
+
+            if (currentLimit > 310) {
+                currentLimit = 310;
+            }
+
+            localStorage.setItem("saveLimit", currentLimit);
+            localStorage.setItem("tune4mePlus", "active");
+        }
 
         function goBack() {
             window.location.href = "/";
         }
-
     </script>
 
 </body>
