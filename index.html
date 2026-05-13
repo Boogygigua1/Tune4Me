@@ -555,7 +555,14 @@ Tune4Me Plus payments are currently in beta testing 🎧
 
             if (saved.length >= currentLimit) {
 
-                showUpgradeBox();
+                if (currentLimit >= 310) {
+
+                    alert("🎧 You’ve unlocked the full Tune4Me archive.");
+
+                } else {
+
+                    showUpgradeBox();
+                }
 
                 return;
             }
@@ -1642,7 +1649,7 @@ Building something intentional.
 
             if (currentLimit > 310) {
                 currentLimit = 310;
-            } 
+            }
 
             localStorage.setItem("saveLimit", currentLimit);
 
