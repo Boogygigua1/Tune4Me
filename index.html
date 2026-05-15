@@ -86,6 +86,16 @@
 
 <body>
 
+    <p style="font-size: 0.9rem; opacity: 0.85; line-height: 1.5; margin-top: 15px;">
+        Based on user feedback and our philosophy of intentional listening, Tune4Me now uses a curated save system
+        designed to prevent overwhelming music clutter and encourage meaningful connections with the songs that matter
+        most 🎧
+    </p>
+
+    <p style="font-size: 0.9rem; opacity: 0.75; line-height: 1.5;">
+        Users can expand their collection in stages of 25 saved songs, up to a maximum of 100 total saved songs.
+    </p>
+
     <h1 style="margin-bottom:5px;">Tune4Me 🎧</h1>
     <p style="margin-top:0; font-size:14px; color:gray;">
         Music that understands your moment
@@ -331,15 +341,15 @@ margin-right:auto;
         let activeSong = null;
         let DEFAULT_SONG_PLAY_MS = 30000; // 30 seconds
 
-        let FREE_PLAY_LIMIT = 10;
-        let PRO_PLAY_LIMIT = 100;
+        let BASE_SAVE_LIMIT = 10;
+        let MAX_SAVE_LIMIT = 100;
 
         let savedSongs = JSON.parse(localStorage.getItem("savedSongs")) || [];
 
         let grandfatheredCount = savedSongs.length;
 
         let FREE_SAVE_LIMIT = Math.max(
-            parseInt(localStorage.getItem("saveLimit")) || 25,
+            parseInt(localStorage.getItem("saveLimit")) || 10,
             grandfatheredCount
         );
 
@@ -358,6 +368,10 @@ margin-right:auto;
 
             const saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
             const currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+            if (currentLimit > MAX_SAVE_LIMIT) {
+                localStorage.setItem("saveLimit", MAX_SAVE_LIMIT);
+            }
 
             if (saved.length < currentLimit) {
                 const oldBox = document.getElementById("upgradeBox");
@@ -482,17 +496,17 @@ margin-right:auto;
 
 Your saved songs and playlists are always preserved.<br><br>
 
-Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
+Expand your Tune4Me collection intentionally, one stage at a time.<br><br>
 
-✨ Unlock space for 100 more saved songs for $3 🎧
+✨ Unlock space for 25 more saved songs for $3 🎧
 
-✨ Support Tune4Me Plus and continue expanding your emotional music archive 🎧
+✨Expand your Tune4Me collection intentionally, up to 100 total saved songs 🎧
 
 <br><br>
 
 <button id="upgradeBtn"
     style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
-    Unlock 100 Songs 🎧
+    Unlock +25 Saves 🎧
 </button>
 `;
 
@@ -540,7 +554,7 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
 
             if (saved.length >= currentLimit) {
 
-                if (currentLimit >= 310) {
+                if (currentLimit >= MAX_SAVE_LIMIT) {
 
                     alert("🎧 Your Tune4Me archive is full.");
 
@@ -590,7 +604,7 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
 
             if (saved.length >= currentLimit) {
 
-                if (currentLimit >= 310) {
+                if (currentLimit >= MAX_SAVE_LIMIT) {
 
                     alert("🎧 You’ve reached the full Tune4Me archive limit.");
 
@@ -635,7 +649,7 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
 
                     hitLimit = true;
 
-                    if (currentLimit < 310) {
+                    if (currentLimit < MAX_SAVE_LIMIT) {
                         showUpgradeBox();
                     }
 
@@ -661,7 +675,7 @@ Upgrade Tune4Me Plus to continue growing your emotional music archive.<br><br>
 
             if (hitLimit) {
 
-                if (currentLimit >= 310) {
+                if (currentLimit >= MAX_SAVE_LIMIT) {
 
                     alert("🎧 You’ve reached the full Tune4Me archive limit.");
 
@@ -1416,8 +1430,8 @@ Building something intentional.
                 label.style.color = "#888";
 
                 label.innerHTML = `
-    <strong>Need more songs? 🎧</strong><br>
-    $3 = Unlock space for 100 more saved songs 🎧
+<strong>Need more songs? 🎧</strong><br>
+$3 = Unlock 25 more saved songs 🎧
 `;
 
                 result.appendChild(label);
@@ -1645,16 +1659,13 @@ Building something intentional.
 
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
 
-            currentLimit += 100;
+            currentLimit += 25;
 
-            if (currentLimit > 310) {
-                currentLimit = 310;
+            if (currentLimit > MAX_SAVE_LIMIT) {
+                currentLimit = MAX_SAVE_LIMIT;
             }
 
             localStorage.setItem("saveLimit", currentLimit);
-
-            // update live limit in app
-            FREE_SAVE_LIMIT = currentLimit;
 
             loadSavedSongs();
 
