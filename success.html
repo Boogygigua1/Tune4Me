@@ -10,7 +10,7 @@
 
     <h1>🎧 Tune4Me Plus Activated</h1>
 
-    <p>Your music archive has been expanded by 100 additional saves.</p>
+    <p>Your music archive has been expanded by 25 additional saves.</p>
 
     <p>Thank you for supporting Tune4Me during beta testing.</p>
 
@@ -27,31 +27,31 @@
 
     <script>
 
-    const upgraded = sessionStorage.getItem("upgradeApplied");
+        const upgraded = sessionStorage.getItem("upgradeApplied");
 
-    if (!upgraded) {
+        if (!upgraded) {
 
-        let currentLimit =
-            parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit =
+                parseInt(localStorage.getItem("saveLimit")) || 10;
 
-        currentLimit += 100;
+            currentLimit += 25;
 
-        if (currentLimit > 310) {
-            currentLimit = 310;
+            if (currentLimit > 100) {
+                currentLimit = 100;
+            }
+
+            localStorage.setItem("saveLimit", currentLimit);
+
+            localStorage.setItem("tune4mePlus", "active");
+
+            sessionStorage.setItem("upgradeApplied", "true");
         }
 
-        localStorage.setItem("saveLimit", currentLimit);
+        function goBack() {
+            window.location.href = "/";
+        }
 
-        localStorage.setItem("tune4mePlus", "active");
-
-        sessionStorage.setItem("upgradeApplied", "true");
-    }
-
-    function goBack() {
-        window.location.href = "/";
-    }
-
-</script>
+    </script>
 
 </body>
 

@@ -16,7 +16,13 @@ export default async function handler(req, res) {
 
     const query = body?.query;
 
-    const cacheKey = "yt_" + query.toLowerCase();
+    const normalizedQuery = query
+        .toLowerCase()
+        .replace(/[^\w\s]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const cacheKey = "yt_" + normalizedQuery;
 
     global.videoCache = global.videoCache || {};
 
@@ -38,10 +44,7 @@ export default async function handler(req, res) {
         const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
         const searches = [
-            `"${query}" official audio`,
-            `"${query}" song`,
-            `"${query}" music`,
-            query + " official audio"
+            `"${query}" official audio`
         ];
 
         for (const searchTerm of searches) {
