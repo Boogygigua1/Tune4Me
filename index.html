@@ -874,34 +874,55 @@ Expand your Tune4Me collection intentionally, one stage at a time.<br><br>
                 if (!data.videoId || data.videoId === "undefined") {
 
                     slot.innerHTML = `
-        ⚠ Preview unavailable right now.<br><br>
-        This may happen if the daily YouTube preview limit has been reached.
-        You can still save songs and try previews again tomorrow.<br><br>
-        Use “Open Playlist on YouTube” to continue listening.<br><br>
-        Enjoy your day 🎧
-    `;
+<div style="
+    padding:16px;
+    background:#f8f8f8;
+    border-radius:10px;
+    text-align:center;
+    line-height:1.6;
+    color:#555;
+">
+⚠ Preview unavailable right now.<br><br>
 
-                    let ytFallbackBtn = document.getElementById("ytFallbackBtn");
+This may happen because:
+<br>
+• YouTube preview limits were reached
+<br>
+• The artist blocked embedded playback
+<br><br>
 
-                    if (!ytFallbackBtn) {
-                        ytFallbackBtn = document.createElement("button");
-                        ytFallbackBtn.id = "ytFallbackBtn";
-                        ytFallbackBtn.textContent = "▶ Open Playlist on YouTube";
-                        ytFallbackBtn.style.marginTop = "15px";
+You can still listen directly on YouTube 🎧
+<br><br>
 
-                        ytFallbackBtn.addEventListener("click", () => {
-                            const searches = currentPlaylist
-                                .map(item => `${item.song} ${item.artist}`)
-                                .join("\n");
+<button id="fallbackYTBtn"
+style="
+padding:10px 14px;
+border:none;
+border-radius:8px;
+background:#ff0000;
+color:white;
+cursor:pointer;
+">
+▶ Listen on YouTube
+</button>
+</div>
+`;
 
-                            const url =
-                                "https://www.youtube.com/results?search_query=" +
-                                encodeURIComponent(searches);
+                    const fallbackBtn = document.getElementById("fallbackYTBtn");
 
-                            window.open(url, "_blank");
+                    if (fallbackBtn) {
+
+                        fallbackBtn.addEventListener("click", () => {
+
+                            const ytQuery = encodeURIComponent(
+                                `${song} ${artist} official audio`
+                            );
+
+                            window.open(
+                                `https://www.youtube.com/results?search_query=${ytQuery}`,
+                                "_blank"
+                            );
                         });
-
-                        document.getElementById("result").prepend(ytFallbackBtn);
                     }
 
                     return;
