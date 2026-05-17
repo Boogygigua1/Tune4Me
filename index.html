@@ -976,8 +976,47 @@ cursor:pointer;
                 wrapper.appendChild(closeBtn);
                 wrapper.appendChild(iframe);
 
-                // 🔴 ONLY append (no innerHTML wipe here)
                 slot.appendChild(wrapper);
+
+                setTimeout(() => {
+                    const stillThere = slot.contains(wrapper);
+
+                    if (stillThere && iframe.contentWindow) {
+                        const fallbackNotice = document.createElement("div");
+
+                        fallbackNotice.style.marginTop = "8px";
+                        fallbackNotice.style.padding = "12px";
+                        fallbackNotice.style.background = "#f8f8f8";
+                        fallbackNotice.style.borderRadius = "10px";
+                        fallbackNotice.style.textAlign = "center";
+                        fallbackNotice.style.fontSize = "13px";
+                        fallbackNotice.style.lineHeight = "1.5";
+                        fallbackNotice.style.color = "#555";
+
+                        fallbackNotice.innerHTML = `
+            Some previews may be blocked by YouTube or the artist.<br>
+            If this preview does not play, tap below 🎧<br><br>
+        `;
+
+                        const fallbackButton = document.createElement("button");
+                        fallbackButton.textContent = "▶ Listen on YouTube";
+
+                        fallbackButton.addEventListener("click", () => {
+                            const ytQuery = encodeURIComponent(
+                                `${song} ${artist} official audio`
+                            );
+
+                            window.open(
+                                `https://www.youtube.com/results?search_query=${ytQuery}`,
+                                "_blank"
+                            );
+                        });
+
+                        fallbackNotice.appendChild(fallbackButton);
+
+                        wrapper.appendChild(fallbackNotice);
+                    }
+                }, 2500);
 
             } catch (err) {
                 console.error("playSong error:", err);
