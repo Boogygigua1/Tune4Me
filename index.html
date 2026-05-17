@@ -973,54 +973,6 @@ cursor:pointer;
                 iframe.setAttribute("allow", "autoplay; encrypted-media");
                 iframe.setAttribute("frameborder", "0");
 
-                iframe.onerror = () => {
-
-                    wrapper.innerHTML = `
-<div style="
-    padding:16px;
-    background:#f8f8f8;
-    border-radius:10px;
-    text-align:center;
-    line-height:1.6;
-    color:#555;
-">
-⚠ This song can't be previewed here.<br><br>
-
-The artist or label blocked embedded playback on external apps/websites.
-<br><br>
-
-<button id="blockedYTBtn"
-style="
-padding:10px 14px;
-border:none;
-border-radius:8px;
-background:#ff0000;
-color:white;
-cursor:pointer;
-">
-▶ Listen on YouTube
-</button>
-</div>
-`;
-
-                    const blockedBtn = document.getElementById("blockedYTBtn");
-
-                    if (blockedBtn) {
-
-                        blockedBtn.addEventListener("click", () => {
-
-                            const ytQuery = encodeURIComponent(
-                                `${song} ${artist} official audio`
-                            );
-
-                            window.open(
-                                `https://www.youtube.com/results?search_query=${ytQuery}`,
-                                "_blank"
-                            );
-                        });
-                    }
-                };
-
                 wrapper.appendChild(closeBtn);
                 wrapper.appendChild(iframe);
 
