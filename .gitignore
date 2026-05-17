@@ -3,3 +3,6 @@
 
 .vercel
 .env*.local
+
+# Dependencies
+node_modules/

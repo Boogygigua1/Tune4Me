@@ -1,0 +1,16 @@
+{
+  "name": "tune4me",
+  "version": "1.0.0",
+  "description": "Music that understands your moment",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Static site - no build step required'",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": ["music", "playlist", "ai"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.4.1"
+  }
+}
