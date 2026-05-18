@@ -808,6 +808,26 @@ Expand your Tune4Me collection intentionally, one stage at a time.<br><br>
             loadSavedSongs();
         }
 
+        function getCachedVideo(song, artist) {
+            const key = "yt_" + (song + " " + artist)
+                .toLowerCase()
+                .replace(/[^\w\s]/g, "")
+                .replace(/\s+/g, " ")
+                .trim();
+
+            return localStorage.getItem(key);
+        }
+
+        function saveCachedVideo(song, artist, videoId) {
+            const key = "yt_" + (song + " " + artist)
+                .toLowerCase()
+                .replace(/[^\w\s]/g, "")
+                .replace(/\s+/g, " ")
+                .trim();
+
+            localStorage.setItem(key, videoId);
+        }
+
         // PLAYBACK CORE
 
         async function playSong(song, artist, playBtn) {
@@ -845,6 +865,51 @@ Expand your Tune4Me collection intentionally, one stage at a time.<br><br>
 
             // 🔴 remove ALL previous video wrappers (THIS fixes X button issue)
             slot.querySelectorAll(".video-wrapper").forEach(w => w.remove());
+
+            const cachedVideoId = getCachedVideo(song, artist);
+
+            if (cachedVideoId) {
+
+                console.log("LOCAL CACHE HIT:", song, artist);
+
+                saveCachedVideo(song, artist, data.videoId);
+                console.log("LOCAL CACHE STORE:", song, artist);
+
+                const embedUrl =
+                    "https://www.youtube-nocookie.com/embed/" +
+                    cachedVideoId +
+                    "?autoplay=1&rel=0&modestbranding=1&playsinline=1";
+
+                const wrapper = document.createElement("div");
+                wrapper.className = "video-wrapper";
+                wrapper.style.position = "relative";
+                wrapper.style.marginTop = "10px";
+
+                const closeBtn = document.createElement("button");
+                closeBtn.textContent = "✖";
+                closeBtn.style.position = "absolute";
+                closeBtn.style.top = "10px";
+                closeBtn.style.right = "-10px";
+                closeBtn.style.zIndex = "20";
+
+                closeBtn.addEventListener("click", () => {
+                    wrapper.remove();
+                });
+
+                const iframe = document.createElement("iframe");
+                iframe.width = "100%";
+                iframe.height = "200";
+                iframe.src = embedUrl;
+                iframe.setAttribute("allow", "autoplay; encrypted-media");
+                iframe.setAttribute("frameborder", "0");
+
+                wrapper.appendChild(closeBtn);
+                wrapper.appendChild(iframe);
+
+                slot.appendChild(wrapper);
+
+                return;
+            }
 
             try {
                 const query = (song + " " + artist).trim();
