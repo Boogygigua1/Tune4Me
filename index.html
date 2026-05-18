@@ -872,9 +872,6 @@ Expand your Tune4Me collection intentionally, one stage at a time.<br><br>
 
                 console.log("LOCAL CACHE HIT:", song, artist);
 
-                saveCachedVideo(song, artist, data.videoId);
-                console.log("LOCAL CACHE STORE:", song, artist);
-
                 const embedUrl =
                     "https://www.youtube-nocookie.com/embed/" +
                     cachedVideoId +
@@ -1009,6 +1006,9 @@ cursor:pointer;
 
                 // 🔴 store duration globally for playNextSong
                 window.currentDurationSeconds = durationSeconds;
+
+                saveCachedVideo(song, artist, data.videoId);
+                console.log("LOCAL CACHE STORE:", song, artist);
 
                 const embedUrl =
                     "https://www.youtube-nocookie.com/embed/" +
@@ -1496,6 +1496,21 @@ Building something intentional.
 
             const result = document.getElementById("result");
             const continueBtn = document.getElementById("continueBtn");
+
+            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+            if (saved.length >= currentLimit) {
+
+                if (currentLimit >= MAX_SAVE_LIMIT) {
+                    alert("🎧 You’ve reached the full Tune4Me archive limit.");
+                } else {
+                    showUpgradeBox();
+                }
+
+                continueBtn.innerText = "▶ Add More Songs";
+                return;
+            }
 
             continueCount++;
             localStorage.setItem("continueCount", continueCount);
