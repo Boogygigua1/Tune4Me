@@ -799,10 +799,33 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
                     deleteSavedSong(item.song, item.artist || "Unknown Artist");
                 });
 
+                const ytBar = document.createElement("button");
+
+                ytBar.textContent = "▶ Listen on YouTube";
+                ytBar.style.width = "100%";
+                ytBar.style.marginTop = "10px";
+                ytBar.style.fontSize = "13px";
+                ytBar.style.opacity = "0.85";
+                ytBar.style.background = "#f3f3f3";
+                ytBar.style.color = "#444";
+                ytBar.style.border = "1px solid #ddd";
+
+                ytBar.addEventListener("click", () => {
+                    const ytQuery = encodeURIComponent(
+                        `${item.song} ${item.artist || "Unknown Artist"} official audio`
+                    );
+
+                    window.open(
+                        `https://www.youtube.com/results?search_query=${ytQuery}`,
+                        "_blank"
+                    );
+                });
+
                 card.appendChild(title);
                 card.appendChild(artist);
                 card.appendChild(button);
                 card.appendChild(deleteBtn);
+                card.appendChild(ytBar);
                 card.appendChild(slot);
 
                 savedSection.appendChild(card);
