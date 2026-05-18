@@ -200,7 +200,7 @@
 ">
 
         <button id="continueBtn" onclick="continuePlaylist()" style="display:none;">
-            ▶ Add More
+            ▶ Continue This Mood
         </button>
 
         <button id="floatingSaveBtn" onclick="savePlaylist(event)">
@@ -385,7 +385,7 @@ margin-right:auto;
 
                 if (continueBtn) {
                     continueBtn.style.display = "inline-block";
-                    continueBtn.innerText = "▶ Add More Songs";
+                    continueBtn.innerText = "▶ Continue This Mood";
                 }
             }
 
@@ -519,11 +519,11 @@ margin-right:auto;
 
 Your saved songs and playlists are always preserved.<br><br>
 
-Expand your Tune4Me collection intentionally, one stage at a time.<br><br>
+Continue exploring this musical journey intentionally, one stage at a time.<br><br>
 
-✨ Unlock space for 25 more saved songs for $3 🎧
+✨ Continue saving songs from your musical journey with 25 more saves for $3 🎧
 
-✨Expand your Tune4Me collection intentionally, up to 100 total saved songs 🎧
+✨ Continue exploring intentionally, up to 100 total saved songs 🎧
 
 <br><br>
 
@@ -1196,6 +1196,20 @@ cursor:pointer;
 
             const mood = document.getElementById("moodInput").value.trim();
 
+            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+
+            if (saved.length >= currentLimit) {
+
+                if (currentLimit >= MAX_SAVE_LIMIT) {
+                    alert("🎧 You’ve reached the full Tune4Me archive limit.");
+                } else {
+                    showUpgradeBox();
+                }
+
+                return;
+            }
+
             if (!mood) {
                 alert("Tell Tune4Me how you're feeling first 🎧");
                 return;
@@ -1488,7 +1502,7 @@ Building something intentional.
                 if (button) button.disabled = false;
 
                 continueBtn.style.display = "inline-block";
-                continueBtn.innerText = "▶ Add More Songs";
+                continueBtn.innerText = "▶ Continue This Mood";
 
                 localStorage.setItem("currentPlaylist", JSON.stringify(currentPlaylist));
 
@@ -1525,7 +1539,7 @@ Building something intentional.
                     showUpgradeBox();
                 }
 
-                continueBtn.innerText = "▶ Add More Songs";
+                continueBtn.innerText = "▶ Continue This Mood";
                 return;
             }
 
@@ -1745,7 +1759,7 @@ $3 = Unlock 25 more saved songs 🎧
                     }
                 });
 
-                continueBtn.innerText = "▶ Add More Songs";
+                continueBtn.innerText = "▶ Continue This Mood";
 
                 localStorage.setItem("currentPlaylist", JSON.stringify(currentPlaylist));
 
@@ -1782,7 +1796,7 @@ $3 = Unlock 25 more saved songs 🎧
             const continueBtn = document.getElementById("continueBtn");
 
             if (continueBtn) {
-                continueBtn.innerText = "▶ Add More Songs";
+                continueBtn.innerText = "▶ Continue This Mood";
                 continueBtn.style.display = "inline-block";
             }
 
