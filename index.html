@@ -349,6 +349,9 @@ margin-right:auto;
         let continueCount = parseInt(localStorage.getItem("continueCount")) || 0;
 
         let activeSong = null;
+
+        let currentPlaylist = JSON.parse(localStorage.getItem("currentPlaylist")) || [];
+
         let DEFAULT_SONG_PLAY_MS = 30000; // 30 seconds
 
         let BASE_SAVE_LIMIT = 10;
@@ -375,6 +378,16 @@ margin-right:auto;
 
         window.onload = function () {
             loadSavedSongs();
+
+            if (currentPlaylist && currentPlaylist.length > 0) {
+
+                const continueBtn = document.getElementById("continueBtn");
+
+                if (continueBtn) {
+                    continueBtn.style.display = "inline-block";
+                    continueBtn.innerText = "▶ Add More Songs";
+                }
+            }
 
             const saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
             const currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
@@ -720,6 +733,8 @@ Expand your Tune4Me collection intentionally, one stage at a time.<br><br>
             result.innerHTML = "";
 
             currentPlaylist = [];
+
+            localStorage.removeItem("currentPlaylist");
 
             stopPlayback();
 
@@ -1475,6 +1490,8 @@ Building something intentional.
                 continueBtn.style.display = "inline-block";
                 continueBtn.innerText = "▶ Add More Songs";
 
+                localStorage.setItem("currentPlaylist", JSON.stringify(currentPlaylist));
+
                 let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
 
                 let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
@@ -1729,6 +1746,8 @@ $3 = Unlock 25 more saved songs 🎧
                 });
 
                 continueBtn.innerText = "▶ Add More Songs";
+
+                localStorage.setItem("currentPlaylist", JSON.stringify(currentPlaylist));
 
                 continueBtn.scrollIntoView({
                     behavior: "smooth",
