@@ -971,7 +971,7 @@ This may happen because:
 You can still listen directly on YouTube 🎧
 <br><br>
 
-<button id="fallbackYTBtn"
+<button class="fallbackYTBtn"
 style="
 padding:10px 14px;
 border:none;
@@ -985,7 +985,7 @@ cursor:pointer;
 </div>
 `;
 
-                    const fallbackBtn = document.getElementById("fallbackYTBtn");
+                    const fallbackBtn = slot.querySelector(".fallbackYTBtn");
 
                     if (fallbackBtn) {
 
