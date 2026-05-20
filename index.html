@@ -92,15 +92,41 @@
 
 <body>
 
-    <p style="font-size: 0.9rem; opacity: 0.85; line-height: 1.5; margin-top: 15px;">
-        Based on user feedback and our philosophy of intentional listening, Tune4Me now uses a curated save system
-        designed to prevent overwhelming music clutter and encourage meaningful connections with the songs that matter
-        most 🎧
-    </p>
+    <div style="
+    font-size: 0.9rem;
+    opacity: 0.88;
+    line-height: 1.7;
+    margin-top: 18px;
+    margin-bottom: 20px;
+    max-width: 620px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 16px;
+    background: rgba(255,255,255,0.45);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+">
 
-    <p style="font-size: 0.9rem; opacity: 0.75; line-height: 1.5;">
-        Users can expand their collection in stages of 25 saved songs, up to a maximum of 100 total saved songs.
-    </p>
+        <p>
+            <strong>🎧 No account required.</strong>
+        </p>
+
+        <p>
+            Tune4Me was created to feel simple, human, and pressure-free.
+        </p>
+
+        <p>
+            Create playlists instantly, explore music that matches your moment,
+            and save up to 15 songs locally on your device — completely free,
+            with no email signup required.
+        </p>
+
+        <p>
+            If Tune4Me connects with you, feedback and recommendations are always
+            appreciated during this early beta phase.
+        </p>
+
+    </div>
 
     <h1 style="margin-bottom:5px;">Tune4Me 🎧</h1>
     <p style="margin-top:0; font-size:14px; color:gray;">
@@ -304,7 +330,7 @@ margin-right:auto;
 
         <input type="text" id="supportName" name="name" placeholder="Your name" style="width:100%; margin-bottom:10px;">
 
-        <input type="text" id="supportContact" name="contact" placeholder="Email or phone number"
+        <input type="text" id="supportContact" name="contact" placeholder="Optional contact info"
             style="width:100%; margin-bottom:10px;">
 
         <select id="supportTopic" name="topic" style="width:100%; margin-bottom:10px; padding:10px;">
@@ -354,7 +380,7 @@ margin-right:auto;
 
         let DEFAULT_SONG_PLAY_MS = 30000; // 30 seconds
 
-        let BASE_SAVE_LIMIT = 10;
+        let BASE_SAVE_LIMIT = 15;
         let MAX_SAVE_LIMIT = 100;
 
         let savedSongs = JSON.parse(localStorage.getItem("savedSongs")) || [];
@@ -362,7 +388,7 @@ margin-right:auto;
         let grandfatheredCount = savedSongs.length;
 
         let FREE_SAVE_LIMIT = Math.max(
-            parseInt(localStorage.getItem("saveLimit")) || 10,
+            parseInt(localStorage.getItem("saveLimit")) || 15,
             grandfatheredCount
         );
 
@@ -390,7 +416,7 @@ margin-right:auto;
             }
 
             const saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-            const currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            const currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
             if (currentLimit > MAX_SAVE_LIMIT) {
                 localStorage.setItem("saveLimit", MAX_SAVE_LIMIT);
@@ -573,7 +599,7 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
                 return;
             }
 
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
             if (saved.length >= currentLimit) {
 
@@ -623,7 +649,7 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
             if (exists) return;
 
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
             if (saved.length >= currentLimit) {
 
@@ -663,7 +689,7 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
             let hitLimit = false;
 
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
             for (let { song, artist } of currentPlaylist) {
 
@@ -754,7 +780,7 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
             let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
 
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
             document.getElementById("saveCounter").innerText =
                 saved.length + " / " + currentLimit + " songs saved 🎧";
@@ -1220,7 +1246,7 @@ cursor:pointer;
             const mood = document.getElementById("moodInput").value.trim();
 
             let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
             if (saved.length >= currentLimit) {
 
@@ -1531,7 +1557,7 @@ Building something intentional.
 
                 let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
 
-                let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+                let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
                 const saveBtn2 = document.getElementById("savePlaylistBtn");
 
@@ -1554,7 +1580,7 @@ Building something intentional.
             const continueBtn = document.getElementById("continueBtn");
 
             let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
             if (saved.length >= currentLimit) {
 
@@ -1825,7 +1851,7 @@ $3 = Unlock 25 more saved songs 🎧
                 continueBtn.style.display = "inline-block";
             }
 
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 10;
+            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
             currentLimit += 25;
 
