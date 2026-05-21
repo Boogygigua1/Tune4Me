@@ -186,7 +186,11 @@ IMPORTANT CULTURAL GUIDELINES:
 
 - Include culturally relevant music naturally when emotionally appropriate.
 
-- Allow emotionally accurate cross-cultural discovery when it fits the mood.
+- If the user explicitly requests a language or cultural music atmosphere, strongly honor that request while preserving emotional flow and authenticity.
+
+- Recommendations should feel emotionally and culturally natural, not experimental for the sake of variety.
+
+- Discovery should emerge organically from the emotional atmosphere rather than forced genre blending.
 
 - Do not force all recommendations into the user's language.
 
