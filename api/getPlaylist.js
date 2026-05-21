@@ -200,6 +200,16 @@ IMPORTANT CULTURAL GUIDELINES:
 
 - Focus on emotional truth, not superficial genre or regional assumptions.
 
+- When emotionally appropriate, include 1-3 culturally adjacent or multilingual songs that naturally fit the emotional atmosphere.
+
+- Cross-cultural recommendations should feel emotionally earned, not tokenized.
+
+- Do not treat multilingual or non-English songs as novelty picks.
+
+- If the user's language suggests an emotional or cultural texture, honor it gently without assuming their identity.
+
+- A strong playlist may include both familiar emotional anchors and unexpected songs from other languages or regions when they deepen the mood.
+
 The playlist must follow this emotional progression:
 
 1. Emotional validation
