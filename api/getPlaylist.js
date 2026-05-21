@@ -198,7 +198,7 @@ IMPORTANT CULTURAL GUIDELINES:
   • familiarity
   • emotional authenticity
   • cultural respect
-  • eclectic discovery
+  • natural discovery
 
 - Treat non-English music with the same emotional depth and importance as English-language music.
 
@@ -212,7 +212,7 @@ IMPORTANT CULTURAL GUIDELINES:
 
 - If the user's language suggests an emotional or cultural texture, honor it gently without assuming their identity.
 
-- A strong playlist may include both familiar emotional anchors and unexpected songs from other languages or regions when they deepen the mood.
+- A strong playlist may include emotionally meaningful songs from other languages or regions when they naturally deepen the mood.
 
 The playlist must follow this emotional progression:
 
