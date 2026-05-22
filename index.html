@@ -363,6 +363,15 @@ margin-right:auto;
 
         console.log("SCRIPT LOADED");
 
+        function trackTune4Me(eventName, details = {}) {
+            if (window.va) {
+                window.va("event", {
+                    name: eventName,
+                    data: details
+                });
+            }
+        }
+
         let playerInstance;
 
         let playlistTimer = null;
@@ -532,6 +541,8 @@ margin-right:auto;
 
             box.id = "upgradeBox";
 
+            trackTune4Me("upgrade_box_shown");
+
             box.style.marginTop = "15px";
             box.style.padding = "15px";
             box.style.background = "#fff3cd";
@@ -619,6 +630,11 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
             if (!isPlayingAll) {
                 loadSavedSongs();
             }
+
+            trackTune4Me("song_saved", {
+                song,
+                artist
+            });
 
             alert("Song saved 🎧");
         }
@@ -910,6 +926,11 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
             document.querySelectorAll(".video-wrapper").forEach(w => w.remove());
 
             console.log("playSong triggered:", song, artist);
+
+            trackTune4Me("song_previewed", {
+                song,
+                artist
+            });
 
             // ✅ Track active song
 
@@ -1260,6 +1281,11 @@ cursor:pointer;
                 alert("Tell Tune4Me how you're feeling first 🎧");
                 return;
             }
+
+            trackTune4Me("playlist_created", {
+                moodLength: mood.length
+            });
+            
             continueCount = 0;
             localStorage.setItem("continueCount", continueCount);
 
