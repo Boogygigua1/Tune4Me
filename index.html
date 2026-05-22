@@ -492,6 +492,12 @@ margin-right:auto;
 
             localStorage.setItem("songFeedback", JSON.stringify(feedback));
 
+            trackTune4Me("song_feedback", {
+                song,
+                artist,
+                rating
+            });
+
             if (rating === "bad") {
 
                 let avoidSongs = JSON.parse(localStorage.getItem("avoidSongs")) || [];
@@ -578,6 +584,17 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
             if (upgradeBtn) {
                 upgradeBtn.addEventListener("click", () => {
+
+                    let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+
+                    let currentLimit =
+                        parseInt(localStorage.getItem("saveLimit")) || 15;
+
+                    trackTune4Me("upgrade_clicked", {
+                        savedSongs: saved.length,
+                        currentLimit: currentLimit
+                    });
+
                     window.open(
                         "https://buy.stripe.com/dRm6oHdbi0H0bi45x22Nq00",
                         "_self"
@@ -633,7 +650,9 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
             trackTune4Me("song_saved", {
                 song,
-                artist
+                artist,
+                totalSavedSongs: saved.length,
+                currentLimit: currentLimit
             });
 
             alert("Song saved 🎧");
@@ -684,6 +703,14 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
             localStorage.setItem("savedSongs", JSON.stringify(saved));
 
             loadSavedSongs();
+
+            trackTune4Me("song_saved", {
+                song,
+                artist,
+                totalSavedSongs: saved.length,
+                currentLimit: currentLimit,
+                source: "save_with_video"
+            });
         }
 
         function savePlaylist(event) {
@@ -711,6 +738,11 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
                     hitLimit = true;
 
+                    trackTune4Me("save_limit_reached", {
+                        totalSavedSongs: saved.length,
+                        currentLimit: currentLimit
+                    });
+
                     if (currentLimit < MAX_SAVE_LIMIT) {
                         showUpgradeBox();
                     }
@@ -734,6 +766,12 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
             localStorage.setItem("savedSongs", JSON.stringify(saved));
             loadSavedSongs();
+
+            trackTune4Me("playlist_saved", {
+                addedCount: addedCount,
+                totalSavedSongs: saved.length,
+                currentLimit: currentLimit
+            });
 
             if (hitLimit) {
 
@@ -1285,7 +1323,7 @@ cursor:pointer;
             trackTune4Me("playlist_created", {
                 moodLength: mood.length
             });
-            
+
             continueCount = 0;
             localStorage.setItem("continueCount", continueCount);
 
@@ -1550,6 +1588,12 @@ Building something intentional.
 
                         ytBar.addEventListener("click", () => {
 
+
+                            trackTune4Me("youtube_listen_clicked", {
+                                song,
+                                artist
+                            });
+
                             const ytQuery = encodeURIComponent(
                                 `${song} ${artist} official audio`
                             );
@@ -1598,6 +1642,10 @@ Building something intentional.
         async function continuePlaylist() {
 
             console.log("USER CONTINUED PLAYLIST");
+
+            trackTune4Me("playlist_continued", {
+                continueCount: continueCount + 1
+            });
 
             const result = document.getElementById("result");
             const continueBtn = document.getElementById("continueBtn");
@@ -1806,6 +1854,12 @@ $3 = Unlock 25 more saved songs 🎧
                     ytBar.style.border = "1px solid #ddd";
 
                     ytBar.addEventListener("click", () => {
+
+
+                        trackTune4Me("youtube_listen_clicked", {
+                            song,
+                            artist
+                        });
 
                         const ytQuery = encodeURIComponent(
                             `${song} ${artist} official audio`
