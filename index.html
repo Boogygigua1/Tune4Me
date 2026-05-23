@@ -30,6 +30,7 @@
             background-color: #f4f4f4;
             text-align: center;
             padding: 20px;
+            padding-bottom: 180px;
             font-size: 20px;
 
             overflow-y: auto;
@@ -415,7 +416,7 @@ margin-right:auto;
         window.onload = function () {
 
             trackTune4Me("app_loaded", {
-                
+
                 hasSavedSongs:
                     (JSON.parse(localStorage.getItem("savedSongs")) || []).length > 0,
 
