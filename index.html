@@ -354,6 +354,22 @@ margin-right:auto;
             box-sizing:border-box;
         "></textarea>
 
+        </textarea>
+
+        <script>
+            document.getElementById("supportMessage").addEventListener("keydown", function (e) {
+
+                if (e.key === "Enter" && !e.shiftKey) {
+
+                    e.preventDefault();
+
+                    this.form.submit();
+                }
+            });
+        </script>
+
+        <br><br>
+
         <br><br>
 
         <button type="submit">
