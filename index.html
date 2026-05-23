@@ -413,6 +413,19 @@ margin-right:auto;
         }
 
         window.onload = function () {
+
+            trackTune4Me("app_loaded", {
+                
+                hasSavedSongs:
+                    (JSON.parse(localStorage.getItem("savedSongs")) || []).length > 0,
+
+                savedSongCount:
+                    (JSON.parse(localStorage.getItem("savedSongs")) || []).length,
+
+                saveLimit:
+                    parseInt(localStorage.getItem("saveLimit")) || 15
+            });
+
             loadSavedSongs();
 
             if (currentPlaylist && currentPlaylist.length > 0) {
