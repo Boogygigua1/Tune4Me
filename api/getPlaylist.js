@@ -353,6 +353,15 @@ Mood: ${enhancedMood}`
 
     const data = await response.json();
 
+    if (!response.ok || data.error || !data.choices) {
+        console.error("OPENAI API ERROR:", data);
+
+        return res.status(200).json({
+            error: "Playlist temporarily unavailable",
+            details: data.error || "No choices returned"
+        });
+    }
+
     console.log("OPENAI RESPONSE:", data);
 
     res.status(200).json(data);
