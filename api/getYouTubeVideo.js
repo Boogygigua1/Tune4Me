@@ -62,7 +62,7 @@ export default async function handler(req, res) {
         const searchTerm = `"${query}" official audio`;
 
         const response = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchTerm)}&key=${YOUTUBE_API_KEY}&maxResults=5&type=video`
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchTerm)}&key=${YOUTUBE_API_KEY}&maxResults=3&type=video`
         );
 
         const data = await response.json();
@@ -79,7 +79,7 @@ export default async function handler(req, res) {
                 reason === "forbidden" ||
                 data.error.code === 403
             ) {
-                global.youtubeCooldownUntil = Date.now() + 1000 * 60 * 30;
+                global.youtubeCooldownUntil = Date.now() + 1000 * 20;
             }
 
             return res.status(200).json({
