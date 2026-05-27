@@ -308,8 +308,8 @@ margin-right:auto;
         <br><br>
 
         Please respect the creative work behind Tune4Me™.
-        The app’s design, playlist experience, branding, and proprietary code are not authorized for unauthorized
-        copying or redistribution 🎧
+        The app’s design, playlist experience, branding, and proprietary code are not authorized for copying or
+        redistribution 🎧
     </div>
 
     <p style="font-size:13px; color:#888;">Playing from your saved songs</p>
@@ -1098,16 +1098,11 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
     line-height:1.6;
     color:#555;
 ">
-⚠ Preview unavailable right now.<br><br>
+🎧 Playback Note<br><br>
 
-This may happen because:
-<br>
-• YouTube preview limits were reached
-<br>
-• The artist blocked embedded playback
-<br><br>
+This preview is temporarily unavailable.<br><br>
 
-You can still listen directly on YouTube 🎧
+You can still listen to this song directly on YouTube 🎧
 <br><br>
 
 <button class="fallbackYTBtn"
@@ -1127,9 +1122,7 @@ cursor:pointer;
                     const fallbackBtn = slot.querySelector(".fallbackYTBtn");
 
                     if (fallbackBtn) {
-
                         fallbackBtn.addEventListener("click", () => {
-
                             const ytQuery = encodeURIComponent(
                                 `${song} ${artist} official audio`
                             );
@@ -1410,6 +1403,18 @@ Building something intentional.
                 }
 
                 console.log("PLAYLIST DATA:", JSON.stringify(data, null, 2));
+
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    console.error("PLAYLIST BAD RESPONSE:", data);
+                    result.innerHTML = `
+<div class="card">
+<strong>🎧 Tune4Me needs a moment</strong><br><br>
+The playlist did not load correctly. Please try again in a moment 🎧
+</div>
+`;
+                    if (button) button.disabled = false;
+                    return;
+                }
 
                 const raw = data.choices[0].message.content;
                 const lines = raw.split("\n");
@@ -1722,7 +1727,20 @@ Building something intentional.
                 if (!data.choices || !data.choices[0] || !data.choices[0].message) {
                     console.error("CONTINUE PLAYLIST BAD RESPONSE:", data);
                     continueBtn.innerText = "▶ Continue This Mood";
-                    alert("Tune4Me had trouble continuing this mood. Please try again 🎧");
+                    const fallbackCard = document.createElement("div");
+
+                    fallbackCard.className = "card";
+
+                    fallbackCard.innerHTML = `
+<strong>🎧 Still feeling this mood?</strong><br><br>
+
+Tune4Me is taking a short pause while building more recommendations.<br><br>
+
+Try previewing your saved songs, exploring YouTube suggestions,
+or continue again in a moment 🎧
+`;
+
+                    result.prepend(fallbackCard);
                     return;
                 }
 
