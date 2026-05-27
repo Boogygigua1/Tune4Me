@@ -1972,10 +1972,14 @@ $3 = Unlock 25 more saved songs 🎧
 
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
-            currentLimit += 25;
-
-            if (currentLimit > MAX_SAVE_LIMIT) {
-                currentLimit = MAX_SAVE_LIMIT;
+            if (currentLimit < 25) {
+                currentLimit = 25;
+            } else if (currentLimit < 50) {
+                currentLimit = 50;
+            } else if (currentLimit < 75) {
+                currentLimit = 75;
+            } else {
+                currentLimit = 100;
             }
 
             localStorage.setItem("saveLimit", currentLimit);
