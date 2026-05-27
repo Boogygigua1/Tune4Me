@@ -1718,6 +1718,14 @@ Building something intentional.
                 });
 
                 const data = await response.json();
+
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    console.error("CONTINUE PLAYLIST BAD RESPONSE:", data);
+                    continueBtn.innerText = "▶ Continue This Mood";
+                    alert("Tune4Me had trouble continuing this mood. Please try again 🎧");
+                    return;
+                }
+
                 const raw = data.choices[0].message.content;
                 const lines = raw.split("\n");
 
