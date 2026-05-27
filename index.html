@@ -795,6 +795,29 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
                 // ✅ SAVE
                 saved.push({ song, artist });
 
+                const matchingCard = [...document.querySelectorAll("#result .card")]
+                    .find(card => {
+                        const text = card.innerText.toLowerCase();
+                        return text.includes(song.toLowerCase()) &&
+                            text.includes(artist.toLowerCase());
+                    });
+
+                if (matchingCard && !matchingCard.querySelector(".saved-label")) {
+
+                    const savedLabel = document.createElement("div");
+
+                    savedLabel.className = "saved-label";
+
+                    savedLabel.style.marginTop = "8px";
+                    savedLabel.style.fontSize = "12px";
+                    savedLabel.style.color = "#4CAF50";
+                    savedLabel.style.fontWeight = "bold";
+
+                    savedLabel.innerText = "✅ Saved to your archive";
+
+                    matchingCard.appendChild(savedLabel);
+                }
+
                 addedCount++;
             }
 
@@ -826,7 +849,15 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
             } else {
 
-                alert("Saved " + addedCount + " new songs 🎧");
+                alert(
+                    "Saved " +
+                    addedCount +
+                    " songs 🎧\n\nYour archive is now at " +
+                    saved.length +
+                    " / " +
+                    currentLimit +
+                    "."
+                );
             }
         }
 
