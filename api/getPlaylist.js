@@ -89,25 +89,27 @@ User clue:
 `;
     }
 
-    const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + process.env.OPENAI_API_KEY
-            },
-            body: JSON.stringify({
-                model: "gpt-4o-mini",
-                messages: [
-                    {
-                        role: "user",
-                        content: `You are an expert human music curator with deep knowledge of music culture, festival culture, nostalgia, underground music discovery, emotional storytelling, and generational music trends.
+    try {
+
+        const response = await fetch(
+            "https://api.openai.com/v1/chat/completions",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + process.env.OPENAI_API_KEY
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o-mini",
+                    messages: [
+                        {
+                            role: "user",
+                            content: `You are an expert human music curator with deep knowledge of music culture, festival culture, nostalgia, underground music discovery, emotional storytelling, and generational music trends.
 
 FIRST:
 ${hasMusicClue
-                                ? "If the user gives clues about music history, artists, bands, decades, lyrics, or famous songs, intelligently identify likely matches before generating recommendations."
-                                : "Interpret the user's emotional state deeply before selecting songs."}
+                                    ? "If the user gives clues about music history, artists, bands, decades, lyrics, or famous songs, intelligently identify likely matches before generating recommendations."
+                                    : "Interpret the user's emotional state deeply before selecting songs."}
 
 Identify:
 - emotional tone
@@ -345,24 +347,34 @@ If the user directly references a real song, artist, band, album, genre, or musi
   • atmosphere
 
 Mood: ${enhancedMood}`
-                    }
-                ]
-            })
+                        }
+                    ]
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || data.error || !data.choices) {
+            console.error("OPENAI API ERROR:", data);
+
+            return res.status(200).json({
+                error: "Playlist temporarily unavailable",
+                details: data.error || "No choices returned"
+            });
         }
-    );
 
-    const data = await response.json();
+        console.log("OPENAI RESPONSE:", data);
 
-    if (!response.ok || data.error || !data.choices) {
-        console.error("OPENAI API ERROR:", data);
+        return res.status(200).json(data);
+
+    } catch (error) {
+
+        console.error("GET PLAYLIST SERVER ERROR:", error);
 
         return res.status(200).json({
             error: "Playlist temporarily unavailable",
-            details: data.error || "No choices returned"
+            details: error.message
         });
     }
-
-    console.log("OPENAI RESPONSE:", data);
-
-    res.status(200).json(data);
 }
