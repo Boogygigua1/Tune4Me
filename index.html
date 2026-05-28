@@ -664,7 +664,7 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
                 if (currentLimit >= MAX_SAVE_LIMIT) {
 
-                    alert("🎧 Your Tune4Me archive is full.");
+                    alert("🎧 Your Tune4Me archive is full at 100 saved songs.\n\nYou can still create playlists and explore music anytime.\n\nDelete older songs to make room for new favorites.");
 
                 } else {
 
@@ -721,7 +721,7 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
                 if (currentLimit >= MAX_SAVE_LIMIT) {
 
-                    alert("🎧 You’ve reached the full Tune4Me archive limit.");
+                    alert("🎧 Your Tune4Me archive is full at 100 saved songs.\n\nYou can still create playlists and explore music anytime.\n\nDelete older songs to make room for new favorites.");
 
                 } else {
 
@@ -834,7 +834,7 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
                 if (currentLimit >= MAX_SAVE_LIMIT) {
 
-                    alert("🎧 You’ve reached the full Tune4Me archive limit.");
+                    alert("🎧 Your Tune4Me archive is full at 100 saved songs.\n\nYou can still create playlists and explore music anytime.\n\nDelete older songs to make room for new favorites.");
 
                 } else {
 
@@ -1359,20 +1359,6 @@ cursor:pointer;
 
             const mood = document.getElementById("moodInput").value.trim();
 
-            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
-
-            if (saved.length >= currentLimit) {
-
-                if (currentLimit >= MAX_SAVE_LIMIT) {
-                    alert("🎧 You’ve reached the full Tune4Me archive limit.");
-                } else {
-                    showUpgradeBox();
-                }
-
-                return;
-            }
-
             if (!mood) {
                 alert("Tell Tune4Me how you're feeling first 🎧");
                 return;
@@ -1719,21 +1705,6 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
             const result = document.getElementById("result");
             const continueBtn = document.getElementById("continueBtn");
-
-            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
-
-            if (saved.length >= currentLimit) {
-
-                if (currentLimit >= MAX_SAVE_LIMIT) {
-                    alert("🎧 You’ve reached the full Tune4Me archive limit.");
-                } else {
-                    showUpgradeBox();
-                }
-
-                continueBtn.innerText = "▶ Continue This Mood";
-                return;
-            }
 
             continueCount++;
             localStorage.setItem("continueCount", continueCount);
