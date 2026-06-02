@@ -318,6 +318,77 @@ margin-right:auto;
 
     <div id="saveCounter"></div>
 
+    <div id="archiveInfo" style="
+margin-top:12px;
+padding:12px;
+background:rgba(255,255,255,0.45);
+backdrop-filter:blur(8px);
+border-radius:12px;
+font-size:13px;
+line-height:1.6;
+color:#555;
+max-width:520px;
+margin-left:auto;
+margin-right:auto;
+">
+
+        🎧 Build your favorites archive over time.
+
+        Create unlimited playlists, save the songs you love, and remove favorites whenever you'd like.
+
+        Need more space later?
+
+        <button onclick="window.open('https://buy.stripe.com/dRm6oHdbi0H0bi45x22Nq00','_self')" style="
+margin-top:10px;
+padding:10px 14px;
+border:none;
+border-radius:6px;
+background:#4CAF50;
+color:white;
+cursor:pointer;
+display:block;
+margin-left:auto;
+margin-right:auto;
+">
+            Unlock More Saved Songs 🎧
+        </button>
+
+    </div>
+
+    <div id="archiveInfo" style="
+margin-top:10px;
+padding:12px;
+background:rgba(255,255,255,0.5);
+border-radius:10px;
+font-size:13px;
+line-height:1.6;
+color:#555;
+max-width:500px;
+margin-left:auto;
+margin-right:auto;
+">
+
+        🎧 You can continue creating playlists and discovering music anytime.
+
+        Save up to 15 songs free, delete songs whenever you'd like, or expand your archive as your music journey grows.
+
+        <button onclick="window.open('https://buy.stripe.com/dRm6oHdbi0H0bi45x22Nq00','_self')" style="
+margin-top:10px;
+padding:10px 14px;
+border:none;
+border-radius:6px;
+background:#4CAF50;
+color:white;
+cursor:pointer;
+display:block;
+margin-left:auto;
+margin-right:auto;
+">
+            Unlock More Saved Songs 🎧
+        </button>
+
+    </div>
+
     <button class="play-saved-btn" onclick="playSavedSongs(this)">
         ▶ Preview First Song
     </button>
@@ -589,15 +660,13 @@ margin-right:auto;
             box.style.borderRadius = "10px";
 
             box.innerHTML = `
-        <strong>🎧 Your Tune4Me archive is full</strong><br><br>
+        <strong>🎧 Your favorites archive is full</strong><br><br>
 
-Your saved songs and playlists are always preserved.<br><br>
+You can continue creating playlists and discovering new music anytime.<br><br>
 
-Continue exploring this musical journey intentionally, one stage at a time.<br><br>
+Your saved favorites remain stored on this device.<br><br>
 
-✨ Continue saving songs from your musical journey with 25 more saves for $3 🎧
-
-✨ Continue exploring intentionally, up to 100 total saved songs 🎧
+If you'd like more room for favorites, you can expand your archive by 25 additional saves for $3 🎧
 
 <br><br>
 
@@ -898,8 +967,17 @@ Continue exploring this musical journey intentionally, one stage at a time.<br><
 
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
+            let remaining = currentLimit - saved.length;
+
+
             document.getElementById("saveCounter").innerText =
-                saved.length + " / " + currentLimit + " songs saved 🎧";
+                saved.length + " / " + currentLimit + " favorite songs saved 🎧" +
+                (remaining > 0
+                    ? "\n\n" + remaining + " favorite song spaces remaining" +
+                    "\n\nFavorites are stored locally on this device."
+                    : "\n\nYour favorites archive is full." +
+                    "\nYou can still discover new music anytime 🎧" +
+                    "\n\nFavorites are stored locally on this device.");
 
             const savedSection = document.getElementById("savedSongs");
 
