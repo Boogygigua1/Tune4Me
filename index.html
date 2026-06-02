@@ -118,8 +118,7 @@
 
         <p>
             Create playlists instantly, explore music that matches your moment,
-            and save up to 15 songs locally on your device — completely free,
-            with no email signup required.
+            completely free with no email signup required.
         </p>
 
         <p>
@@ -337,40 +336,6 @@ margin-right:auto;
         Create unlimited playlists, save the songs you love, and remove favorites whenever you'd like.
 
         Need more space later?
-
-        <button onclick="window.open('https://buy.stripe.com/dRm6oHdbi0H0bi45x22Nq00','_self')" style="
-margin-top:10px;
-padding:10px 14px;
-border:none;
-border-radius:6px;
-background:#4CAF50;
-color:white;
-cursor:pointer;
-display:block;
-margin-left:auto;
-margin-right:auto;
-">
-            Unlock More Saved Songs 🎧
-        </button>
-
-    </div>
-
-    <div id="archiveInfo" style="
-margin-top:10px;
-padding:12px;
-background:rgba(255,255,255,0.5);
-border-radius:10px;
-font-size:13px;
-line-height:1.6;
-color:#555;
-max-width:500px;
-margin-left:auto;
-margin-right:auto;
-">
-
-        🎧 You can continue creating playlists and discovering music anytime.
-
-        Save up to 15 songs free, delete songs whenever you'd like, or expand your archive as your music journey grows.
 
         <button onclick="window.open('https://buy.stripe.com/dRm6oHdbi0H0bi45x22Nq00','_self')" style="
 margin-top:10px;
@@ -670,10 +635,6 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
 <br><br>
 
-<button id="upgradeBtn"
-    style="padding:10px 15px; border:none; border-radius:6px; background:#4CAF50; color:white; cursor:pointer;">
-    Unlock +25 Saves 🎧
-</button>
 `;
 
             document.getElementById("result").appendChild(box);
@@ -683,27 +644,6 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 block: "center"
             });
 
-            const upgradeBtn = document.getElementById("upgradeBtn");
-
-            if (upgradeBtn) {
-                upgradeBtn.addEventListener("click", () => {
-
-                    let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-
-                    let currentLimit =
-                        parseInt(localStorage.getItem("saveLimit")) || 15;
-
-                    trackTune4Me("upgrade_clicked", {
-                        savedSongs: saved.length,
-                        currentLimit: currentLimit
-                    });
-
-                    window.open(
-                        "https://buy.stripe.com/dRm6oHdbi0H0bi45x22Nq00",
-                        "_self"
-                    );
-                });
-            }
         }
 
 
