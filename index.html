@@ -112,13 +112,15 @@
     border-radius:8px;
     text-align:center;
 ">
-        <strong>🎵 Tune4Me Beta</strong>
+        <strong>Tune4Me™</strong>
+
+        <br>
+
+        Music that understands your moment.
 
         <br><br>
 
-        Tune4Me is currently in active development.
-
-        Recommendations, features, and playlists may change as the service continues to improve.
+        Tune4Me is continuously improving. Thanks for helping shape the experience.
 
         <br><br>
 
@@ -1167,17 +1169,35 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 try {
                     data = JSON.parse(text);
                 } catch {
-                    slot.innerHTML = "Server response error";
-                    return;
+                    data = {
+                        error: "Preview unavailable",
+                        reason: "upstream_error"
+                    };
                 }
 
                 if (!data.videoId || data.videoId === "undefined") {
+                    const previewReason = data.reason ||
+                        (response.status === 429
+                            ? "quota_limited"
+                            : response.status === 404
+                                ? "no_result"
+                                : "upstream_error");
+
+                    const previewMessages = {
+                        quota_limited: "YouTube previews are taking a short pause right now. You can still listen directly on YouTube.",
+                        no_result: "Tune4Me could not find a reliable preview for this song. You can still search on YouTube.",
+                        missing_key: "Previews are temporarily unavailable right now. You can still listen directly on YouTube.",
+                        upstream_error: "YouTube lookup is having trouble right now. You can still listen directly on YouTube."
+                    };
+
+                    const previewMessage = previewMessages[previewReason] ||
+                        previewMessages.upstream_error;
 
                     console.log("youtube_preview_request_finished", {
                         status: response.status,
                         durationMs: Date.now() - previewStartedAt,
                         resultFound: false,
-                        errorCategory: data.error || "missing_video_id"
+                        errorCategory: previewReason
                     });
 
                     slot.innerHTML = `
@@ -1191,9 +1211,9 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 ">
 🎧 Playback Note<br><br>
 
-This preview is temporarily unavailable.<br><br>
+${previewMessage}<br><br>
 
-You can still listen to this song directly on YouTube 🎧
+Use the button below to open YouTube 🎧
 <br><br>
 
 <button class="fallbackYTBtn"
@@ -2114,7 +2134,7 @@ $3 = Unlock 25 more saved songs 🎧
     </script>
 
     <footer class="project-credit">
-    Tune4Me Beta © 2026 • A Vads Best Project
+    Tune4Me™ © 2026 • A Vads Best Project
     <br>
     Created by Vad Monty • ChatGPT Aided
 </footer>
