@@ -1,4 +1,6 @@
 export default async function handler(req, res) {
+    const startedAt = Date.now();
+
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method not allowed" });
     }
@@ -30,7 +32,10 @@ export default async function handler(req, res) {
     global.youtubeCooldownUntil = global.youtubeCooldownUntil || 0;
 
     if (global.videoCache[cacheKey]) {
-        console.log("CACHE HIT:", query);
+        console.log("YOUTUBE PREVIEW CACHE HIT:", {
+            durationMs: Date.now() - startedAt,
+            resultFound: true
+        });
 
         return res.status(200).json({
             videoId: global.videoCache[cacheKey],
@@ -39,7 +44,10 @@ export default async function handler(req, res) {
     }
 
     if (global.videoMissCache[cacheKey]) {
-        console.log("MISS CACHE HIT:", query);
+        console.log("YOUTUBE PREVIEW MISS CACHE HIT:", {
+            durationMs: Date.now() - startedAt,
+            resultFound: false
+        });
 
         return res.status(200).json({
             error: "Preview unavailable",
@@ -48,7 +56,10 @@ export default async function handler(req, res) {
     }
 
     if (Date.now() < global.youtubeCooldownUntil) {
-        console.log("YOUTUBE COOLDOWN ACTIVE");
+        console.log("YOUTUBE PREVIEW LIMITED:", {
+            durationMs: Date.now() - startedAt,
+            errorCategory: "cooldown"
+        });
 
         return res.status(200).json({
             error: "YouTube preview temporarily limited",
@@ -67,9 +78,6 @@ export default async function handler(req, res) {
 
         const data = await response.json();
 
-        console.log("YOUTUBE SEARCH TERM:", searchTerm);
-        console.log("YOUTUBE RESPONSE:", data);
-
         if (data.error) {
             const reason = data.error?.errors?.[0]?.reason || data.error?.status || "unknown";
 
@@ -81,6 +89,12 @@ export default async function handler(req, res) {
             ) {
                 global.youtubeCooldownUntil = Date.now() + 1000 * 20;
             }
+
+            console.log("YOUTUBE PREVIEW API ERROR:", {
+                status: response.status,
+                durationMs: Date.now() - startedAt,
+                errorCategory: reason
+            });
 
             return res.status(200).json({
                 error: "YouTube preview temporarily unavailable",
@@ -100,7 +114,11 @@ export default async function handler(req, res) {
             if (validVideo) {
                 global.videoCache[cacheKey] = validVideo.id.videoId;
 
-                console.log("CACHE STORE:", query);
+                console.log("YOUTUBE PREVIEW FOUND:", {
+                    status: response.status,
+                    durationMs: Date.now() - startedAt,
+                    resultFound: true
+                });
 
                 return res.status(200).json({
                     videoId: validVideo.id.videoId,
@@ -112,12 +130,21 @@ export default async function handler(req, res) {
 
         global.videoMissCache[cacheKey] = true;
 
+        console.log("YOUTUBE PREVIEW NOT FOUND:", {
+            status: response.status,
+            durationMs: Date.now() - startedAt,
+            resultFound: false
+        });
+
         return res.status(200).json({
             error: "No video found"
         });
 
     } catch (error) {
-        console.error("YOUTUBE SERVER ERROR:", error);
+        console.error("YOUTUBE SERVER ERROR:", {
+            durationMs: Date.now() - startedAt,
+            errorCategory: error.name || "server_error"
+        });
 
         return res.status(200).json({
             error: "Preview unavailable",

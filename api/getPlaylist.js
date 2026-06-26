@@ -1,6 +1,23 @@
-console.log("Force rebuild");
+const MAX_MOOD_LENGTH = 500;
+const MAX_FEEDBACK_SONGS = 30;
+
+function limitSongPayload(value) {
+    if (!Array.isArray(value)) return [];
+
+    return value
+        .slice(0, MAX_FEEDBACK_SONGS)
+        .map(item => ({
+            song: String(item?.song || "").slice(0, 120),
+            artist: String(item?.artist || "").slice(0, 120)
+        }))
+        .filter(item => item.song && item.artist);
+}
 
 export default async function handler(req, res) {
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Method not allowed" });
+    }
+
     let body;
 
 
@@ -12,11 +29,28 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Invalid JSON body" });
     }
 
-    const mood = body?.mood || "";
+    const mood = String(body?.mood || "").trim();
+
+    if (!mood) {
+        return res.status(400).json({ error: "Mood prompt is required" });
+    }
+
+    if (mood.length > MAX_MOOD_LENGTH) {
+        return res.status(413).json({
+            error: "Mood prompt is too long",
+            maxLength: MAX_MOOD_LENGTH
+        });
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+        console.error("GET PLAYLIST CONFIG ERROR:", { missing: "OPENAI_API_KEY" });
+        return res.status(500).json({ error: "Playlist service is not configured" });
+    }
+
     const length = body?.length || 10;
     const existingSongs = body?.existingSongs || [];
-    const avoidSongs = body?.avoidSongs || [];
-    const likedSongs = body?.likedSongs || [];
+    const avoidSongs = limitSongPayload(body?.avoidSongs);
+    const likedSongs = limitSongPayload(body?.likedSongs);
 
     let songReference = "";
     let artistReference = "";
@@ -32,8 +66,6 @@ export default async function handler(req, res) {
         songReference && artistReference
             ? `- ${songReference} - ${artistReference}`
             : "";
-
-    console.log("BODY RECEIVED:", req.body);
 
     const existingSongList = existingSongs
         .map(s => `${s.song} - ${s.artist}`)
@@ -353,18 +385,46 @@ Mood: ${enhancedMood}`
             }
         );
 
-        const data = await response.json();
+        let data;
 
-        if (!response.ok || data.error || !data.choices) {
-            console.error("OPENAI API ERROR:", data);
+        try {
+            data = await response.json();
+        } catch {
+            console.error("OPENAI API NON_JSON_RESPONSE:", {
+                status: response.status
+            });
 
-            return res.status(200).json({
+            return res.status(502).json({
                 error: "Playlist temporarily unavailable",
-                details: data.error || "No choices returned"
+                reason: "invalid_upstream_response"
             });
         }
 
-        console.log("OPENAI RESPONSE:", data);
+        if (!response.ok || data.error || !data.choices) {
+            const upstreamStatus = response.status || 502;
+            const safeStatus = upstreamStatus === 429
+                ? 429
+                : upstreamStatus >= 400 && upstreamStatus < 500
+                    ? 502
+                    : 503;
+
+            console.error("OPENAI API ERROR:", {
+                status: upstreamStatus,
+                reason: data.error?.type || data.error?.code || "missing_choices"
+            });
+
+            return res.status(safeStatus).json({
+                error: "Playlist temporarily unavailable",
+                reason: data.error?.type || data.error?.code || "missing_choices"
+            });
+        }
+
+        console.log("PLAYLIST GENERATED:", {
+            choiceCount: data.choices.length,
+            promptLength: mood.length,
+            likedSongCount: likedSongs.length,
+            avoidSongCount: avoidSongs.length
+        });
 
         return res.status(200).json(data);
 
@@ -372,9 +432,9 @@ Mood: ${enhancedMood}`
 
         console.error("GET PLAYLIST SERVER ERROR:", error);
 
-        return res.status(200).json({
+        return res.status(500).json({
             error: "Playlist temporarily unavailable",
-            details: error.message
+            reason: "server_error"
         });
     }
 }

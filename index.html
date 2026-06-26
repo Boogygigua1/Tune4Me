@@ -87,11 +87,47 @@
             width: 95%;
             text-align: left;
         }
+
+        .project-credit {
+            font-size: 10px;
+            color: #aaa;
+            opacity: 0.75;
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
     </style>
 </head>
 
 
 <body>
+
+    <div id="betaNotice" style="
+    background:#fff3cd;
+    color:#664d03;
+    border:1px solid #ffecb5;
+    padding:14px;
+    margin:12px;
+    border-radius:8px;
+    text-align:center;
+">
+        <strong>🎵 Tune4Me Beta</strong>
+
+        <br><br>
+
+        Tune4Me is currently in active development.
+
+        Recommendations, features, and playlists may change as the service continues to improve.
+
+        <br><br>
+
+        <button onclick="
+        document.getElementById('betaNotice').style.display='none';
+    ">
+            Continue
+        </button>
+    </div>
 
     <div style="
     font-size: 0.9rem;
@@ -662,7 +698,6 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
             );
 
             if (exists) {
-                console.log("Duplicate detected:", song, artist);
                 alert("This song is already saved 👍");
                 return;
             }
@@ -1046,7 +1081,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
             // 🔴 remove all video wrappers (ensures no duplicates)
             document.querySelectorAll(".video-wrapper").forEach(w => w.remove());
 
-            console.log("playSong triggered:", song, artist);
+            console.log("song_preview_started");
 
             trackTune4Me("song_previewed", {
                 song,
@@ -1073,7 +1108,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
             if (cachedVideoId) {
 
-                console.log("LOCAL CACHE HIT:", song, artist);
+                console.log("youtube_preview_cache_hit");
 
                 const embedUrl =
                     "https://www.youtube-nocookie.com/embed/" +
@@ -1114,7 +1149,9 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
             try {
                 const query = (song + " " + artist).trim();
 
-                console.log("FETCH START:", query);
+                const previewStartedAt = Date.now();
+
+                console.log("youtube_preview_request_started");
 
                 const response = await fetch("/api/getYouTubeVideo", {
                     method: "POST",
@@ -1126,8 +1163,6 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 const text = await response.text();
 
-                console.log("FETCH RESPONSE:", text);
-
                 let data;
                 try {
                     data = JSON.parse(text);
@@ -1137,6 +1172,13 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 }
 
                 if (!data.videoId || data.videoId === "undefined") {
+
+                    console.log("youtube_preview_request_finished", {
+                        status: response.status,
+                        durationMs: Date.now() - previewStartedAt,
+                        resultFound: false,
+                        errorCategory: data.error || "missing_video_id"
+                    });
 
                     slot.innerHTML = `
 <div style="
@@ -1204,7 +1246,11 @@ cursor:pointer;
                 window.currentDurationSeconds = durationSeconds;
 
                 saveCachedVideo(song, artist, data.videoId);
-                console.log("LOCAL CACHE STORE:", song, artist);
+                console.log("youtube_preview_request_finished", {
+                    status: response.status,
+                    durationMs: Date.now() - previewStartedAt,
+                    resultFound: true
+                });
 
                 const embedUrl =
                     "https://www.youtube-nocookie.com/embed/" +
@@ -1437,10 +1483,16 @@ Building something intentional.
                     return;
                 }
 
-                console.log("PLAYLIST DATA:", JSON.stringify(data, null, 2));
+                console.log("playlist_response_received", {
+                    status: response.status,
+                    hasChoices: !!data.choices
+                });
 
                 if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                    console.error("PLAYLIST BAD RESPONSE:", data);
+                    console.error("playlist_bad_response", {
+                        status: response.status,
+                        hasChoices: !!data.choices
+                    });
                     result.innerHTML = `
 <div class="card">
 <strong>🎧 Tune4Me needs a moment</strong><br><br>
@@ -1477,7 +1529,9 @@ The playlist did not load correctly. Please try again in a moment 🎧
                     if (line.startsWith("1.")) {
                         const card = document.createElement("div");
                         card.className = "card";
-                        card.innerHTML = `<strong>${line.replace("1.", "")}</strong>`;
+                        const introText = document.createElement("strong");
+                        introText.textContent = line.replace("1.", "").trim();
+                        card.appendChild(introText);
                         result.appendChild(card);
                         songSection = false;
                         return;
@@ -1512,10 +1566,12 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         const card = document.createElement("div");
                         card.className = "card";
 
-                        card.innerHTML = `
-                    <strong>🧠 Why this fits:</strong><br>
-                    ${explanation.trim()}
-                `;
+                        const heading = document.createElement("strong");
+                        heading.textContent = "🧠 Why this fits:";
+
+                        card.appendChild(heading);
+                        card.appendChild(document.createElement("br"));
+                        card.appendChild(document.createTextNode(explanation.trim()));
 
                         result.appendChild(card);
                         songSection = false;
@@ -1745,7 +1801,10 @@ The playlist did not load correctly. Please try again in a moment 🎧
                 const data = await response.json();
 
                 if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                    console.error("CONTINUE PLAYLIST BAD RESPONSE:", data);
+                    console.error("continue_playlist_bad_response", {
+                        status: response.status,
+                        hasChoices: !!data.choices
+                    });
                     continueBtn.innerText = "▶ Continue This Mood";
                     const fallbackCard = document.createElement("div");
 
@@ -2054,11 +2113,11 @@ $3 = Unlock 25 more saved songs 🎧
 
     </script>
 
-    <!--
-T4M_ORIGIN_AIMUSICDISCOVERY
-music-that-understands-your-moment
-intentional-listening-not-endless-scrolling
--->
+    <footer class="project-credit">
+    Tune4Me Beta © 2026 • A Vads Best Project
+    <br>
+    Created by Vad Monty • ChatGPT Aided
+</footer>
 
 </body>
 
