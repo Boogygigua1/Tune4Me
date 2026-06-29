@@ -1,11 +1,46 @@
 const MAX_MOOD_LENGTH = 500;
 const MAX_FEEDBACK_SONGS = 30;
+const MAX_EXISTING_SONGS = 40;
+const MAX_PLAYLIST_LENGTH = 25;
+const RATE_LIMIT_WINDOW_MS = 1000 * 60;
+const RATE_LIMIT_MAX_REQUESTS = 12;
 
-function limitSongPayload(value) {
+function getClientKey(req) {
+    const forwardedFor = req.headers["x-forwarded-for"];
+    const ip = Array.isArray(forwardedFor)
+        ? forwardedFor[0]
+        : String(forwardedFor || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
+
+    return ip || "unknown";
+}
+
+function isRateLimited(req) {
+    const now = Date.now();
+    const key = getClientKey(req);
+
+    global.playlistRateLimit = global.playlistRateLimit || {};
+
+    const record = global.playlistRateLimit[key] || {
+        count: 0,
+        resetAt: now + RATE_LIMIT_WINDOW_MS
+    };
+
+    if (now > record.resetAt) {
+        record.count = 0;
+        record.resetAt = now + RATE_LIMIT_WINDOW_MS;
+    }
+
+    record.count += 1;
+    global.playlistRateLimit[key] = record;
+
+    return record.count > RATE_LIMIT_MAX_REQUESTS;
+}
+
+function limitSongPayload(value, maxItems = MAX_FEEDBACK_SONGS) {
     if (!Array.isArray(value)) return [];
 
     return value
-        .slice(0, MAX_FEEDBACK_SONGS)
+        .slice(0, maxItems)
         .map(item => ({
             song: String(item?.song || "").slice(0, 120),
             artist: String(item?.artist || "").slice(0, 120)
@@ -13,9 +48,24 @@ function limitSongPayload(value) {
         .filter(item => item.song && item.artist);
 }
 
+function clampPlaylistLength(value) {
+    const parsed = Number.parseInt(value, 10);
+
+    if (!Number.isFinite(parsed)) return 10;
+
+    return Math.min(Math.max(parsed, 1), MAX_PLAYLIST_LENGTH);
+}
+
 export default async function handler(req, res) {
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method not allowed" });
+    }
+
+    if (isRateLimited(req)) {
+        return res.status(429).json({
+            error: "Too many playlist requests",
+            reason: "rate_limited"
+        });
     }
 
     let body;
@@ -47,8 +97,8 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "Playlist service is not configured" });
     }
 
-    const length = body?.length || 10;
-    const existingSongs = body?.existingSongs || [];
+    const length = clampPlaylistLength(body?.length);
+    const existingSongs = limitSongPayload(body?.existingSongs, MAX_EXISTING_SONGS);
     const avoidSongs = limitSongPayload(body?.avoidSongs);
     const likedSongs = limitSongPayload(body?.likedSongs);
 
@@ -430,7 +480,9 @@ Mood: ${enhancedMood}`
 
     } catch (error) {
 
-        console.error("GET PLAYLIST SERVER ERROR:", error);
+        console.error("GET PLAYLIST SERVER ERROR:", {
+            reason: error.name || "server_error"
+        });
 
         return res.status(500).json({
             error: "Playlist temporarily unavailable",

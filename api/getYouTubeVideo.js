@@ -1,4 +1,7 @@
 const QUOTA_COOLDOWN_MS = 1000 * 60 * 60 * 6;
+const MAX_QUERY_LENGTH = 180;
+const RATE_LIMIT_WINDOW_MS = 1000 * 60;
+const RATE_LIMIT_MAX_REQUESTS = 30;
 
 const HARD_AVOID_KEYWORDS = [
     "interview",
@@ -118,11 +121,49 @@ function isQuotaError(data) {
     );
 }
 
+function getClientKey(req) {
+    const forwardedFor = req.headers["x-forwarded-for"];
+    const ip = Array.isArray(forwardedFor)
+        ? forwardedFor[0]
+        : String(forwardedFor || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
+
+    return ip || "unknown";
+}
+
+function isRateLimited(req) {
+    const now = Date.now();
+    const key = getClientKey(req);
+
+    global.youtubeRateLimit = global.youtubeRateLimit || {};
+
+    const record = global.youtubeRateLimit[key] || {
+        count: 0,
+        resetAt: now + RATE_LIMIT_WINDOW_MS
+    };
+
+    if (now > record.resetAt) {
+        record.count = 0;
+        record.resetAt = now + RATE_LIMIT_WINDOW_MS;
+    }
+
+    record.count += 1;
+    global.youtubeRateLimit[key] = record;
+
+    return record.count > RATE_LIMIT_MAX_REQUESTS;
+}
+
 export default async function handler(req, res) {
     const startedAt = Date.now();
 
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method not allowed" });
+    }
+
+    if (isRateLimited(req)) {
+        return res.status(429).json({
+            error: "Too many preview requests",
+            reason: "rate_limited"
+        });
     }
 
     let body;
@@ -133,10 +174,18 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Invalid JSON body" });
     }
 
-    const query = body?.query;
+    const query = String(body?.query || "").trim();
 
     if (!query) {
         return res.status(400).json({ error: "Missing query" });
+    }
+
+    if (query.length > MAX_QUERY_LENGTH) {
+        return res.status(413).json({
+            error: "Query is too long",
+            reason: "query_too_long",
+            maxLength: MAX_QUERY_LENGTH
+        });
     }
 
     const normalizedQuery = query
