@@ -2,6 +2,7 @@ const QUOTA_COOLDOWN_MS = 1000 * 60 * 60 * 6;
 const MAX_QUERY_LENGTH = 180;
 const RATE_LIMIT_WINDOW_MS = 1000 * 60;
 const RATE_LIMIT_MAX_REQUESTS = 30;
+const YOUTUBE_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 const HARD_AVOID_KEYWORDS = [
     "interview",
@@ -152,6 +153,22 @@ function isRateLimited(req) {
     return record.count > RATE_LIMIT_MAX_REQUESTS;
 }
 
+function getFreshCacheEntry(cache, key) {
+    const entry = cache[key];
+
+    if (!entry || typeof entry !== "object" || !entry.cachedAt) {
+        delete cache[key];
+        return null;
+    }
+
+    if (Date.now() - entry.cachedAt > YOUTUBE_CACHE_TTL_MS) {
+        delete cache[key];
+        return null;
+    }
+
+    return entry;
+}
+
 export default async function handler(req, res) {
     const startedAt = Date.now();
 
@@ -200,20 +217,24 @@ export default async function handler(req, res) {
     global.videoMissCache = global.videoMissCache || {};
     global.youtubeCooldownUntil = global.youtubeCooldownUntil || 0;
 
-    if (global.videoCache[cacheKey]) {
+    const cachedVideo = getFreshCacheEntry(global.videoCache, cacheKey);
+
+    if (cachedVideo) {
         console.log("YOUTUBE PREVIEW CACHE HIT:", {
             durationMs: Date.now() - startedAt,
             resultFound: true
         });
 
         return res.status(200).json({
-            videoId: global.videoCache[cacheKey],
+            videoId: cachedVideo.videoId,
             reason: null,
             cached: true
         });
     }
 
-    if (global.videoMissCache[cacheKey]) {
+    const cachedMiss = getFreshCacheEntry(global.videoMissCache, cacheKey);
+
+    if (cachedMiss) {
         console.log("YOUTUBE PREVIEW MISS CACHE HIT:", {
             durationMs: Date.now() - startedAt,
             resultFound: false
@@ -337,7 +358,10 @@ export default async function handler(req, res) {
             const validVideo = pickBestVideo(data.items, normalizedQuery, false);
 
             if (validVideo) {
-                global.videoCache[cacheKey] = validVideo.id.videoId;
+                global.videoCache[cacheKey] = {
+                    videoId: validVideo.id.videoId,
+                    cachedAt: Date.now()
+                };
 
                 console.log("YOUTUBE PREVIEW FOUND:", {
                     status: response.status,
@@ -359,7 +383,10 @@ export default async function handler(req, res) {
         }
 
         if (fallbackLiveVideo) {
-            global.videoCache[cacheKey] = fallbackLiveVideo.id.videoId;
+            global.videoCache[cacheKey] = {
+                videoId: fallbackLiveVideo.id.videoId,
+                cachedAt: Date.now()
+            };
 
             console.log("YOUTUBE PREVIEW FOUND:", {
                 status: lastStatus,
@@ -376,7 +403,9 @@ export default async function handler(req, res) {
             });
         }
 
-        global.videoMissCache[cacheKey] = true;
+        global.videoMissCache[cacheKey] = {
+            cachedAt: Date.now()
+        };
 
         console.log("YOUTUBE PREVIEW NOT FOUND:", {
             status: lastStatus,

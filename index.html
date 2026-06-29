@@ -482,6 +482,7 @@ margin-right:auto;
         let currentPlaylist = JSON.parse(localStorage.getItem("currentPlaylist")) || [];
 
         let DEFAULT_SONG_PLAY_MS = 30000; // 30 seconds
+        let YOUTUBE_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
         let BASE_SAVE_LIMIT = 15;
         let MAX_SAVE_LIMIT = 100;
@@ -1046,7 +1047,28 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 .replace(/\s+/g, " ")
                 .trim();
 
-            return localStorage.getItem(key);
+            const cached = localStorage.getItem(key);
+
+            if (!cached) return null;
+
+            try {
+                const entry = JSON.parse(cached);
+
+                if (!entry.videoId || !entry.cachedAt) {
+                    localStorage.removeItem(key);
+                    return null;
+                }
+
+                if (Date.now() - entry.cachedAt > YOUTUBE_CACHE_TTL_MS) {
+                    localStorage.removeItem(key);
+                    return null;
+                }
+
+                return entry.videoId;
+            } catch {
+                localStorage.removeItem(key);
+                return null;
+            }
         }
 
         function saveCachedVideo(song, artist, videoId) {
@@ -1056,7 +1078,10 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 .replace(/\s+/g, " ")
                 .trim();
 
-            localStorage.setItem(key, videoId);
+            localStorage.setItem(key, JSON.stringify({
+                videoId,
+                cachedAt: Date.now()
+            }));
         }
 
         // PLAYBACK CORE
