@@ -1,3 +1,5 @@
+import { recordAnalyticsEvent } from "./analytics.js";
+
 const QUOTA_COOLDOWN_MS = 1000 * 60 * 60 * 6;
 const MAX_QUERY_LENGTH = 180;
 const RATE_LIMIT_WINDOW_MS = 1000 * 60;
@@ -177,6 +179,8 @@ export default async function handler(req, res) {
     }
 
     if (isRateLimited(req)) {
+        recordAnalyticsEvent("rate_limit_event");
+
         return res.status(429).json({
             error: "Too many preview requests",
             reason: "rate_limited"

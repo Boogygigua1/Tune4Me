@@ -444,12 +444,19 @@ margin-right:auto;
         "></textarea>
 
         <script>
-            document.getElementById("supportMessage").addEventListener("keydown", function (e) {
+            const supportMessage = document.getElementById("supportMessage");
+
+            supportMessage.form.addEventListener("submit", function () {
+                trackTune4Me("support_form_submitted");
+            });
+
+            supportMessage.addEventListener("keydown", function (e) {
 
                 if (e.key === "Enter" && !e.shiftKey) {
 
                     e.preventDefault();
 
+                    trackTune4Me("support_form_submitted");
                     this.form.submit();
                 }
             });
@@ -465,13 +472,29 @@ margin-right:auto;
 
     <script>
 
-        function trackTune4Me(eventName, details = {}) {
+        function trackTune4Me(eventName) {
             if (window.va) {
                 window.va("event", {
-                    name: eventName,
-                    data: details
+                    name: eventName
                 });
             }
+
+            const body = JSON.stringify({ event: eventName });
+
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(
+                    "/api/analytics",
+                    new Blob([body], { type: "application/json" })
+                );
+                return;
+            }
+
+            fetch("/api/analytics", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body,
+                keepalive: true
+            }).catch(() => { });
         }
 
         let playerInstance;
@@ -513,17 +536,7 @@ margin-right:auto;
 
         window.onload = function () {
 
-            trackTune4Me("app_loaded", {
-
-                hasSavedSongs:
-                    (JSON.parse(localStorage.getItem("savedSongs")) || []).length > 0,
-
-                savedSongCount:
-                    (JSON.parse(localStorage.getItem("savedSongs")) || []).length,
-
-                saveLimit:
-                    parseInt(localStorage.getItem("saveLimit")) || 15
-            });
+            trackTune4Me("home_page_loaded");
 
             loadSavedSongs();
 
@@ -580,6 +593,10 @@ margin-right:auto;
             button.innerText = isHidden
                 ? "Hide Philosophy"
                 : "✨ Our Philosophy";
+
+            if (isHidden) {
+                trackTune4Me("philosophy_opened");
+            }
         }
 
         function toggleLegal(button) {
@@ -608,9 +625,7 @@ margin-right:auto;
 
             localStorage.setItem("songFeedback", JSON.stringify(feedback));
 
-            trackTune4Me("song_feedback", {
-                rating
-            });
+            trackTune4Me(rating === "good" ? "song_liked" : "song_disliked");
 
             if (rating === "bad") {
 
@@ -661,7 +676,7 @@ margin-right:auto;
 
             box.id = "upgradeBox";
 
-            trackTune4Me("upgrade_box_shown");
+            trackTune4Me("upgrade_dialog_viewed");
 
             box.style.marginTop = "15px";
             box.style.padding = "15px";
@@ -734,10 +749,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 loadSavedSongs();
             }
 
-            trackTune4Me("song_saved", {
-                totalSavedSongs: saved.length,
-                currentLimit: currentLimit
-            });
+            trackTune4Me("song_saved");
 
             alert("Song saved 🎧");
         }
@@ -788,11 +800,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
             loadSavedSongs();
 
-            trackTune4Me("song_saved", {
-                totalSavedSongs: saved.length,
-                currentLimit: currentLimit,
-                source: "save_with_video"
-            });
+            trackTune4Me("song_saved");
         }
 
         function savePlaylist(event) {
@@ -820,10 +828,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                     hitLimit = true;
 
-                    trackTune4Me("save_limit_reached", {
-                        totalSavedSongs: saved.length,
-                        currentLimit: currentLimit
-                    });
+                    trackTune4Me("upgrade_dialog_viewed");
 
                     if (currentLimit < MAX_SAVE_LIMIT) {
                         showUpgradeBox();
@@ -842,6 +847,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 // ✅ SAVE
                 saved.push({ song, artist });
+                trackTune4Me("song_saved");
 
                 const matchingCard = [...document.querySelectorAll("#result .card")]
                     .find(card => {
@@ -871,12 +877,6 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
             localStorage.setItem("savedSongs", JSON.stringify(saved));
             loadSavedSongs();
-
-            trackTune4Me("playlist_saved", {
-                addedCount: addedCount,
-                totalSavedSongs: saved.length,
-                currentLimit: currentLimit
-            });
 
             if (hitLimit) {
 
@@ -927,6 +927,8 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
             localStorage.removeItem("currentPlaylist");
 
             stopPlayback();
+
+            trackTune4Me("playlist_deleted");
 
             const saveBtn = document.getElementById("savePlaylistBtn");
 
@@ -1010,6 +1012,8 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 ytBar.style.border = "1px solid #ddd";
 
                 ytBar.addEventListener("click", () => {
+                    trackTune4Me("youtube_search_opened");
+
                     const ytQuery = encodeURIComponent(
                         `${item.song} ${item.artist || "Unknown Artist"} official audio`
                     );
@@ -1111,7 +1115,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
             console.log("song_preview_started");
 
-            trackTune4Me("song_previewed");
+            trackTune4Me("song_preview_opened");
 
             // ✅ Track active song
 
@@ -1206,6 +1210,10 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                                 ? "no_result"
                                 : "upstream_error");
 
+                    if (response.status === 429) {
+                        trackTune4Me("rate_limit_event");
+                    }
+
                     const previewMessages = {
                         quota_limited: "YouTube previews are taking a short pause right now. You can still listen directly on YouTube.",
                         no_result: "Tune4Me could not find a reliable preview for this song. You can still search on YouTube.",
@@ -1222,6 +1230,8 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                         resultFound: false,
                         errorCategory: previewReason
                     });
+
+                    trackTune4Me("youtube_preview_failure");
 
                     slot.innerHTML = `
 <div style="
@@ -1257,6 +1267,8 @@ cursor:pointer;
 
                     if (fallbackBtn) {
                         fallbackBtn.addEventListener("click", () => {
+                            trackTune4Me("youtube_search_opened");
+
                             const ytQuery = encodeURIComponent(
                                 `${song} ${artist} official audio`
                             );
@@ -1332,6 +1344,7 @@ cursor:pointer;
                 console.error("playSong error:", {
                     errorCategory: err.name || "preview_error"
                 });
+                trackTune4Me("youtube_preview_failure");
                 slot.innerHTML = "Error loading video";
             }
         }
@@ -1478,10 +1491,6 @@ cursor:pointer;
                 return;
             }
 
-            trackTune4Me("playlist_created", {
-                moodLength: mood.length
-            });
-
             continueCount = 0;
             localStorage.setItem("continueCount", continueCount);
 
@@ -1528,6 +1537,7 @@ Building something intentional.
                 try {
                     data = JSON.parse(text);
                 } catch {
+                    trackTune4Me("playlist_generation_failure");
                     result.innerHTML = "Bad playlist response";
                     if (button) button.disabled = false;
                     return;
@@ -1539,6 +1549,11 @@ Building something intentional.
                 });
 
                 if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    if (response.status === 429) {
+                        trackTune4Me("rate_limit_event");
+                    }
+
+                    trackTune4Me("playlist_generation_failure");
                     console.error("playlist_bad_response", {
                         status: response.status,
                         hasChoices: !!data.choices
@@ -1554,6 +1569,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                 }
 
                 const raw = data.choices[0].message.content;
+                trackTune4Me("playlist_generated");
                 const lines = raw.split("\n");
 
                 stopPlayback();
@@ -1769,7 +1785,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         ytBar.addEventListener("click", () => {
 
 
-                            trackTune4Me("youtube_listen_clicked");
+                            trackTune4Me("youtube_search_opened");
 
                             const ytQuery = encodeURIComponent(
                                 `${song} ${artist} official audio`
@@ -1822,9 +1838,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
             console.log("USER CONTINUED PLAYLIST");
 
-            trackTune4Me("playlist_continued", {
-                continueCount: continueCount + 1
-            });
+            trackTune4Me("continue_playlist");
 
             const result = document.getElementById("result");
             const continueBtn = document.getElementById("continueBtn");
@@ -1850,6 +1864,10 @@ The playlist did not load correctly. Please try again in a moment 🎧
                 const data = await response.json();
 
                 if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    if (response.status === 429) {
+                        trackTune4Me("rate_limit_event");
+                    }
+
                     console.error("continue_playlist_bad_response", {
                         status: response.status,
                         hasChoices: !!data.choices
@@ -2044,7 +2062,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     ytBar.addEventListener("click", () => {
 
 
-                        trackTune4Me("youtube_listen_clicked");
+                        trackTune4Me("youtube_search_opened");
 
                         const ytQuery = encodeURIComponent(
                             `${song} ${artist} official audio`
@@ -2093,6 +2111,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
         // $$$$
 
         window.handleUpgrade = function () {
+            trackTune4Me("upgrade_completed");
 
             const oldBox = document.getElementById("upgradeBox");
 

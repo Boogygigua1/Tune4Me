@@ -1,3 +1,5 @@
+import { recordAnalyticsEvent } from "./analytics.js";
+
 const MAX_MOOD_LENGTH = 500;
 const MAX_FEEDBACK_SONGS = 30;
 const MAX_EXISTING_SONGS = 40;
@@ -62,6 +64,8 @@ export default async function handler(req, res) {
     }
 
     if (isRateLimited(req)) {
+        recordAnalyticsEvent("rate_limit_event");
+
         return res.status(429).json({
             error: "Too many playlist requests",
             reason: "rate_limited"

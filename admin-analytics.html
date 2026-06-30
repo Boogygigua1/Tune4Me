@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tune4Me Beta Analytics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+            background: #f4f4f4;
+            color: #333;
+        }
+
+        section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        input,
+        button {
+            font-size: 16px;
+            padding: 10px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>Tune4Me Beta Analytics</h1>
+        <p>Aggregate event counts only. No song titles, artist names, prompts, mood text, IP addresses, or personal data.</p>
+
+        <section>
+            <label for="adminToken">Admin token</label><br>
+            <input id="adminToken" type="password" autocomplete="off">
+            <button type="button" onclick="loadAnalytics()">Load Summary</button>
+            <p id="status"></p>
+        </section>
+
+        <section>
+            <h2>Conversion Metrics</h2>
+            <table>
+                <tbody id="metricsTable"></tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Event Counts</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody id="countsTable"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        const metricLabels = {
+            visitors: "Visitors",
+            playlistGenerationRate: "Playlist generation rate",
+            averagePreviewOpensPerPlaylist: "Average preview opens per playlist",
+            saveRate: "Save rate",
+            songSavedTotal: "Songs saved",
+            songLikedTotal: "Song likes",
+            songDislikedTotal: "Song dislikes",
+            continuePlaylistUsage: "Continue Playlist usage",
+            upgradeConversion: "Upgrade conversion",
+            playlistGenerationFailures: "Playlist generation failures",
+            youtubePreviewFailures: "YouTube preview failures",
+            rateLimitEvents: "Rate-limit events"
+        };
+
+        const eventLabels = {
+            home_page_loaded: "Home page loaded",
+            playlist_generated: "Playlist generated",
+            continue_playlist: "Continue Playlist",
+            song_preview_opened: "Song preview opened",
+            youtube_search_opened: "YouTube search opened",
+            song_saved: "Song saved",
+            song_liked: "Song liked",
+            song_disliked: "Song disliked",
+            playlist_deleted: "Playlist deleted",
+            philosophy_opened: "Philosophy opened",
+            upgrade_dialog_viewed: "Upgrade dialog viewed",
+            upgrade_completed: "Upgrade completed",
+            support_form_submitted: "Support form submitted",
+            playlist_generation_failure: "Playlist generation failure",
+            youtube_preview_failure: "YouTube preview failure",
+            rate_limit_event: "Rate-limit events"
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const tokenFromUrl = params.get("token");
+
+        if (tokenFromUrl) {
+            document.getElementById("adminToken").value = tokenFromUrl;
+        }
+
+        function renderRows(targetId, values, labels) {
+            const target = document.getElementById(targetId);
+            target.innerHTML = "";
+
+            Object.entries(labels).forEach(([key, label]) => {
+                const row = document.createElement("tr");
+                const labelCell = document.createElement("td");
+                const valueCell = document.createElement("td");
+
+                labelCell.textContent = label;
+                valueCell.textContent = values[key] ?? 0;
+
+                row.appendChild(labelCell);
+                row.appendChild(valueCell);
+                target.appendChild(row);
+            });
+        }
+
+        async function loadAnalytics() {
+            const token = document.getElementById("adminToken").value.trim();
+            const status = document.getElementById("status");
+
+            if (!token) {
+                status.textContent = "Enter the admin token.";
+                return;
+            }
+
+            status.textContent = "Loading...";
+
+            try {
+                const response = await fetch("/api/analytics", {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    status.textContent = data.error || "Unable to load analytics.";
+                    return;
+                }
+
+                renderRows("metricsTable", data.metrics || {}, metricLabels);
+                renderRows("countsTable", data.counts || {}, eventLabels);
+                status.textContent = `Updated ${data.updatedAt}`;
+            } catch {
+                status.textContent = "Unable to load analytics.";
+            }
+        }
+
+        if (tokenFromUrl) {
+            loadAnalytics();
+        }
+    </script>
+</body>
+
+</html>

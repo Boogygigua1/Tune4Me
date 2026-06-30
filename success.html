@@ -32,6 +32,25 @@
 
     <script>
 
+        function trackTune4MeBetaEvent(eventName) {
+            const body = JSON.stringify({ event: eventName });
+
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(
+                    "/api/analytics",
+                    new Blob([body], { type: "application/json" })
+                );
+                return;
+            }
+
+            fetch("/api/analytics", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body,
+                keepalive: true
+            }).catch(() => { });
+        }
+
         const upgraded = sessionStorage.getItem("upgradeApplied");
 
         if (!upgraded) {
@@ -50,6 +69,8 @@
             localStorage.setItem("tune4mePlus", "active");
 
             sessionStorage.setItem("upgradeApplied", "true");
+
+            trackTune4MeBetaEvent("upgrade_completed");
         }
 
         function goBack() {
