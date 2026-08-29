@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
@@ -34,7 +34,7 @@
             background-color: #f4f4f4;
             text-align: center;
             padding: 20px;
-            padding-bottom: 180px;
+            padding-bottom: 40px;
             font-size: 20px;
 
             overflow-y: auto;
@@ -94,7 +94,6 @@
 
             max-height: none;
             overflow-y: auto;
-            padding-bottom: 120px;
         }
 
         .card {
@@ -120,6 +119,8 @@
 
 
 <body>
+
+    <main>
 
     <div style="
     font-size: 0.9rem;
@@ -186,7 +187,7 @@
 
             <br>
 
-            <button onclick="toggleReadMore(this)"
+            <button onclick="toggleReadMore(this)" aria-expanded="false" aria-controls="moreText"
                 style="background:none; color:#007AFF; margin-top:5px; border:none; padding:0; cursor:pointer; font-size:14px; opacity:0.8;">
 
                 Read more
@@ -194,7 +195,7 @@
         </p>
 
         <div style="margin-top:10px;">
-            <button onclick="togglePhilosophy(this)"
+            <button onclick="togglePhilosophy(this)" aria-expanded="false" aria-controls="philosophyText"
                 style="background:none; color:#8a63ff; border:none; padding:0; cursor:pointer; font-size:14px; opacity:0.9;">
 
                 ✨ Our Philosophy
@@ -215,43 +216,40 @@
     </div>
 
     <label for="moodInput" style="position:absolute; left:-9999px;">Describe how you're feeling</label>
-    <input type="text" id="moodInput" maxlength="500"
+    <input type="text" id="moodInput" maxlength="500" aria-describedby="moodLanguageHint moodDiscoveryHint"
         placeholder="Describe how you're feeling (in a word or full sentence)" onkeydown="handleKey(event)">
 
-    <p style="font-size:12px; color:#888; margin-top:6px;">
+    <p id="moodLanguageHint" style="font-size:12px; color:#888; margin-top:6px;">
         Want music in another language? Try: “Spanish heartbreak” or “Turkish late-night mood” 🎧
     </p>
 
-    <p style="font-size:12px; color:#888; margin-top:6px;">
+    <p id="moodDiscoveryHint" style="font-size:12px; color:#888; margin-top:6px;">
         Tune4Me can suggest familiar artists, hidden gems, local-feeling discoveries,
         festival moods, emotional deep cuts, and songs beyond the usual A-list recommendations 🎧
     </p>
 
     <br><br>
 
-    <div id="lastMood" style="font-size:12px; color:#888; margin-top:-10px; margin-bottom:10px;">
+    <div id="lastMood" role="status" aria-live="polite" style="font-size:12px; color:#888; margin-top:-10px; margin-bottom:10px;">
     </div>
 
     <button onclick="showMood()" aria-label="Create playlist from your mood">Create Playlist</button>
 
     <button onclick="clearNewList()" aria-label="Clear the current playlist">🗑 Clear List</button>
 
-    <div id="nowPlaying" style="font-weight:bold; margin-top:20px;"></div>
+    <div id="nowPlaying" role="status" aria-live="polite" style="font-weight:bold; margin-top:20px;"></div>
     <div id="player" style="margin-top:10px;"></div>
 
     <p style="font-size:11px; color:#888; margin-top:10px;">
         Use the play buttons to preview songs or save playlists below 🎧
     </p>
 
-    <div id="result"></div>
+    <div id="result" aria-live="polite"></div>
 
     <div style="
-    position: fixed;
-    bottom: calc(20px + env(safe-area-inset-bottom));
-    left: 50%;
-    transform: translateX(-50%);
+    margin:20px auto;
     padding:10px;
-    z-index:1000;
+    max-width:420px;
 
     background: rgba(255,255,255,0.45);
     backdrop-filter: blur(8px);
@@ -260,6 +258,8 @@
 
     display:flex;
     gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
     align-items:center;
 ">
 
@@ -287,7 +287,7 @@
         All music remains the property of its respective owners.
     </p>
 
-    <button onclick="toggleLegal(this)" style="
+    <button onclick="toggleLegal(this)" aria-expanded="false" aria-controls="legalText" style="
 background:none;
 color:#888;
 border:none;
@@ -359,7 +359,7 @@ margin-right:auto;
 
     <div id="savedPlayer" style="margin-top:15px;"></div>
 
-    <div id="saveCounter"></div>
+    <div id="saveCounter" role="status" aria-live="polite"></div>
 
     <div id="archiveInfo" style="
 margin-top:12px;
@@ -579,6 +579,7 @@ margin-right:auto;
 
             moreText.style.display = isHidden ? "inline" : "none";
             button.innerText = isHidden ? "Read less" : "Read more";
+            button.setAttribute("aria-expanded", String(isHidden));
         }
 
         function togglePhilosophy(button) {
@@ -589,6 +590,7 @@ margin-right:auto;
                 text.style.display === "none" || text.style.display === "";
 
             text.style.display = isHidden ? "block" : "none";
+            button.setAttribute("aria-expanded", String(isHidden));
 
             button.innerText = isHidden
                 ? "Hide Philosophy"
@@ -607,6 +609,7 @@ margin-right:auto;
                 text.style.display === "none" || text.style.display === "";
 
             text.style.display = isHidden ? "block" : "none";
+            button.setAttribute("aria-expanded", String(isHidden));
 
             button.innerText = isHidden
                 ? "▲ Hide AI, Usage & Platform Information"
@@ -1151,6 +1154,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 const closeBtn = document.createElement("button");
                 closeBtn.textContent = "✖";
+                closeBtn.setAttribute("aria-label", "Close YouTube preview");
                 closeBtn.style.position = "absolute";
                 closeBtn.style.top = "10px";
                 closeBtn.style.right = "-10px";
@@ -1164,6 +1168,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 iframe.width = "100%";
                 iframe.height = "200";
                 iframe.src = embedUrl;
+                iframe.title = "YouTube preview";
                 iframe.setAttribute("allow", "autoplay; encrypted-media");
                 iframe.setAttribute("frameborder", "0");
 
@@ -1319,6 +1324,7 @@ cursor:pointer;
 
                 const closeBtn = document.createElement("button");
                 closeBtn.textContent = "✖";
+                closeBtn.setAttribute("aria-label", "Close YouTube preview");
                 closeBtn.style.position = "absolute";
                 closeBtn.style.top = "10px";
                 closeBtn.style.right = "-10px";
@@ -1332,6 +1338,7 @@ cursor:pointer;
                 iframe.width = "100%";
                 iframe.height = "200";
                 iframe.src = embedUrl;
+                iframe.title = "YouTube preview";
                 iframe.setAttribute("allow", "autoplay; encrypted-media");
                 iframe.setAttribute("frameborder", "0");
 
@@ -1718,6 +1725,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         const goodBtn = document.createElement("button");
                         goodBtn.textContent = "👍 Good";
+                        goodBtn.setAttribute("aria-label", "Mark this song as good");
 
                         goodBtn.addEventListener("click", () => {
                             saveFeedback(song, artist, "good");
@@ -1725,6 +1733,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         const badBtn = document.createElement("button");
                         badBtn.textContent = "👎 Bad";
+                        badBtn.setAttribute("aria-label", "Mark this song as bad");
 
                         badBtn.addEventListener("click", () => {
                             saveFeedback(song, artist, "bad");
@@ -1740,6 +1749,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         const deleteBtn = document.createElement("button");
 
                         deleteBtn.textContent = "🗑";
+                        deleteBtn.setAttribute("aria-label", "Remove this song from the playlist");
 
                         deleteBtn.style.fontSize = "12px";
                         deleteBtn.style.padding = "6px 8px";
@@ -1998,6 +2008,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const goodBtn = document.createElement("button");
                     goodBtn.textContent = "👍";
+                    goodBtn.setAttribute("aria-label", "Mark this song as good");
                     goodBtn.style.fontSize = "12px";
                     goodBtn.style.padding = "6px 8px";
                     goodBtn.style.marginLeft = "auto";
@@ -2008,6 +2019,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const badBtn = document.createElement("button");
                     badBtn.textContent = "👎";
+                    badBtn.setAttribute("aria-label", "Mark this song as bad");
                     badBtn.style.fontSize = "12px";
                     badBtn.style.padding = "6px 8px";
 
@@ -2017,6 +2029,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const deleteBtn = document.createElement("button");
                     deleteBtn.textContent = "🗑";
+                    deleteBtn.setAttribute("aria-label", "Remove this song from the playlist");
                     deleteBtn.style.fontSize = "12px";
                     deleteBtn.style.padding = "6px 8px";
 
@@ -2184,6 +2197,8 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
         <a href="/privacy.html">Privacy Policy</a>
         <a href="/terms.html">Terms of Service</a>
     </p>
+
+    </main>
 
     <footer class="project-credit">
     Tune4Me™ © 2026 • A Vads Best Project
