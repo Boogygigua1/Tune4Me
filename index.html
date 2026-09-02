@@ -59,7 +59,7 @@
             padding: 12px 16px;
             margin-top: 10px;
 
-            background: rgba(76, 175, 80, 0.55);
+            background: #2E7D32;
             backdrop-filter: blur(4px);
 
             color: white;
@@ -79,6 +79,14 @@
         a:focus-visible {
             outline: 3px solid #007AFF;
             outline-offset: 3px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                scroll-behavior: auto !important;
+                transition: none !important;
+            }
         }
 
         .legal-links a {
@@ -107,12 +115,18 @@
 
         .project-credit {
             font-size: 10px;
-            color: #aaa;
-            opacity: 0.75;
+            color: #595959;
+            opacity: 1;
             text-align: center;
             margin-top: 30px;
             margin-bottom: 20px;
             font-weight: normal;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #595959;
+            opacity: 1;
         }
     </style>
 </head>
@@ -157,7 +171,7 @@
     </div>
 
     <h1 style="margin-bottom:5px;">Tune4Me 🎧</h1>
-    <p style="margin-top:0; font-size:14px; color:gray;">
+    <p style="margin-top:0; font-size:14px; color:#595959;">
         Music that understands your moment
     </p>
 
@@ -188,7 +202,7 @@
             <br>
 
             <button onclick="toggleReadMore(this)" aria-expanded="false" aria-controls="moreText"
-                style="background:none; color:#007AFF; margin-top:5px; border:none; padding:0; cursor:pointer; font-size:14px; opacity:0.8;">
+                style="background:none; color:#005FCC; margin-top:5px; border:none; padding:2px 0; min-height:24px; min-width:24px; cursor:pointer; font-size:14px; opacity:1;">
 
                 Read more
             </button>
@@ -196,7 +210,7 @@
 
         <div style="margin-top:10px;">
             <button onclick="togglePhilosophy(this)" aria-expanded="false" aria-controls="philosophyText"
-                style="background:none; color:#8a63ff; border:none; padding:0; cursor:pointer; font-size:14px; opacity:0.9;">
+                style="background:none; color:#5B3FD6; border:none; padding:2px 0; min-height:24px; min-width:24px; cursor:pointer; font-size:14px; opacity:1;">
 
                 ✨ Our Philosophy
             </button>
@@ -219,18 +233,18 @@
     <input type="text" id="moodInput" maxlength="500" aria-describedby="moodLanguageHint moodDiscoveryHint"
         placeholder="Describe how you're feeling (in a word or full sentence)" onkeydown="handleKey(event)">
 
-    <p id="moodLanguageHint" style="font-size:12px; color:#888; margin-top:6px;">
+    <p id="moodLanguageHint" style="font-size:12px; color:#595959; margin-top:6px;">
         Want music in another language? Try: “Spanish heartbreak” or “Turkish late-night mood” 🎧
     </p>
 
-    <p id="moodDiscoveryHint" style="font-size:12px; color:#888; margin-top:6px;">
+    <p id="moodDiscoveryHint" style="font-size:12px; color:#595959; margin-top:6px;">
         Tune4Me can suggest familiar artists, hidden gems, local-feeling discoveries,
         festival moods, emotional deep cuts, and songs beyond the usual A-list recommendations 🎧
     </p>
 
     <br><br>
 
-    <div id="lastMood" role="status" aria-live="polite" style="font-size:12px; color:#888; margin-top:-10px; margin-bottom:10px;">
+    <div id="lastMood" role="status" aria-live="polite" style="font-size:12px; color:#595959; margin-top:-10px; margin-bottom:10px;">
     </div>
 
     <button onclick="showMood()" aria-label="Create playlist from your mood">Create Playlist</button>
@@ -240,13 +254,13 @@
     <div id="nowPlaying" role="status" aria-live="polite" style="font-weight:bold; margin-top:20px;"></div>
     <div id="player" style="margin-top:10px;"></div>
 
-    <p style="font-size:11px; color:#888; margin-top:10px;">
+    <p style="font-size:11px; color:#595959; margin-top:10px;">
         Use the play buttons to preview songs or save playlists below 🎧
     </p>
 
-    <div id="result" aria-live="polite"></div>
+    <div id="result" role="region" aria-label="Playlist results" aria-live="polite" aria-atomic="false" tabindex="-1"></div>
 
-    <div style="
+    <div role="group" aria-label="Playlist actions" style="
     margin:20px auto;
     padding:10px;
     max-width:420px;
@@ -277,19 +291,19 @@
 
     </div>
 
-    <p style="font-size:12px; color:#888; margin-top:5px;">
+    <p style="font-size:12px; color:#595959; margin-top:5px;">
         Music playback and previews are provided through YouTube.
         Tune4Me does not host or store copyrighted media.
     </p>
 
-    <p style="font-size:12px; color:#888; margin-top:3px;">
+    <p style="font-size:12px; color:#595959; margin-top:3px;">
         Tune4Me uses AI to help create music recommendations from the words you provide.
         All music remains the property of its respective owners.
     </p>
 
     <button onclick="toggleLegal(this)" aria-expanded="false" aria-controls="legalText" style="
 background:none;
-color:#888;
+color:#595959;
 border:none;
 font-size:11px;
 cursor:pointer;
@@ -304,7 +318,7 @@ opacity:0.85;
     <div id="legalText" style="
 display:none;
 font-size:11px;
-color:#999;
+color:#595959;
 margin-top:10px;
 text-align:center;
 line-height:1.6;
@@ -355,7 +369,7 @@ margin-right:auto;
         code may not be copied, redistributed, or used to create derivative works without permission.
     </div>
 
-    <p style="font-size:13px; color:#888;">Playing from your saved songs</p>
+    <p style="font-size:13px; color:#595959;">Playing from your saved songs</p>
 
     <div id="savedPlayer" style="margin-top:15px;"></div>
 
@@ -386,7 +400,7 @@ margin-top:10px;
 padding:10px 14px;
 border:none;
 border-radius:6px;
-background:#4CAF50;
+background:#2E7D32;
 color:white;
 cursor:pointer;
 display:block;
@@ -616,6 +630,12 @@ margin-right:auto;
                 : "▼ AI, Usage & Platform Information";
         }
 
+        function preferredScrollBehavior() {
+            return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                ? "auto"
+                : "smooth";
+        }
+
         function saveFeedback(song, artist, rating) {
             let feedback = JSON.parse(localStorage.getItem("songFeedback")) || [];
 
@@ -702,7 +722,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
             document.getElementById("result").appendChild(box);
 
             box.scrollIntoView({
-                behavior: "smooth",
+                behavior: preferredScrollBehavior(),
                 block: "center"
             });
 
@@ -867,7 +887,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                     savedLabel.style.marginTop = "8px";
                     savedLabel.style.fontSize = "12px";
-                    savedLabel.style.color = "#4CAF50";
+                    savedLabel.style.color = "#2E7D32";
                     savedLabel.style.fontWeight = "bold";
 
                     savedLabel.innerText = "✅ Saved to your archive";
@@ -980,12 +1000,13 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 const artist = document.createElement("div");
                 artist.style.fontSize = "14px";
-                artist.style.color = "gray";
+                artist.style.color = "#595959";
                 artist.textContent = item.artist || "Unknown Artist";
 
                 const button = document.createElement("button");
                 button.textContent = "▶ Play";
                 button.className = "play-song-btn";
+                button.setAttribute("aria-label", `Play preview for ${item.song} by ${item.artist || "Unknown Artist"}`);
 
                 // ✅ SAFE event binding (no inline JS)
                 button.addEventListener("click", function () {
@@ -994,9 +1015,11 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 const slot = document.createElement("div");
                 slot.className = "video-slot";
+                slot.setAttribute("aria-live", "polite");
 
                 const deleteBtn = document.createElement("button");
                 deleteBtn.textContent = "🗑 Delete";
+                deleteBtn.setAttribute("aria-label", `Delete ${item.song} by ${item.artist || "Unknown Artist"} from saved songs`);
                 deleteBtn.style.marginLeft = "10px";
 
                 deleteBtn.addEventListener("click", function () {
@@ -1006,6 +1029,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 const ytBar = document.createElement("button");
 
                 ytBar.textContent = "▶ Listen on YouTube";
+                ytBar.setAttribute("aria-label", `Listen to ${item.song} by ${item.artist || "Unknown Artist"} on YouTube`);
                 ytBar.style.width = "100%";
                 ytBar.style.marginTop = "10px";
                 ytBar.style.fontSize = "13px";
@@ -1030,8 +1054,8 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 card.appendChild(title);
                 card.appendChild(artist);
                 card.appendChild(button);
-                card.appendChild(deleteBtn);
                 card.appendChild(ytBar);
+                card.appendChild(deleteBtn);
                 card.appendChild(slot);
 
                 savedSection.appendChild(card);
@@ -1130,6 +1154,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
             if (!slot) {
                 slot = document.createElement("div");
                 slot.className = "video-slot";
+                slot.setAttribute("aria-live", "polite");
                 card.appendChild(slot);
             }
 
@@ -1162,6 +1187,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 closeBtn.addEventListener("click", () => {
                     wrapper.remove();
+                    playBtn.focus();
                 });
 
                 const iframe = document.createElement("iframe");
@@ -1176,6 +1202,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 wrapper.appendChild(iframe);
 
                 slot.appendChild(wrapper);
+                closeBtn.focus();
 
                 return;
             }
@@ -1259,7 +1286,7 @@ style="
 padding:10px 14px;
 border:none;
 border-radius:8px;
-background:#ff0000;
+background:#D00000;
 color:white;
 cursor:pointer;
 ">
@@ -1271,6 +1298,7 @@ cursor:pointer;
                     const fallbackBtn = slot.querySelector(".fallbackYTBtn");
 
                     if (fallbackBtn) {
+                        fallbackBtn.setAttribute("aria-label", `Search for ${song} by ${artist} on YouTube`);
                         fallbackBtn.addEventListener("click", () => {
                             trackTune4Me("youtube_search_opened");
 
@@ -1332,6 +1360,7 @@ cursor:pointer;
 
                 closeBtn.addEventListener("click", () => {
                     wrapper.remove();
+                    playBtn.focus();
                 });
 
                 const iframe = document.createElement("iframe");
@@ -1346,6 +1375,7 @@ cursor:pointer;
                 wrapper.appendChild(iframe);
 
                 slot.appendChild(wrapper);
+                closeBtn.focus();
 
             } catch (err) {
                 console.error("playSong error:", {
@@ -1587,7 +1617,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                 const note = document.createElement("p");
                 note.style.fontSize = "11px";
-                note.style.color = "#888";
+                note.style.color = "#595959";
                 note.style.marginTop = "10px";
 
                 result.appendChild(note);
@@ -1694,7 +1724,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         const artistDiv = document.createElement("div");
                         artistDiv.style.fontSize = "14px";
-                        artistDiv.style.color = "gray";
+                        artistDiv.style.color = "#595959";
                         artistDiv.textContent = artist;
 
                         const controls = document.createElement("div");
@@ -1706,6 +1736,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         const playBtn = document.createElement("button");
                         playBtn.textContent = "▶ Play";
                         playBtn.className = "play-song-btn";
+                        playBtn.setAttribute("aria-label", `Play preview for ${song} by ${artist}`);
                         playBtn.addEventListener("click", () => {
                             playSong(song, artist, playBtn);
                         });
@@ -1713,6 +1744,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         const saveBtn = document.createElement("button");
                         saveBtn.textContent = "💾 Save";
                         saveBtn.className = "save-song-btn";
+                        saveBtn.setAttribute("aria-label", `Save ${song} by ${artist}`);
                         saveBtn.addEventListener("click", (e) => {
                             e.stopPropagation();
                             saveSong(song, artist);
@@ -1720,6 +1752,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         const slot = document.createElement("div");
                         slot.className = "video-slot";
+                        slot.setAttribute("aria-live", "polite");
                         controls.appendChild(playBtn);
                         controls.appendChild(saveBtn);
 
@@ -1776,13 +1809,10 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         });
 
-                        controls.appendChild(goodBtn);
-                        controls.appendChild(badBtn);
-                        controls.appendChild(deleteBtn);
-
                         const ytBar = document.createElement("button");
 
                         ytBar.textContent = "▶ Listen on YouTube";
+                        ytBar.setAttribute("aria-label", `Listen to ${song} by ${artist} on YouTube`);
 
                         ytBar.style.width = "100%";
                         ytBar.style.marginTop = "10px";
@@ -1807,7 +1837,10 @@ The playlist did not load correctly. Please try again in a moment 🎧
                             );
                         });
 
-                        card.appendChild(ytBar);
+                        controls.appendChild(ytBar);
+                        controls.appendChild(goodBtn);
+                        controls.appendChild(badBtn);
+                        controls.appendChild(deleteBtn);
 
                         card.appendChild(title);
                         card.appendChild(artistDiv);
@@ -1824,6 +1857,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                 continueBtn.innerText = "▶ Continue This Mood";
 
                 localStorage.setItem("currentPlaylist", JSON.stringify(currentPlaylist));
+                result.focus({ preventScroll: true });
 
                 let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
 
@@ -1906,7 +1940,7 @@ or continue again in a moment 🎧
                 const label = document.createElement("div");
                 label.style.margin = "15px 0 5px";
                 label.style.fontSize = "13px";
-                label.style.color = "#888";
+                label.style.color = "#595959";
 
                 label.innerHTML = `
 <strong>Need more songs? 🎧</strong><br>
@@ -1979,7 +2013,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const artistDiv = document.createElement("div");
                     artistDiv.style.fontSize = "14px";
-                    artistDiv.style.color = "gray";
+                    artistDiv.style.color = "#595959";
                     artistDiv.textContent = artist;
 
                     const controls = document.createElement("div");
@@ -1991,6 +2025,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     const playBtn = document.createElement("button");
                     playBtn.textContent = "▶ Play";
                     playBtn.className = "play-song-btn";
+                    playBtn.setAttribute("aria-label", `Play preview for ${song} by ${artist}`);
                     playBtn.addEventListener("click", () => {
                         playSong(song, artist, playBtn);
                     });
@@ -1998,6 +2033,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     const saveBtn = document.createElement("button");
                     saveBtn.textContent = "💾 Save";
                     saveBtn.className = "save-song-btn";
+                    saveBtn.setAttribute("aria-label", `Save ${song} by ${artist}`);
                     saveBtn.addEventListener("click", (e) => {
                         e.stopPropagation();
                         saveSong(song, artist);
@@ -2005,6 +2041,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const slot = document.createElement("div");
                     slot.className = "video-slot";
+                    slot.setAttribute("aria-live", "polite");
 
                     const goodBtn = document.createElement("button");
                     goodBtn.textContent = "👍";
@@ -2053,16 +2090,10 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                         }
                     });
 
-                    controls.appendChild(playBtn);
-                    controls.appendChild(saveBtn);
-
-                    controls.appendChild(goodBtn);
-                    controls.appendChild(badBtn);
-                    controls.appendChild(deleteBtn);
-
                     const ytBar = document.createElement("button");
 
                     ytBar.textContent = "▶ Listen on YouTube";
+                    ytBar.setAttribute("aria-label", `Listen to ${song} by ${artist} on YouTube`);
 
                     ytBar.style.width = "100%";
                     ytBar.style.marginTop = "10px";
@@ -2087,7 +2118,12 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                         );
                     });
 
-                    card.appendChild(ytBar);
+                    controls.appendChild(playBtn);
+                    controls.appendChild(saveBtn);
+                    controls.appendChild(ytBar);
+                    controls.appendChild(goodBtn);
+                    controls.appendChild(badBtn);
+                    controls.appendChild(deleteBtn);
 
                     card.appendChild(title);
                     card.appendChild(artistDiv);
@@ -2106,9 +2142,10 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                 continueBtn.innerText = "▶ Continue This Mood";
 
                 localStorage.setItem("currentPlaylist", JSON.stringify(currentPlaylist));
+                result.focus({ preventScroll: true });
 
                 continueBtn.scrollIntoView({
-                    behavior: "smooth",
+                    behavior: preferredScrollBehavior(),
                     block: "center"
                 });
 
@@ -2193,7 +2230,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
     </script>
 
-    <p class="legal-links" style="font-size:12px; color:#777; margin-top:24px;">
+    <p class="legal-links" style="font-size:12px; color:#595959; margin-top:24px;">
         <a href="/privacy.html">Privacy Policy</a>
         <a href="/terms.html">Terms of Service</a>
     </p>

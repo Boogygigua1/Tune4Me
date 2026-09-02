@@ -44,6 +44,18 @@
         button {
             cursor: pointer;
         }
+
+        button:focus-visible,
+        input:focus-visible {
+            outline: 3px solid #007AFF;
+            outline-offset: 3px;
+        }
+
+        caption {
+            font-weight: bold;
+            text-align: left;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 
@@ -56,12 +68,13 @@
             <label for="adminToken">Admin token</label><br>
             <input id="adminToken" type="password" autocomplete="off">
             <button type="button" onclick="loadAnalytics()">Load Summary</button>
-            <p id="status"></p>
+            <p id="status" role="status" aria-live="polite"></p>
         </section>
 
         <section>
             <h2>Conversion Metrics</h2>
             <table>
+                <caption>Conversion metrics summary</caption>
                 <tbody id="metricsTable"></tbody>
             </table>
         </section>
@@ -69,10 +82,11 @@
         <section>
             <h2>Event Counts</h2>
             <table>
+                <caption>Aggregate event counts</caption>
                 <thead>
                     <tr>
-                        <th>Event</th>
-                        <th>Count</th>
+                        <th scope="col">Event</th>
+                        <th scope="col">Count</th>
                     </tr>
                 </thead>
                 <tbody id="countsTable"></tbody>
@@ -128,9 +142,10 @@
 
             Object.entries(labels).forEach(([key, label]) => {
                 const row = document.createElement("tr");
-                const labelCell = document.createElement("td");
+                const labelCell = document.createElement("th");
                 const valueCell = document.createElement("td");
 
+                labelCell.scope = "row";
                 labelCell.textContent = label;
                 valueCell.textContent = values[key] ?? 0;
 
