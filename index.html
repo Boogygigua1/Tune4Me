@@ -27,11 +27,18 @@
     <style>
         * {
             font-family: Arial, sans-serif;
+            box-sizing: border-box;
+        }
+
+        *::before,
+        *::after {
+            box-sizing: border-box;
         }
 
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
+            color: #222222;
             text-align: center;
             padding: 20px;
             padding-bottom: 40px;
@@ -50,6 +57,7 @@
             padding: 10px;
             width: 90%;
             max-width: 420px;
+            min-height: 44px;
             margin-top: 10px;
             font-size: 16px;
             box-sizing: border-box;
@@ -59,8 +67,10 @@
         button {
             padding: 12px 16px;
             margin-top: 10px;
+            min-width: 44px;
+            min-height: 44px;
 
-            background: #2E7D32;
+            background: #1B5E20;
             backdrop-filter: blur(4px);
 
             color: white;
@@ -93,7 +103,10 @@
             top: 8px;
             z-index: 100;
             background: #ffffff;
-            color: #005FCC;
+            color: #004A99;
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
             padding: 10px 14px;
             border-radius: 6px;
             font-size: 16px;
@@ -124,13 +137,13 @@
         .inline-message {
             max-width: 420px;
             margin: 10px auto;
-            color: #595959;
+            color: #4D4D4D;
             font-size: 14px;
             line-height: 1.5;
         }
 
         .field-error {
-            color: #B00020;
+            color: #99001B;
             font-size: 14px;
             line-height: 1.5;
             margin: 8px auto 0;
@@ -170,7 +183,10 @@
         }
 
         .legal-links a {
-            color: #666;
+            color: #4D4D4D;
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
             margin: 0 6px;
         }
 
@@ -195,7 +211,7 @@
 
         .project-credit {
             font-size: 10px;
-            color: #595959;
+            color: #4D4D4D;
             opacity: 1;
             text-align: center;
             margin-top: 30px;
@@ -205,8 +221,35 @@
 
         input::placeholder,
         textarea::placeholder {
-            color: #595959;
+            color: #4D4D4D;
             opacity: 1;
+        }
+
+        .card-heading {
+            margin: 0 0 10px;
+            font-size: 1rem;
+            line-height: 1.3;
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            input,
+            select,
+            textarea,
+            .playlist-button-group,
+            .install-button-group,
+            .card {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            #result {
+                padding: 12px;
+            }
         }
     </style>
 </head>
@@ -253,7 +296,7 @@
     </div>
 
     <h1 style="margin-bottom:5px;">Tune4Me 🎧</h1>
-    <p style="margin-top:0; font-size:14px; color:#595959;">
+    <p style="margin-top:0; font-size:14px; color:#4D4D4D;">
         Music that understands your moment
     </p>
 
@@ -264,7 +307,7 @@
             <span id="moreText" style="display:none; transition: all 0.3s ease;">
                 <br><br>
 
-                No account needed. No scrolling. Just music that fits your moment.
+                No account needed. No scrolling. Just music that fits your mood.
                 Save songs, explore, and come back anytime.
 
                 <br><br>
@@ -284,7 +327,7 @@
             <br>
 
             <button onclick="toggleReadMore(this)" aria-expanded="false" aria-controls="moreText"
-                style="background:none; color:#005FCC; margin-top:5px; border:none; padding:2px 0; min-height:24px; min-width:24px; cursor:pointer; font-size:14px; opacity:1;">
+                style="background:none; color:#004A99; margin-top:5px; border:none; padding:2px 0; min-height:44px; min-width:44px; cursor:pointer; font-size:14px; opacity:1;">
 
                 Read more
             </button>
@@ -292,13 +335,13 @@
 
         <div style="margin-top:10px;">
             <button onclick="togglePhilosophy(this)" aria-expanded="false" aria-controls="philosophyText"
-                style="background:none; color:#5B3FD6; border:none; padding:2px 0; min-height:24px; min-width:24px; cursor:pointer; font-size:14px; opacity:1;">
+                style="background:none; color:#4630A8; border:none; padding:2px 0; min-height:44px; min-width:44px; cursor:pointer; font-size:14px; opacity:1;">
 
                 ✨ Our Philosophy
             </button>
 
             <div id="philosophyText"
-                style="display:none; margin-top:10px; font-size:14px; line-height:1.6; color:#555;">
+                style="display:none; margin-top:10px; font-size:14px; line-height:1.6; color:#4D4D4D;">
 
                 Tune4Me was built around a simple idea:
                 sometimes people don’t know what they want to hear —
@@ -319,18 +362,18 @@
 
     <div id="moodError" class="field-error" role="alert"></div>
 
-    <p id="moodLanguageHint" style="font-size:12px; color:#595959; margin-top:6px;">
+    <p id="moodLanguageHint" style="font-size:12px; color:#4D4D4D; margin-top:6px;">
         Want music in another language? Try: “Spanish heartbreak” or “Turkish late-night mood” 🎧
     </p>
 
-    <p id="moodDiscoveryHint" style="font-size:12px; color:#595959; margin-top:6px;">
+    <p id="moodDiscoveryHint" style="font-size:12px; color:#4D4D4D; margin-top:6px;">
         Tune4Me can suggest familiar artists, hidden gems, local-feeling discoveries,
-        festival moods, emotional deep cuts, and songs beyond the usual A-list recommendations 🎧
+        festival moods, emotional lesser-known songs, and music beyond the most common recommendations 🎧
     </p>
 
     <br><br>
 
-    <div id="lastMood" role="status" aria-live="polite" style="font-size:12px; color:#595959; margin-top:-10px; margin-bottom:10px;">
+    <div id="lastMood" role="status" aria-live="polite" style="font-size:12px; color:#4D4D4D; margin-top:-10px; margin-bottom:10px;">
     </div>
 
     <div class="playlist-button-group" role="group" aria-label="Playlist creation">
@@ -354,7 +397,7 @@
     <div id="nowPlaying" role="status" aria-live="polite" style="font-weight:bold; margin-top:20px;"></div>
     <div id="player" style="margin-top:10px;"></div>
 
-    <p style="font-size:11px; color:#595959; margin-top:10px;">
+    <p style="font-size:12px; color:#4D4D4D; margin-top:10px;">
         Use the play buttons to preview songs or save playlists below 🎧
     </p>
 
@@ -366,21 +409,21 @@
         </button>
     </div>
 
-    <p style="font-size:12px; color:#595959; margin-top:5px;">
+    <p style="font-size:12px; color:#4D4D4D; margin-top:5px;">
         Music playback and previews are provided through YouTube.
         Tune4Me does not host or store copyrighted media.
     </p>
 
-    <p style="font-size:12px; color:#595959; margin-top:3px;">
+    <p style="font-size:12px; color:#4D4D4D; margin-top:3px;">
         Tune4Me uses AI to help create music recommendations from the words you provide.
         All music remains the property of its respective owners.
     </p>
 
     <button onclick="toggleLegal(this)" aria-expanded="false" aria-controls="legalText" style="
 background:none;
-color:#595959;
+color:#4D4D4D;
 border:none;
-font-size:11px;
+font-size:12px;
 cursor:pointer;
 margin-top:30px;
 opacity:0.85;
@@ -392,8 +435,8 @@ opacity:0.85;
 
     <div id="legalText" style="
 display:none;
-font-size:11px;
-color:#595959;
+font-size:12px;
+color:#4D4D4D;
 margin-top:10px;
 text-align:center;
 line-height:1.6;
@@ -426,7 +469,7 @@ margin-right:auto;
         resource.
         <br><br>
 
-        Optional support helps expand your saved-song archive on this device.
+        Optional support helps expand your saved songs list on this device.
         <br><br>
 
         <span class="legal-links">
@@ -436,7 +479,7 @@ margin-right:auto;
         </span>
         <br><br>
 
-        Thank you for helping shape Tune4Me during its Early Public Beta. Your feedback helps make every playlist
+        Thank you for helping shape Tune4Me during its early public preview. Your feedback helps make every playlist
         better. ❤️
         <br><br>
 
@@ -446,7 +489,7 @@ margin-right:auto;
 
     <h2 style="font-size:18px; margin-top:24px;">Saved Songs</h2>
 
-    <p style="font-size:13px; color:#595959;">Playing from your saved songs</p>
+    <p style="font-size:13px; color:#4D4D4D;">Playing from your saved songs</p>
 
     <div id="savedPlayer" style="margin-top:15px;"></div>
 
@@ -460,13 +503,13 @@ backdrop-filter:blur(8px);
 border-radius:12px;
 font-size:13px;
 line-height:1.6;
-color:#555;
+color:#4D4D4D;
 max-width:520px;
 margin-left:auto;
 margin-right:auto;
 ">
 
-        🎧 Build your favorites archive over time.
+        🎧 Build your saved songs list over time.
 
         Create playlists, save the songs you love, and remove favorites whenever you'd like.
 
@@ -477,7 +520,7 @@ margin-top:10px;
 padding:10px 14px;
 border:none;
 border-radius:6px;
-background:#2E7D32;
+background:#1B5E20;
 color:white;
 cursor:pointer;
 display:block;
@@ -499,7 +542,7 @@ margin-right:auto;
 
     <h2 style="margin-top:30px;">Support & Feedback 🎧</h2>
 
-    <p style="font-size:13px; color:#666; line-height:1.5;">
+    <p style="font-size:13px; color:#4D4D4D; line-height:1.5;">
         Questions, bugs, billing issues, or suggestions are always welcome.
         Support messages are handled through Formspree.
     </p>
@@ -725,7 +768,7 @@ margin-right:auto;
             if (!status) return;
 
             status.textContent = message;
-            status.style.color = tone === "error" ? "#B00020" : "#595959";
+            status.style.color = tone === "error" ? "#99001B" : "#4D4D4D";
         }
 
         function clearStatusMessage() {
@@ -823,13 +866,13 @@ margin-right:auto;
             box.style.borderRadius = "10px";
 
             box.innerHTML = `
-        <strong>🎧 Your favorites archive is full</strong><br><br>
+        <h2 class="card-heading">🎧 Your saved songs list is full</h2>
 
 You can continue creating playlists and discovering new music anytime.<br><br>
 
 Your saved favorites remain stored on this device.<br><br>
 
-If you'd like more room for favorites, you can expand your archive by 25 additional saves for $3 🎧
+If you'd like more room for favorites, you can expand your saved songs list by 25 additional saves for $3 🎧
 
 <br><br>
 
@@ -870,7 +913,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 if (currentLimit >= MAX_SAVE_LIMIT) {
 
-                    showStatusMessage("Your Tune4Me archive is full at 100 saved songs. You can still create playlists and explore music anytime. Remove older songs to make room for new favorites.", "error");
+                    showStatusMessage("Your Tune4Me saved songs list is full at 100 songs. You can still create playlists and explore music anytime. Remove older songs to make room for new favorites.", "error");
 
                 } else {
 
@@ -922,7 +965,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 if (currentLimit >= MAX_SAVE_LIMIT) {
 
-                    showStatusMessage("Your Tune4Me archive is full at 100 saved songs. You can still create playlists and explore music anytime. Remove older songs to make room for new favorites.", "error");
+                    showStatusMessage("Your Tune4Me saved songs list is full at 100 songs. You can still create playlists and explore music anytime. Remove older songs to make room for new favorites.", "error");
 
                 } else {
 
@@ -1003,10 +1046,10 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                     savedLabel.style.marginTop = "8px";
                     savedLabel.style.fontSize = "12px";
-                    savedLabel.style.color = "#2E7D32";
+                    savedLabel.style.color = "#1B5E20";
                     savedLabel.style.fontWeight = "bold";
 
-                    savedLabel.innerText = "✅ Saved to your archive";
+                savedLabel.innerText = "✅ Saved to your saved songs";
 
                     matchingCard.appendChild(savedLabel);
                 }
@@ -1021,11 +1064,11 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 if (currentLimit >= MAX_SAVE_LIMIT) {
 
-                    showStatusMessage("Your Tune4Me archive is full at 100 saved songs. You can still create playlists and explore music anytime. Remove older songs to make room for new favorites.", "error");
+                    showStatusMessage("Your Tune4Me saved songs list is full at 100 songs. You can still create playlists and explore music anytime. Remove older songs to make room for new favorites.", "error");
 
                 } else {
 
-                    showStatusMessage("Your current archive limit has been reached. You can still create playlists and explore music anytime.", "error");
+                    showStatusMessage("Your current saved songs limit has been reached. You can still create playlists and explore music anytime.", "error");
 
                     showUpgradeBox();
                 }
@@ -1039,7 +1082,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 showStatusMessage(
                     "Saved " +
                     addedCount +
-                    " songs 🎧 Your archive is now at " +
+                    " songs 🎧 Your saved songs list is now at " +
                     saved.length +
                     " / " +
                     currentLimit +
@@ -1049,7 +1092,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
         }
 
         function clearSavedSongs() {
-            if (confirm("Clear all saved songs?\n\nThis will free space in your Tune4Me archive 🎧")) {
+            if (confirm("Clear all saved songs?\n\nThis will free space in your Tune4Me saved songs list 🎧")) {
                 localStorage.removeItem("savedSongs");
                 loadSavedSongs();
             }
@@ -1095,7 +1138,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
                 (remaining > 0
                     ? "\n\n" + remaining + " favorite song spaces remaining" +
                     "\n\nFavorites are stored locally on this device."
-                    : "\n\nYour favorites archive is full." +
+                    : "\n\nYour saved songs list is full." +
                     "\nYou can still discover new music anytime 🎧" +
                     "\n\nFavorites are stored locally on this device.");
 
@@ -1116,7 +1159,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 const artist = document.createElement("div");
                 artist.style.fontSize = "14px";
-                artist.style.color = "#595959";
+                artist.style.color = "#4D4D4D";
                 artist.textContent = item.artist || "Unknown Artist";
 
                 const button = document.createElement("button");
@@ -1387,9 +1430,9 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
     border-radius:10px;
     text-align:center;
     line-height:1.6;
-    color:#555;
+    color:#4D4D4D;
 ">
-🎧 Playback Note<br><br>
+<h3 class="card-heading">🎧 Playback Note</h3>
 
 ${previewMessage}<br><br>
 
@@ -1401,7 +1444,7 @@ style="
 padding:10px 14px;
 border:none;
 border-radius:8px;
-background:#D00000;
+background:#A80000;
 color:white;
 cursor:pointer;
 ">
@@ -1657,12 +1700,12 @@ cursor:pointer;
             continueBtn.style.display = "none";
 
             if (lastMood) {
-                lastMood.innerText = "Last vibe: " + mood;
+                lastMood.innerText = "Last mood: " + mood;
             }
 
             result.innerHTML = `
 <div style="padding:20px; line-height:1.6;">
-🎧 Listening to your vibe...<br><br>
+🎧 Listening to your mood...<br><br>
 Building something intentional.
 </div>
 `;
@@ -1715,7 +1758,7 @@ Building something intentional.
                     });
                     result.innerHTML = `
 <div class="card">
-<strong>🎧 Tune4Me needs a moment</strong><br><br>
+<h2 class="card-heading">🎧 Tune4Me needs a moment</h2>
 The playlist did not load correctly. Please try again in a moment 🎧
 </div>
 `;
@@ -1735,7 +1778,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                 const note = document.createElement("p");
                 note.style.fontSize = "11px";
-                note.style.color = "#595959";
+                note.style.color = "#4D4D4D";
                 note.style.marginTop = "10px";
 
                 result.appendChild(note);
@@ -1766,7 +1809,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                     if (line.includes("🎧 Songs")) {
                         const card = document.createElement("div");
                         card.className = "card";
-                        card.innerHTML = `<strong>🎧 Songs:</strong>`;
+                        card.innerHTML = `<h2 class="card-heading">🎧 Songs:</h2>`;
                         result.appendChild(card);
                         result.appendChild(songList);
                         songSection = true;
@@ -1792,11 +1835,11 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         const card = document.createElement("div");
                         card.className = "card";
 
-                        const heading = document.createElement("strong");
+                        const heading = document.createElement("h2");
+                        heading.className = "card-heading";
                         heading.textContent = "🧠 Why this fits:";
 
                         card.appendChild(heading);
-                        card.appendChild(document.createElement("br"));
                         card.appendChild(document.createTextNode(explanation.trim()));
 
                         result.appendChild(card);
@@ -1847,7 +1890,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         const artistDiv = document.createElement("div");
                         artistDiv.style.fontSize = "14px";
-                        artistDiv.style.color = "#595959";
+                        artistDiv.style.color = "#4D4D4D";
                         artistDiv.textContent = artist;
 
                         const controls = document.createElement("div");
@@ -2048,7 +2091,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                     fallbackCard.className = "card";
 
                     fallbackCard.innerHTML = `
-<strong>🎧 Still feeling this mood?</strong><br><br>
+<h2 class="card-heading">🎧 Still feeling this mood?</h2>
 
 Tune4Me is taking a short pause while building more recommendations.<br><br>
 
@@ -2066,10 +2109,10 @@ or continue again in a moment 🎧
                 const label = document.createElement("div");
                 label.style.margin = "15px 0 5px";
                 label.style.fontSize = "13px";
-                label.style.color = "#595959";
+                label.style.color = "#4D4D4D";
 
                 label.innerHTML = `
-<strong>Need more songs? 🎧</strong><br>
+Need more songs? 🎧<br>
 Optional $3 support = unlock 25 more saved songs on this device 🎧
 `;
 
@@ -2143,7 +2186,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const artistDiv = document.createElement("div");
                     artistDiv.style.fontSize = "14px";
-                    artistDiv.style.color = "#595959";
+                    artistDiv.style.color = "#4D4D4D";
                     artistDiv.textContent = artist;
 
                     const controls = document.createElement("div");
@@ -2174,7 +2217,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     slot.setAttribute("aria-live", "polite");
 
                     const goodBtn = document.createElement("button");
-                    goodBtn.textContent = "👍";
+                    goodBtn.textContent = "👍 Good";
                     goodBtn.setAttribute("aria-label", "Mark this song as good");
                     goodBtn.style.fontSize = "12px";
                     goodBtn.style.padding = "6px 8px";
@@ -2184,7 +2227,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     });
 
                     const badBtn = document.createElement("button");
-                    badBtn.textContent = "👎";
+                    badBtn.textContent = "👎 Bad";
                     badBtn.setAttribute("aria-label", "Mark this song as bad");
                     badBtn.style.fontSize = "12px";
                     badBtn.style.padding = "6px 8px";
@@ -2327,7 +2370,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
             loadSavedSongs();
 
-            showStatusMessage("Your music archive has expanded 🎧");
+            showStatusMessage("Your saved songs list has expanded 🎧");
         };
 
         let deferredPrompt;
@@ -2357,7 +2400,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
     </script>
 
-    <p class="legal-links" style="font-size:12px; color:#595959; margin-top:24px;">
+    <p class="legal-links" style="font-size:12px; color:#4D4D4D; margin-top:24px;">
         <a href="/privacy.html">Privacy Policy</a>
         <a href="/terms.html">Terms of Service</a>
     </p>
