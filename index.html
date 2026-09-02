@@ -52,6 +52,7 @@
             max-width: 420px;
             margin-top: 10px;
             font-size: 16px;
+            box-sizing: border-box;
         }
 
 
@@ -79,6 +80,70 @@
         a:focus-visible {
             outline: 3px solid #007AFF;
             outline-offset: 3px;
+        }
+
+        main:focus {
+            outline: 3px solid #007AFF;
+            outline-offset: 3px;
+        }
+
+        .skip-link {
+            position: absolute;
+            left: -9999px;
+            top: 8px;
+            z-index: 100;
+            background: #ffffff;
+            color: #005FCC;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .skip-link:focus {
+            left: 8px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .song-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .inline-message {
+            max-width: 420px;
+            margin: 10px auto;
+            color: #595959;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .field-error {
+            color: #B00020;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 8px auto 0;
+            max-width: 420px;
+        }
+
+        .form-label {
+            display: block;
+            max-width: 420px;
+            margin: 10px auto 4px;
+            text-align: left;
+            font-size: 14px;
+            color: #333;
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -134,7 +199,9 @@
 
 <body>
 
-    <main>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+
+    <main id="mainContent" tabindex="-1">
 
     <div style="
     font-size: 0.9rem;
@@ -229,9 +296,13 @@
         </div>
     </div>
 
+    <h2 class="sr-only">Create a Playlist</h2>
+
     <label for="moodInput" style="position:absolute; left:-9999px;">Describe how you're feeling</label>
-    <input type="text" id="moodInput" maxlength="500" aria-describedby="moodLanguageHint moodDiscoveryHint"
+    <input type="text" id="moodInput" maxlength="500" aria-describedby="moodLanguageHint moodDiscoveryHint moodError"
         placeholder="Describe how you're feeling (in a word or full sentence)" onkeydown="handleKey(event)">
+
+    <div id="moodError" class="field-error" role="alert"></div>
 
     <p id="moodLanguageHint" style="font-size:12px; color:#595959; margin-top:6px;">
         Want music in another language? Try: “Spanish heartbreak” or “Turkish late-night mood” 🎧
@@ -250,6 +321,8 @@
     <button onclick="showMood()" aria-label="Create playlist from your mood">Create Playlist</button>
 
     <button onclick="clearNewList()" aria-label="Clear the current playlist">🗑 Clear List</button>
+
+    <div id="appStatus" class="inline-message" role="status" aria-live="polite"></div>
 
     <div id="nowPlaying" role="status" aria-live="polite" style="font-weight:bold; margin-top:20px;"></div>
     <div id="player" style="margin-top:10px;"></div>
@@ -369,6 +442,8 @@ margin-right:auto;
         code may not be copied, redistributed, or used to create derivative works without permission.
     </div>
 
+    <h2 style="font-size:18px; margin-top:24px;">Saved Songs</h2>
+
     <p style="font-size:13px; color:#595959;">Playing from your saved songs</p>
 
     <div id="savedPlayer" style="margin-top:15px;"></div>
@@ -418,9 +493,9 @@ margin-right:auto;
 
     <button onclick="clearSavedSongs()" aria-label="Clear all saved songs">🗑 Clear Saved Songs</button>
 
-    <div id="savedSongs"></div>
+    <ul id="savedSongs" class="song-list" aria-label="Saved songs"></ul>
 
-    <h3 style="margin-top:30px;">Support & Feedback 🎧</h3>
+    <h2 style="margin-top:30px;">Support & Feedback 🎧</h2>
 
     <p style="font-size:13px; color:#666; line-height:1.5;">
         Questions, bugs, billing issues, or suggestions are always welcome.
@@ -436,7 +511,7 @@ margin-right:auto;
         <input type="text" id="supportContact" name="contact" placeholder="Optional contact info"
             style="width:100%; margin-bottom:10px;">
 
-        <label for="supportTopic" style="position:absolute; left:-9999px;">Support topic</label>
+        <label for="supportTopic" class="form-label">Support topic</label>
         <select id="supportTopic" name="topic" style="width:100%; margin-bottom:10px; padding:10px;">
             <option>Billing</option>
             <option>Bug</option>
@@ -462,17 +537,6 @@ margin-right:auto;
 
             supportMessage.form.addEventListener("submit", function () {
                 trackTune4Me("support_form_submitted");
-            });
-
-            supportMessage.addEventListener("keydown", function (e) {
-
-                if (e.key === "Enter" && !e.shiftKey) {
-
-                    e.preventDefault();
-
-                    trackTune4Me("support_form_submitted");
-                    this.form.submit();
-                }
             });
         </script>
 
@@ -553,6 +617,23 @@ margin-right:auto;
             trackTune4Me("home_page_loaded");
 
             loadSavedSongs();
+
+            const skipLink = document.querySelector(".skip-link");
+            const mainContent = document.getElementById("mainContent");
+
+            if (skipLink && mainContent) {
+                skipLink.addEventListener("click", function () {
+                    requestAnimationFrame(() => {
+                        mainContent.focus();
+                    });
+                });
+            }
+
+            const moodInput = document.getElementById("moodInput");
+
+            if (moodInput) {
+                moodInput.addEventListener("input", clearMoodError);
+            }
 
             if (currentPlaylist && currentPlaylist.length > 0) {
 
@@ -636,6 +717,39 @@ margin-right:auto;
                 : "smooth";
         }
 
+        function showStatusMessage(message, tone = "info") {
+            const status = document.getElementById("appStatus");
+
+            if (!status) return;
+
+            status.textContent = message;
+            status.style.color = tone === "error" ? "#B00020" : "#595959";
+        }
+
+        function clearStatusMessage() {
+            showStatusMessage("");
+        }
+
+        function showMoodError(message) {
+            const input = document.getElementById("moodInput");
+            const error = document.getElementById("moodError");
+
+            if (!input || !error) return;
+
+            input.setAttribute("aria-invalid", "true");
+            error.textContent = message;
+        }
+
+        function clearMoodError() {
+            const input = document.getElementById("moodInput");
+            const error = document.getElementById("moodError");
+
+            if (!input || !error) return;
+
+            input.removeAttribute("aria-invalid");
+            error.textContent = "";
+        }
+
         function saveFeedback(song, artist, rating) {
             let feedback = JSON.parse(localStorage.getItem("songFeedback")) || [];
 
@@ -680,7 +794,7 @@ margin-right:auto;
                 }
             }
 
-            alert(rating === "good"
+            showStatusMessage(rating === "good"
                 ? "Glad this fit 🎧"
                 : "Got it — I’ll avoid that one.");
 
@@ -744,7 +858,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
             );
 
             if (exists) {
-                alert("This song is already saved 👍");
+                showStatusMessage("This song is already saved 👍");
                 return;
             }
 
@@ -754,7 +868,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 if (currentLimit >= MAX_SAVE_LIMIT) {
 
-                    alert("🎧 Your Tune4Me archive is full at 100 saved songs.\n\nYou can still create playlists and explore music anytime.\n\nDelete older songs to make room for new favorites.");
+                    showStatusMessage("Your Tune4Me archive is full at 100 saved songs. You can still create playlists and explore music anytime. Remove older songs to make room for new favorites.", "error");
 
                 } else {
 
@@ -774,7 +888,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
             trackTune4Me("song_saved");
 
-            alert("Song saved 🎧");
+            showStatusMessage("Song saved 🎧");
         }
 
         function saveSongWithVideo(event, song, artist) {
@@ -806,7 +920,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 if (currentLimit >= MAX_SAVE_LIMIT) {
 
-                    alert("🎧 Your Tune4Me archive is full at 100 saved songs.\n\nYou can still create playlists and explore music anytime.\n\nDelete older songs to make room for new favorites.");
+                    showStatusMessage("Your Tune4Me archive is full at 100 saved songs. You can still create playlists and explore music anytime. Remove older songs to make room for new favorites.", "error");
 
                 } else {
 
@@ -833,7 +947,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
             }
 
             if (!currentPlaylist || currentPlaylist.length === 0) {
-                alert("Create a playlist first, then click Save Playlist");
+                showStatusMessage("Create a playlist first, then click Save Playlist.", "error");
                 return;
             }
 
@@ -905,25 +1019,25 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
                 if (currentLimit >= MAX_SAVE_LIMIT) {
 
-                    alert("🎧 Your Tune4Me archive is full at 100 saved songs.\n\nYou can still create playlists and explore music anytime.\n\nDelete older songs to make room for new favorites.");
+                    showStatusMessage("Your Tune4Me archive is full at 100 saved songs. You can still create playlists and explore music anytime. Remove older songs to make room for new favorites.", "error");
 
                 } else {
 
-                    alert("🎧 Your current archive limit has been reached.");
+                    showStatusMessage("Your current archive limit has been reached. You can still create playlists and explore music anytime.", "error");
 
                     showUpgradeBox();
                 }
 
             } else if (addedCount === 0) {
 
-                alert("No new songs were added 🎧");
+                showStatusMessage("No new songs were added 🎧");
 
             } else {
 
-                alert(
+                showStatusMessage(
                     "Saved " +
                     addedCount +
-                    " songs 🎧\n\nYour archive is now at " +
+                    " songs 🎧 Your archive is now at " +
                     saved.length +
                     " / " +
                     currentLimit +
@@ -989,7 +1103,7 @@ If you'd like more room for favorites, you can expand your archive by 25 additio
 
             saved.slice().reverse().forEach(item => {
 
-                const card = document.createElement("div");
+                const card = document.createElement("li");
                 card.className = "card";
                 card.dataset.song = item.song;
                 card.dataset.artist = item.artist || "Unknown Artist";
@@ -1483,7 +1597,7 @@ cursor:pointer;
             const saved = JSON.parse(localStorage.getItem("savedSongs") || "[]");
 
             if (!saved.length) {
-                alert("No saved songs");
+                showStatusMessage("No saved songs yet. Save a song first, then preview your saved songs.", "error");
                 return;
             }
 
@@ -1518,14 +1632,17 @@ cursor:pointer;
             const mood = document.getElementById("moodInput").value.trim();
 
             if (!mood) {
-                alert("Tell Tune4Me how you're feeling first 🎧");
+                showMoodError("Tell Tune4Me how you're feeling first, then create a playlist 🎧");
                 return;
             }
 
             if (mood.length > 500) {
-                alert("Please keep your mood note under 500 characters 🎧");
+                showMoodError("Please keep your mood note under 500 characters, then try again 🎧");
                 return;
             }
+
+            clearMoodError();
+            clearStatusMessage();
 
             continueCount = 0;
             localStorage.setItem("continueCount", continueCount);
@@ -1621,6 +1738,10 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                 result.appendChild(note);
 
+                const songList = document.createElement("ul");
+                songList.className = "song-list";
+                songList.setAttribute("aria-label", "Generated playlist songs");
+
                 let songSection = false;
 
                 lines.forEach((line, i) => {
@@ -1645,6 +1766,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         card.className = "card";
                         card.innerHTML = `<strong>🎧 Songs:</strong>`;
                         result.appendChild(card);
+                        result.appendChild(songList);
                         songSection = true;
                         return;
                     }
@@ -1714,7 +1836,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         currentPlaylist.push({ song, artist });
 
-                        const card = document.createElement("div");
+                        const card = document.createElement("li");
                         card.className = "card";
 
                         const title = document.createElement("div");
@@ -1844,7 +1966,11 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         card.appendChild(artistDiv);
                         card.appendChild(controls);
                         card.appendChild(slot);
-                        result.appendChild(card);
+                        if (!songList.isConnected) {
+                            result.appendChild(songList);
+                        }
+
+                        songList.appendChild(card);
                     }
                 });
 
@@ -1947,6 +2073,10 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                 result.appendChild(label);
 
+                const songList = document.createElement("ul");
+                songList.className = "song-list";
+                songList.setAttribute("aria-label", "Continued playlist songs");
+
                 let songSection = false;
 
                 lines.forEach((line, i) => {
@@ -2002,7 +2132,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     currentPlaylist.unshift({ song, artist });
 
                     // ✅ safe card build
-                    const card = document.createElement("div");
+                    const card = document.createElement("li");
                     card.className = "card";
 
                     const title = document.createElement("div");
@@ -2127,13 +2257,11 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     card.appendChild(controls);
                     card.appendChild(slot);
 
-                    const firstCard = result.querySelector(".card");
-
-                    if (firstCard) {
-                        result.insertBefore(card, firstCard);
-                    } else {
-                        result.appendChild(card);
+                    if (!songList.isConnected) {
+                        result.appendChild(songList);
                     }
+
+                    songList.appendChild(card);
                 });
 
                 continueBtn.innerText = "▶ Continue This Mood";
@@ -2197,7 +2325,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
             loadSavedSongs();
 
-            alert("🎧 Your music archive has expanded.");
+            showStatusMessage("Your music archive has expanded 🎧");
         };
 
         let deferredPrompt;
