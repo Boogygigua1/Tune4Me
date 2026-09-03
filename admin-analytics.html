@@ -47,6 +47,13 @@
             cursor: pointer;
         }
 
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #333;
+        }
+
         button:focus-visible,
         input:focus-visible {
             outline: 3px solid #007AFF;
@@ -67,7 +74,7 @@
         <p>Aggregate event counts only. No song titles, artist names, prompts, mood text, IP addresses, or personal data.</p>
 
         <section>
-            <label for="adminToken">Admin token</label><br>
+            <label for="adminToken">Admin token</label>
             <input id="adminToken" type="password" autocomplete="off">
             <button type="button" onclick="loadAnalytics()">Load Summary</button>
             <p id="status" role="status" aria-live="polite"></p>

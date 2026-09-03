@@ -356,9 +356,9 @@
 
     <h2 class="sr-only">Create a Playlist</h2>
 
-    <label for="moodInput" style="position:absolute; left:-9999px;">Describe how you're feeling</label>
+    <label for="moodInput" class="form-label">Describe how you're feeling (required)</label>
     <input type="text" id="moodInput" maxlength="500" aria-describedby="moodLanguageHint moodDiscoveryHint moodError"
-        placeholder="Describe how you're feeling (in a word or full sentence)" onkeydown="handleKey(event)">
+        placeholder="Example: peaceful, heartbroken, or ready for a fresh start" onkeydown="handleKey(event)">
 
     <div id="moodError" class="field-error" role="alert"></div>
 
@@ -549,11 +549,11 @@ margin-right:auto;
 
     <form action="https://formspree.io/f/xojrboej" method="POST">
 
-        <label for="supportName" style="position:absolute; left:-9999px;">Your name</label>
-        <input type="text" id="supportName" name="name" placeholder="Your name" style="width:100%; margin-bottom:10px;">
+        <label for="supportName" class="form-label">Name (optional)</label>
+        <input type="text" id="supportName" name="name" placeholder="Example: Alex" style="width:100%; margin-bottom:10px;">
 
-        <label for="supportContact" style="position:absolute; left:-9999px;">Optional contact info</label>
-        <input type="text" id="supportContact" name="contact" placeholder="Optional contact info"
+        <label for="supportContact" class="form-label">Email or phone (optional)</label>
+        <input type="text" id="supportContact" name="contact" placeholder="name@example.com or phone number"
             style="width:100%; margin-bottom:10px;">
 
         <label for="supportTopic" class="form-label">Support topic</label>
@@ -565,9 +565,10 @@ margin-right:auto;
             <option>Other</option>
         </select>
 
-        <label for="supportMessage" style="position:absolute; left:-9999px;">Support message</label>
-        <textarea id="supportMessage" name="message" placeholder="Short message..." maxlength="400" style="
+        <label for="supportMessage" class="form-label">Support message (optional)</label>
+        <textarea id="supportMessage" name="message" placeholder="Briefly describe what you need help with" maxlength="400" style="
             width:100%;
+            max-width:420px;
             height:100px;
             padding:10px;
             border-radius:8px;
@@ -575,6 +576,9 @@ margin-right:auto;
             resize:none;
             font-size:14px;
             box-sizing:border-box;
+            display:block;
+            margin-left:auto;
+            margin-right:auto;
         "></textarea>
 
         <script>
