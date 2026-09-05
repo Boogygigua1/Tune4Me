@@ -1937,7 +1937,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         const goodBtn = document.createElement("button");
                         goodBtn.textContent = "👍 Good";
-                        goodBtn.setAttribute("aria-label", "Mark this song as good");
+                        goodBtn.setAttribute("aria-label", `Mark ${song} by ${artist} as good`);
 
                         goodBtn.addEventListener("click", () => {
                             saveFeedback(song, artist, "good");
@@ -1945,7 +1945,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         const badBtn = document.createElement("button");
                         badBtn.textContent = "👎 Bad";
-                        badBtn.setAttribute("aria-label", "Mark this song as bad");
+                        badBtn.setAttribute("aria-label", `Mark ${song} by ${artist} as bad`);
 
                         badBtn.addEventListener("click", () => {
                             saveFeedback(song, artist, "bad");
@@ -1960,7 +1960,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         const deleteBtn = document.createElement("button");
 
                         deleteBtn.textContent = "🗑 Remove";
-                        deleteBtn.setAttribute("aria-label", "Remove this song");
+                        deleteBtn.setAttribute("aria-label", `Remove ${song} by ${artist} from this playlist`);
 
                         deleteBtn.style.fontSize = "12px";
                         deleteBtn.style.padding = "6px 8px";
@@ -2231,7 +2231,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const goodBtn = document.createElement("button");
                     goodBtn.textContent = "👍 Good";
-                    goodBtn.setAttribute("aria-label", "Mark this song as good");
+                    goodBtn.setAttribute("aria-label", `Mark ${song} by ${artist} as good`);
                     goodBtn.style.fontSize = "12px";
                     goodBtn.style.padding = "6px 8px";
 
@@ -2241,7 +2241,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const badBtn = document.createElement("button");
                     badBtn.textContent = "👎 Bad";
-                    badBtn.setAttribute("aria-label", "Mark this song as bad");
+                    badBtn.setAttribute("aria-label", `Mark ${song} by ${artist} as bad`);
                     badBtn.style.fontSize = "12px";
                     badBtn.style.padding = "6px 8px";
 
@@ -2251,7 +2251,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const deleteBtn = document.createElement("button");
                     deleteBtn.textContent = "🗑 Remove";
-                    deleteBtn.setAttribute("aria-label", "Remove this song");
+                    deleteBtn.setAttribute("aria-label", `Remove ${song} by ${artist} from this playlist`);
                     deleteBtn.style.fontSize = "12px";
                     deleteBtn.style.padding = "6px 8px";
 
