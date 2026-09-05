@@ -1291,6 +1291,60 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
             }));
         }
 
+        function closeYouTubePreview(wrapper, playBtn) {
+
+            wrapper.remove();
+
+            if (playBtn && typeof playBtn.focus === "function") {
+                playBtn.focus();
+            }
+        }
+
+        function createYouTubePreviewWrapper(embedUrl, playBtn) {
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "video-wrapper";
+            wrapper.style.marginTop = "10px";
+
+            const previewHeader = document.createElement("div");
+            previewHeader.style.display = "flex";
+            previewHeader.style.justifyContent = "flex-end";
+            previewHeader.style.marginBottom = "8px";
+
+            const closeBtn = document.createElement("button");
+            closeBtn.type = "button";
+            closeBtn.textContent = "✖";
+            closeBtn.setAttribute("aria-label", "Close YouTube preview");
+
+            closeBtn.addEventListener("click", () => {
+                closeYouTubePreview(wrapper, playBtn);
+            });
+
+            wrapper.addEventListener("keydown", event => {
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    closeYouTubePreview(wrapper, playBtn);
+                }
+            });
+
+            const iframe = document.createElement("iframe");
+            iframe.width = "100%";
+            iframe.height = "200";
+            iframe.src = embedUrl;
+            iframe.title = "YouTube preview";
+            iframe.setAttribute("allow", "autoplay; encrypted-media");
+            iframe.setAttribute("frameborder", "0");
+
+            previewHeader.appendChild(closeBtn);
+            wrapper.appendChild(previewHeader);
+            wrapper.appendChild(iframe);
+
+            return {
+                wrapper,
+                closeBtn
+            };
+        }
+
         // PLAYBACK CORE
 
         async function playSong(song, artist, playBtn) {
@@ -1343,34 +1397,8 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
                     cachedVideoId +
                     "?autoplay=1&rel=0&modestbranding=1&playsinline=1";
 
-                const wrapper = document.createElement("div");
-                wrapper.className = "video-wrapper";
-                wrapper.style.position = "relative";
-                wrapper.style.marginTop = "10px";
-
-                const closeBtn = document.createElement("button");
-                closeBtn.textContent = "✖";
-                closeBtn.setAttribute("aria-label", "Close YouTube preview");
-                closeBtn.style.position = "absolute";
-                closeBtn.style.top = "10px";
-                closeBtn.style.right = "-10px";
-                closeBtn.style.zIndex = "20";
-
-                closeBtn.addEventListener("click", () => {
-                    wrapper.remove();
-                    playBtn.focus();
-                });
-
-                const iframe = document.createElement("iframe");
-                iframe.width = "100%";
-                iframe.height = "200";
-                iframe.src = embedUrl;
-                iframe.title = "YouTube preview";
-                iframe.setAttribute("allow", "autoplay; encrypted-media");
-                iframe.setAttribute("frameborder", "0");
-
-                wrapper.appendChild(closeBtn);
-                wrapper.appendChild(iframe);
+                const { wrapper, closeBtn } =
+                    createYouTubePreviewWrapper(embedUrl, playBtn);
 
                 slot.appendChild(wrapper);
                 closeBtn.focus();
@@ -1516,34 +1544,8 @@ cursor:pointer;
                     data.videoId +
                     "?autoplay=1&rel=0&modestbranding=1&playsinline=1";
 
-                const wrapper = document.createElement("div");
-                wrapper.className = "video-wrapper";
-                wrapper.style.position = "relative";
-                wrapper.style.marginTop = "10px";
-
-                const closeBtn = document.createElement("button");
-                closeBtn.textContent = "✖";
-                closeBtn.setAttribute("aria-label", "Close YouTube preview");
-                closeBtn.style.position = "absolute";
-                closeBtn.style.top = "10px";
-                closeBtn.style.right = "-10px";
-                closeBtn.style.zIndex = "20";
-
-                closeBtn.addEventListener("click", () => {
-                    wrapper.remove();
-                    playBtn.focus();
-                });
-
-                const iframe = document.createElement("iframe");
-                iframe.width = "100%";
-                iframe.height = "200";
-                iframe.src = embedUrl;
-                iframe.title = "YouTube preview";
-                iframe.setAttribute("allow", "autoplay; encrypted-media");
-                iframe.setAttribute("frameborder", "0");
-
-                wrapper.appendChild(closeBtn);
-                wrapper.appendChild(iframe);
+                const { wrapper, closeBtn } =
+                    createYouTubePreviewWrapper(embedUrl, playBtn);
 
                 slot.appendChild(wrapper);
                 closeBtn.focus();
