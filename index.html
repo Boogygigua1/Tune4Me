@@ -87,14 +87,23 @@
         input:focus-visible,
         select:focus-visible,
         textarea:focus-visible,
-        a:focus-visible {
-            outline: 3px solid #007AFF;
+        a:focus-visible,
+        [tabindex]:not([tabindex="-1"]):focus-visible {
+            outline: 3px solid #005FCC;
             outline-offset: 3px;
+            box-shadow:
+                0 0 0 5px #ffffff,
+                0 0 0 8px #005FCC;
+            border-radius: 6px;
         }
 
         main:focus {
-            outline: 3px solid #007AFF;
+            outline: 3px solid #005FCC;
             outline-offset: 3px;
+            box-shadow:
+                0 0 0 5px #ffffff,
+                0 0 0 8px #005FCC;
+            border-radius: 6px;
         }
 
         .skip-link {
