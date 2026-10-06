@@ -27,6 +27,6 @@ Tune4Me analytics are aggregate, count-only product events. Events must not incl
 
 The admin dashboard lives at `admin-analytics.html` and fetches aggregate counts from `/api/analytics`.
 
-Set `ANALYTICS_ADMIN_TOKEN` in the hosting environment. The dashboard accepts the token in the page input or as `?token=...`.
+Set `ANALYTICS_ADMIN_TOKEN` in the hosting environment. The dashboard accepts the token in the page input and sends it with the `Authorization: Bearer` request header.
 
 The summary is intentionally lightweight and in-memory. It is useful for Early Public Beta directional counts, but it is not a durable analytics warehouse.

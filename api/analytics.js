@@ -87,7 +87,7 @@ function isAuthorized(req) {
         ? authHeader.slice("Bearer ".length)
         : "";
 
-    return bearerToken === token || req.query?.token === token;
+    return bearerToken === token;
 }
 
 export default async function handler(req, res) {

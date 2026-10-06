@@ -146,13 +146,6 @@
             rate_limit_event: "Rate-limit events"
         };
 
-        const params = new URLSearchParams(window.location.search);
-        const tokenFromUrl = params.get("token");
-
-        if (tokenFromUrl) {
-            document.getElementById("adminToken").value = tokenFromUrl;
-        }
-
         function renderRows(targetId, values, labels) {
             const target = document.getElementById(targetId);
             target.innerHTML = "";
@@ -204,9 +197,6 @@
             }
         }
 
-        if (tokenFromUrl) {
-            loadAnalytics();
-        }
     </script>
 </body>
 
