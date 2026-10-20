@@ -366,7 +366,7 @@
     <h2 class="sr-only">Create a Playlist</h2>
 
     <label for="moodInput" class="form-label">Describe how you're feeling (required)</label>
-    <input type="text" id="moodInput" maxlength="500" aria-describedby="moodLanguageHint moodDiscoveryHint moodError"
+    <input type="text" id="moodInput" maxlength="2000" aria-describedby="moodLanguageHint moodDiscoveryHint moodError"
         placeholder="Example: peaceful, heartbroken, or ready for a fresh start" onkeydown="handleKey(event)">
 
     <div id="moodError" class="field-error" role="alert"></div>
@@ -1199,7 +1199,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
 
                 const ytBar = document.createElement("button");
 
-                ytBar.textContent = "▶ Listen on YouTube";
+                ytBar.textContent = "Open YouTube";
                 ytBar.setAttribute("aria-label", `Listen to ${item.song} by ${item.artist || "Unknown Artist"} on YouTube`);
                 ytBar.style.width = "100%";
                 ytBar.style.marginTop = "10px";
@@ -1247,12 +1247,72 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
             loadSavedSongs();
         }
 
+        function getVideoCacheKey(song, artist) {
+            return "yt_v4_" + JSON.stringify([song, artist].map(value => value
+                .normalize("NFKC").toLowerCase().trim()));
+        }
+
+        async function lookupYouTubePreview(song, artist, excludedIds, startSearchStage = 0) {
+            const state = window.tune4mePreviewLookups ||= { pools: new Map(), pending: new Map(), limited: null, attempt: 0 };
+            const identityKey = getVideoCacheKey(song, artist);
+            const excluded = new Set(excludedIds);
+            const pool = state.pools.get(identityKey);
+            if (pool && Date.now() - pool.cachedAt < 5 * 60 * 1000) {
+                const candidates = pool.data.candidates.filter(item => !excluded.has(item.videoId));
+                if (candidates.length) return { ok: true, status: 200,
+                    data: { ...pool.data, ...candidates[0], candidates, cacheSource: "browser_candidates" } };
+                startSearchStage = Math.max(startSearchStage, pool.data.nextSearchStage || 0);
+                if (startSearchStage >= 4) return { ok: false, status: 404,
+                    data: { reason: "unplayable", nextSearchStage: 4, cacheSource: "browser_candidates" } };
+            } else if (pool) state.pools.delete(identityKey);
+
+            const key = JSON.stringify([identityKey, [...excluded].sort(), startSearchStage]);
+            if (state.pending.has(key)) {
+                const result = await state.pending.get(key);
+                return { ...result, data: { ...result.data, cacheSource: "browser_inflight" } };
+            }
+            if (state.limited && Date.now() < state.limited.until) {
+                return { ok: false, status: 429, data: { ...state.limited.data, cacheSource: "browser_backoff",
+                    retryAfterSeconds: Math.max(1, Math.ceil((state.limited.until - Date.now()) / 1000)) } };
+            }
+
+            const task = (async () => {
+                const response = await fetch("/api/getYouTubeVideo", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: (song + " " + artist).trim(), song, artist,
+                        excludeVideoIds: [...excluded], includeAlternatives: true, startSearchStage })
+                });
+                const data = await response.json();
+                if (response.status === 429 || ["rate_limited", "quota_limited"].includes(data.warning)) {
+                    state.attempt = state.limited && Date.now() < state.limited.until + 300000
+                        ? Math.min(state.attempt + 1, 5) : 1;
+                    const seconds = Number(data.retryAfterSeconds || response.headers?.get?.("retry-after"));
+                    const backoff = Math.min(5 * 2 ** (state.attempt - 1), 60);
+                    data.retryAfterSeconds = Math.max(backoff, Number.isFinite(seconds) && seconds > 0
+                        ? Math.min(Math.ceil(seconds), (data.reason || data.warning) === "quota_limited" ? 21600 : 300)
+                        : backoff);
+                    state.limited = { until: Date.now() + data.retryAfterSeconds * 1000,
+                        data: { reason: data.reason || data.warning, diagnostics: data.diagnostics, retryAfterSeconds: data.retryAfterSeconds } };
+                }
+                if (response.ok && /^[A-Za-z0-9_-]{11}$/.test(data.videoId || "")) {
+                    // Only verified pools are reused; a single legacy ID still follows the existing retry path.
+                    if (Array.isArray(data.candidates)) {
+                        data.candidates = data.candidates.filter(item => /^[A-Za-z0-9_-]{11}$/.test(item.videoId || ""));
+                        state.pools.set(identityKey, { data, cachedAt: Date.now() });
+                    }
+                    // A server cache hit is not evidence that an upstream pause has ended.
+                    if (!data.warning && !data.cached && data.cacheSource !== "server_cache") {
+                        state.limited = null; state.attempt = 0;
+                    }
+                }
+                return { ok: response.ok, status: response.status, data };
+            })();
+            state.pending.set(key, task);
+            try { return await task; } finally { state.pending.delete(key); }
+        }
+
         function getCachedVideo(song, artist) {
-            const key = "yt_" + (song + " " + artist)
-                .toLowerCase()
-                .replace(/[^\w\s]/g, "")
-                .replace(/\s+/g, " ")
-                .trim();
+            const key = getVideoCacheKey(song, artist);
 
             const cached = localStorage.getItem(key);
 
@@ -1261,7 +1321,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
             try {
                 const entry = JSON.parse(cached);
 
-                if (!entry.videoId || !entry.cachedAt) {
+                if (!/^[A-Za-z0-9_-]{11}$/.test(entry.videoId || "") || !entry.cachedAt) {
                     localStorage.removeItem(key);
                     return null;
                 }
@@ -1279,11 +1339,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
         }
 
         function saveCachedVideo(song, artist, videoId) {
-            const key = "yt_" + (song + " " + artist)
-                .toLowerCase()
-                .replace(/[^\w\s]/g, "")
-                .replace(/\s+/g, " ")
-                .trim();
+            const key = getVideoCacheKey(song, artist);
 
             localStorage.setItem(key, JSON.stringify({
                 videoId,
@@ -1291,16 +1347,40 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
             }));
         }
 
+        function forgetCachedVideo(song, artist) {
+            localStorage.removeItem(getVideoCacheKey(song, artist));
+        }
+
+        function destroyYouTubePreview(wrapper) {
+            wrapper.previewDisposed = true;
+            clearTimeout(wrapper.previewReadyTimeout);
+            if (wrapper.youtubePlayer) wrapper.youtubePlayer.destroy();
+            wrapper.remove();
+        }
+
         function closeYouTubePreview(wrapper, playBtn) {
 
-            wrapper.remove();
+            destroyYouTubePreview(wrapper);
 
             if (playBtn && typeof playBtn.focus === "function") {
                 playBtn.focus();
             }
         }
 
-        function createYouTubePreviewWrapper(embedUrl, playBtn) {
+        function waitForYouTubeApi() {
+            if (window.YT?.Player) return Promise.resolve(window.YT);
+            return new Promise((resolve, reject) => {
+                const previous = window.onYouTubeIframeAPIReady;
+                const timeout = setTimeout(() => reject(new Error("YouTube player API unavailable")), 10000);
+                window.onYouTubeIframeAPIReady = () => {
+                    clearTimeout(timeout);
+                    if (previous) previous();
+                    resolve(window.YT);
+                };
+            });
+        }
+
+        function createYouTubePreviewWrapper(embedUrl, playBtn, onError, onPlaying, diagnostics = {}) {
 
             const wrapper = document.createElement("div");
             wrapper.className = "video-wrapper";
@@ -1331,6 +1411,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
             iframe.width = "100%";
             iframe.height = "200";
             iframe.src = embedUrl;
+            iframe.referrerPolicy = "strict-origin-when-cross-origin";
             iframe.title = "YouTube preview";
             iframe.setAttribute("allow", "autoplay; encrypted-media");
             iframe.setAttribute("frameborder", "0");
@@ -1338,6 +1419,40 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
             previewHeader.appendChild(closeBtn);
             wrapper.appendChild(previewHeader);
             wrapper.appendChild(iframe);
+
+            waitForYouTubeApi().then(api => {
+                if (wrapper.previewDisposed || !wrapper.isConnected) return;
+                wrapper.previewReadyTimeout = setTimeout(() => {
+                    if (!wrapper.previewDisposed && wrapper.isConnected) onError?.("player_not_ready");
+                }, 15000);
+                wrapper.youtubePlayer = new api.Player(iframe, {
+                    events: {
+                        onReady: () => {
+                            clearTimeout(wrapper.previewReadyTimeout);
+                            if (!wrapper.previewDisposed && wrapper.isConnected)
+                                console.log("youtube_preview_player_ready", diagnostics);
+                        },
+                        onError: event => {
+                            clearTimeout(wrapper.previewReadyTimeout);
+                            if (!wrapper.previewDisposed && wrapper.isConnected) return onError?.(event.data);
+                        },
+                        onStateChange: event => {
+                            if (wrapper.previewDisposed || !wrapper.isConnected) return;
+                            console.log("youtube_preview_player_state", { ...diagnostics, state: event.data });
+                            if (event.data === 1) { clearTimeout(wrapper.previewReadyTimeout); onPlaying?.(); }
+                        },
+                        onAutoplayBlocked: () => {
+                            if (wrapper.previewDisposed || !wrapper.isConnected || wrapper.autoplayNotice) return;
+                            const notice = document.createElement("p");
+                            notice.textContent = "Press Play in the video to start the preview.";
+                            wrapper.appendChild(notice);
+                            wrapper.autoplayNotice = notice;
+                        }
+                    }
+                });
+            }).catch(() => {
+                if (!wrapper.previewDisposed && wrapper.isConnected) onError?.("player_api_unavailable");
+            });
 
             return {
                 wrapper,
@@ -1347,215 +1462,192 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
 
         // PLAYBACK CORE
 
-        async function playSong(song, artist, playBtn) {
-
-            if (playBtn.disabled) return;
-
-            playBtn.disabled = true;
-
-            setTimeout(() => {
-                playBtn.disabled = false;
-            }, 1000);
-
-            // 🔴 STOP everything before playing a new song
-            if (!isPlayingAll) {
-                stopPlayback();
+        function showPreviewFailure(slot, song, artist, reason, options = {}) {
+            const messages = {
+                quota_limited: "YouTube's preview quota is temporarily exhausted. Please try again later.",
+                rate_limited: "YouTube preview lookup is temporarily limited. Please wait before retrying.",
+                access_denied: "YouTube preview access is unavailable right now.",
+                missing_key: "Previews are temporarily unavailable right now.",
+                no_result: "Tune4Me could not find a reliable preview for this song.",
+                unplayable: "A matching recording was found, but it cannot play here right now.",
+                embed_restricted: "YouTube does not allow this recording to play in an embedded player.",
+                video_unavailable: "This recording is no longer available for playback here.",
+                player_identity: "YouTube could not verify this player. Try reloading the page or listening on YouTube.",
+                player_api_unavailable: "The YouTube player could not connect. Try reloading the page.",
+                player_not_ready: "The YouTube player did not become ready. Please try again or open YouTube.",
+                upstream_error: "YouTube lookup is having trouble right now."
+            };
+            slot.innerHTML = "";
+            const note = document.createElement("div");
+            const message = document.createElement("p");
+            message.textContent = messages[reason] || "The preview could not play in this browser.";
+            const link = document.createElement("button");
+            link.textContent = "▶ Listen on YouTube";
+            link.className = "fallbackYTBtn";
+            link.setAttribute("aria-label", `Search for ${song} by ${artist} on YouTube`);
+            link.addEventListener("click", () => {
+                trackTune4Me("youtube_search_opened");
+                window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${song} ${artist} official audio`)}`, "_blank");
+            });
+            note.appendChild(message);
+            if (["rate_limited", "quota_limited"].includes(reason) && options.onRetry) {
+                const seconds = Math.max(1, Math.ceil(options.retryAfterSeconds || 5));
+                const retry = document.createElement("button");
+                retry.type = "button";
+                retry.className = "retryPreviewBtn";
+                retry.disabled = true;
+                retry.textContent = seconds >= 60 ? `Retry preview after ${Math.ceil(seconds / 60)} minutes`
+                    : `Retry preview after ${seconds} seconds`;
+                retry.addEventListener("click", async () => {
+                    if (retry.disabled || (options.isCurrent && !options.isCurrent())) return;
+                    retry.disabled = true;
+                    await options.onRetry();
+                });
+                setTimeout(() => {
+                    if (options.isCurrent && !options.isCurrent()) return;
+                    retry.disabled = false;
+                    retry.textContent = "Retry preview";
+                }, seconds * 1000);
+                note.appendChild(retry);
             }
+            note.appendChild(link);
+            slot.appendChild(note);
+        }
 
-            // 🔴 remove all video wrappers (ensures no duplicates)
-            document.querySelectorAll(".video-wrapper").forEach(w => w.remove());
-
-            console.log("song_preview_started");
-
+        async function playSong(song, artist, playBtn) {
+            if (playBtn.disabled) return;
+            playBtn.disabled = true;
+            setTimeout(() => { playBtn.disabled = false; }, 1000);
+            if (!isPlayingAll) stopPlayback();
+            document.querySelectorAll(".video-wrapper").forEach(destroyYouTubePreview);
             trackTune4Me("song_preview_opened");
 
-            // ✅ Track active song
-
             const card = playBtn.closest(".card");
-            // 🔴 stop any currently playing videos
-
             let slot = card.querySelector(".video-slot");
-
             if (!slot) {
                 slot = document.createElement("div");
                 slot.className = "video-slot";
                 slot.setAttribute("aria-live", "polite");
                 card.appendChild(slot);
             }
-
-            // 🔴 remove ALL previous video wrappers (THIS fixes X button issue)
-            slot.querySelectorAll(".video-wrapper").forEach(w => w.remove());
-
-            const cachedVideoId = getCachedVideo(song, artist);
-
-            if (cachedVideoId) {
-
-                console.log("youtube_preview_cache_hit");
-
-                const embedUrl =
-                    "https://www.youtube-nocookie.com/embed/" +
-                    cachedVideoId +
-                    "?autoplay=1&rel=0&modestbranding=1&playsinline=1";
-
-                const { wrapper, closeBtn } =
-                    createYouTubePreviewWrapper(embedUrl, playBtn);
-
-                slot.appendChild(wrapper);
-                closeBtn.focus();
-
-                return;
-            }
-
-            try {
-                const query = (song + " " + artist).trim();
-
-                const previewStartedAt = Date.now();
-
-                console.log("youtube_preview_request_started");
-
-                const response = await fetch("/api/getYouTubeVideo", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        query: query
-                    })
+            slot.innerHTML = "";
+            const requestId = window.tune4mePreviewRequest = (window.tune4mePreviewRequest || 0) + 1;
+            const failedIds = [...(slot.previewFailedIds || [])];
+            const isCurrent = () => window.tune4mePreviewRequest === requestId;
+            const fail = (reason, data = {}) => {
+                if (isCurrent()) showPreviewFailure(slot, song, artist, reason, {
+                    retryAfterSeconds: data.retryAfterSeconds, isCurrent,
+                    onRetry: () => playSong(song, artist, playBtn)
                 });
+            };
+            const attemptedIds = new Set();
+            let candidates = [];
+            let lookups = 0;
+            let alternativesSearched = false;
+            let nextSearchStage = 0;
+            let maxLookups = 2; // Compatibility with older responses without search progress.
+            let lastPlaybackReason = "unplayable";
+            let lookupSource = null;
 
-                const text = await response.text();
-
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch {
-                    data = {
-                        error: "Preview unavailable",
-                        reason: "upstream_error"
-                    };
+            async function loadPreview(useCache) {
+                let videoId = useCache ? getCachedVideo(song, artist) : null;
+                if (failedIds.includes(videoId)) videoId = null;
+                let cacheSource = videoId ? "browser_cache" : "candidate_pool";
+                let candidate;
+                while (candidates.length && !candidate) {
+                    const next = candidates.shift();
+                    if (!failedIds.includes(next.videoId) && !attemptedIds.has(next.videoId)) candidate = next;
                 }
-
-                if (!data.videoId || data.videoId === "undefined") {
-                    const previewReason = data.reason ||
-                        (response.status === 429
-                            ? "quota_limited"
-                            : response.status === 404
-                                ? "no_result"
-                                : "upstream_error");
-
-                    if (response.status === 429) {
-                        trackTune4Me("rate_limit_event");
+                if (!videoId && candidate) videoId = candidate.videoId;
+                if (!videoId) {
+                    if (alternativesSearched || lookups >= maxLookups) {
+                        fail(lastPlaybackReason);
+                        return;
                     }
-
-                    const previewMessages = {
-                        quota_limited: "YouTube previews are taking a short pause right now. You can still listen directly on YouTube.",
-                        no_result: "Tune4Me could not find a reliable preview for this song. You can still search on YouTube.",
-                        missing_key: "Previews are temporarily unavailable right now. You can still listen directly on YouTube.",
-                        upstream_error: "YouTube lookup is having trouble right now. You can still listen directly on YouTube."
-                    };
-
-                    const previewMessage = previewMessages[previewReason] ||
-                        previewMessages.upstream_error;
-
-                    console.log("youtube_preview_request_finished", {
-                        status: response.status,
-                        durationMs: Date.now() - previewStartedAt,
-                        resultFound: false,
-                        errorCategory: previewReason
-                    });
-
-                    trackTune4Me("youtube_preview_failure");
-
-                    slot.innerHTML = `
-<div style="
-    padding:16px;
-    background:#f8f8f8;
-    border-radius:10px;
-    text-align:center;
-    line-height:1.6;
-    color:#4D4D4D;
-">
-<h3 class="card-heading">🎧 Playback Note</h3>
-
-${previewMessage}<br><br>
-
-Use the button below to open YouTube 🎧
-<br><br>
-
-<button class="fallbackYTBtn"
-style="
-padding:10px 14px;
-border:none;
-border-radius:8px;
-background:#A80000;
-color:white;
-cursor:pointer;
-">
-▶ Listen on YouTube
-</button>
-</div>
-`;
-
-                    const fallbackBtn = slot.querySelector(".fallbackYTBtn");
-
-                    if (fallbackBtn) {
-                        fallbackBtn.setAttribute("aria-label", `Search for ${song} by ${artist} on YouTube`);
-                        fallbackBtn.addEventListener("click", () => {
-                            trackTune4Me("youtube_search_opened");
-
-                            const ytQuery = encodeURIComponent(
-                                `${song} ${artist} official audio`
-                            );
-
-                            window.open(
-                                `https://www.youtube.com/results?search_query=${ytQuery}`,
-                                "_blank"
-                            );
-                        });
+                    lookups++;
+                    const response = await lookupYouTubePreview(song, artist, failedIds, nextSearchStage);
+                    const data = response.data;
+                    if (!isCurrent()) return;
+                    console.log("youtube_preview_lookup", { song, artist, status: response.status, reason: data.reason || null,
+                        warning: data.warning || null, videoId: data.videoId || null,
+                        video: data.video || null, candidateIds: data.candidates?.map(item => item.videoId) || [],
+                        candidateCount: data.candidates?.length || 0, cacheSource: data.cacheSource || "upstream",
+                        diagnostics: data.diagnostics || null, retryAfterSeconds: data.retryAfterSeconds || null,
+                        nextSearchStage: data.nextSearchStage ?? null });
+                    if (!response.ok || !/^[A-Za-z0-9_-]{11}$/.test(data.videoId || "")) {
+                        if (response.status === 429) trackTune4Me("rate_limit_event");
+                        trackTune4Me("youtube_preview_failure");
+                        fail(data.reason || "upstream_error", data);
+                        return;
                     }
-
+                    const hasPool = Array.isArray(data.candidates);
+                    const hasProgress = Number.isInteger(data.nextSearchStage) && data.nextSearchStage >= 1 && data.nextSearchStage <= 4;
+                    if (hasProgress) { nextSearchStage = Math.max(nextSearchStage, data.nextSearchStage); maxLookups = 4; }
+                    alternativesSearched = hasProgress ? nextSearchStage >= 4 : hasPool;
+                    candidates = (hasPool ? data.candidates : [{ videoId: data.videoId, video: data.video }])
+                        .filter(item => /^[A-Za-z0-9_-]{11}$/.test(item.videoId || "") &&
+                            !failedIds.includes(item.videoId) && !attemptedIds.has(item.videoId)).slice(0, 5);
+                    candidate = candidates.shift();
+                    if (!candidate) {
+                        fail(lastPlaybackReason);
+                        return;
+                    }
+                    videoId = candidate.videoId;
+                    cacheSource = lookupSource = data.cacheSource || "upstream";
+                }
+                if (!isCurrent()) return;
+                if (attemptedIds.has(videoId) || attemptedIds.size >= 5) {
+                    fail(lastPlaybackReason);
                     return;
                 }
-
-                // 🔴 convert ISO duration
-                function parseDuration(iso) {
-                    const match = iso.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
-                    const minutes = parseInt(match[1] || 0);
-                    const seconds = parseInt(match[2] || 0);
-                    return minutes * 60 + seconds;
+                attemptedIds.add(videoId);
+                const diagnostics = { song, artist, videoId, cacheSource, lookupSource, attempt: attemptedIds.size };
+                console.log("youtube_preview_attempt", diagnostics);
+                window.currentDurationSeconds = 30;
+                const embedUrl = "https://www.youtube-nocookie.com/embed/" + videoId +
+                    "?enablejsapi=1&autoplay=1&rel=0&playsinline=1&origin=" + encodeURIComponent(window.location.origin);
+                let failed = false;
+                const { wrapper, closeBtn } = createYouTubePreviewWrapper(embedUrl, playBtn, async code => {
+                    if (failed || !isCurrent()) return;
+                    failed = true;
+                    console.warn("youtube_preview_playback_error", { song, artist, videoId, code, attempt: attemptedIds.size });
+                    trackTune4Me("youtube_preview_failure");
+                    forgetCachedVideo(song, artist);
+                    destroyYouTubePreview(wrapper);
+                    const retryable = [100, 101, 150].includes(code);
+                    if (retryable && !failedIds.includes(videoId)) failedIds.push(videoId);
+                    slot.previewFailedIds = failedIds.slice(-5);
+                    const reason = code === 100 ? "video_unavailable" : [101, 150].includes(code) ? "embed_restricted" :
+                        code === 153 ? "player_identity" : ["player_api_unavailable", "player_not_ready"].includes(code) ? code : "player_error";
+                    lastPlaybackReason = reason;
+                    if (retryable && attemptedIds.size < 5 &&
+                        (candidates.length || (!alternativesSearched && lookups < maxLookups))) {
+                        try { await loadPreview(false); } catch {
+                            fail("upstream_error");
+                        }
+                        return;
+                    }
+                    fail(reason);
+                }, () => {
+                    // A lookup is not proof of playback. Cache only after the player starts.
+                    if (!failed && isCurrent()) saveCachedVideo(song, artist, videoId);
+                }, diagnostics);
+                if (candidate?.video) {
+                    const source = document.createElement("p");
+                    source.style.fontSize = "12px";
+                    source.textContent = `${candidate.video.title} — ${candidate.video.channelTitle}` +
+                        (candidate.video.version === "live" ? " (live performance)" : "");
+                    wrapper.appendChild(source);
                 }
-
-                let durationSeconds = 30;
-
-                if (data.duration) {
-                    durationSeconds = parseDuration(data.duration);
-                }
-
-                // 🔴 store duration globally for playNextSong
-                window.currentDurationSeconds = durationSeconds;
-
-                saveCachedVideo(song, artist, data.videoId);
-                console.log("youtube_preview_request_finished", {
-                    status: response.status,
-                    durationMs: Date.now() - previewStartedAt,
-                    resultFound: true
-                });
-
-                const embedUrl =
-                    "https://www.youtube-nocookie.com/embed/" +
-                    data.videoId +
-                    "?autoplay=1&rel=0&modestbranding=1&playsinline=1";
-
-                const { wrapper, closeBtn } =
-                    createYouTubePreviewWrapper(embedUrl, playBtn);
-
                 slot.appendChild(wrapper);
                 closeBtn.focus();
+            }
 
-            } catch (err) {
-                console.error("playSong error:", {
-                    errorCategory: err.name || "preview_error"
-                });
+            try { await loadPreview(true); } catch (error) {
+                if (!isCurrent()) return;
+                console.error("youtube_preview_lookup_error", { category: error.name });
                 trackTune4Me("youtube_preview_failure");
-                slot.innerHTML = "Error loading video";
+                fail("upstream_error");
             }
         }
 
@@ -1624,6 +1716,7 @@ cursor:pointer;
         }
 
         function stopPlayback() {
+            window.tune4mePreviewRequest = (window.tune4mePreviewRequest || 0) + 1;
             isPlayingAll = false;
 
             // stop timer
@@ -1639,7 +1732,7 @@ cursor:pointer;
 
             // 🔴 THIS is the missing fix
             document.querySelectorAll(".video-wrapper").forEach(wrapper => {
-                wrapper.remove();
+                destroyYouTubePreview(wrapper);
             });
 
             // reset buttons
@@ -1696,8 +1789,8 @@ cursor:pointer;
                 return;
             }
 
-            if (mood.length > 500) {
-                showMoodError("Please keep your mood note under 500 characters, then try again 🎧");
+            if (mood.length > 2000) {
+                showMoodError("Please keep your mood note under 2000 characters, then try again 🎧");
                 return;
             }
 
@@ -1782,7 +1875,6 @@ The playlist did not load correctly. Please try again in a moment 🎧
                 }
 
                 const raw = data.choices[0].message.content;
-                trackTune4Me("playlist_generated");
                 const lines = raw.split("\n");
 
                 stopPlayback();
@@ -1803,6 +1895,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                 songList.setAttribute("aria-label", "Generated playlist songs");
 
                 let songSection = false;
+                let songIndex = 0;
 
                 lines.forEach((line, i) => {
 
@@ -1875,7 +1968,13 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         let song = "";
                         let artist = "";
 
-                        if (clean.includes(" - ")) {
+                        if (!clean) return;
+
+                        if (data.playlist?.songs) {
+                            const item = data.playlist.songs[songIndex++];
+                            if (!item) return;
+                            ({ song, artist } = item);
+                        } else if (clean.includes(" - ")) {
 
                             const parts = clean.split(" - ");
 
@@ -1991,7 +2090,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         const ytBar = document.createElement("button");
 
-                        ytBar.textContent = "▶ Listen on YouTube";
+                        ytBar.textContent = "Open YouTube";
                         ytBar.setAttribute("aria-label", `Listen to ${song} by ${artist} on YouTube`);
 
                         ytBar.style.width = "100%";
@@ -2035,6 +2134,9 @@ The playlist did not load correctly. Please try again in a moment 🎧
                 });
 
 
+                if (!currentPlaylist.length) throw new Error("No playlist songs rendered");
+                trackTune4Me("playlist_generated");
+
                 if (button) button.disabled = false;
 
                 continueBtn.style.display = "inline-block";
@@ -2054,6 +2156,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                 }
 
             } catch (err) {
+                trackTune4Me("playlist_generation_failure");
                 console.error("playlist_error", {
                     errorCategory: err.name || "playlist_error"
                 });
@@ -2138,6 +2241,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                 songList.setAttribute("aria-label", "Continued playlist songs");
 
                 let songSection = false;
+                let songIndex = 0;
 
                 lines.forEach((line, i) => {
 
@@ -2162,7 +2266,13 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     let song = "";
                     let artist = "";
 
-                    if (clean.includes(" - ")) {
+                    if (!clean) return;
+
+                    if (data.playlist?.songs) {
+                        const item = data.playlist.songs[songIndex++];
+                        if (!item) return;
+                        ({ song, artist } = item);
+                    } else if (clean.includes(" - ")) {
 
                         const parts = clean.split(" - ");
 
@@ -2279,7 +2389,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const ytBar = document.createElement("button");
 
-                    ytBar.textContent = "▶ Listen on YouTube";
+                    ytBar.textContent = "Open YouTube";
                     ytBar.setAttribute("aria-label", `Listen to ${song} by ${artist} on YouTube`);
 
                     ytBar.style.width = "100%";

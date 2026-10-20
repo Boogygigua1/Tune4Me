@@ -1,0 +1,566 @@
+{
+  "url": "http://127.0.0.1:3000",
+  "regionChecked": "US",
+  "browserPlaybackVerified": false,
+  "songs": [
+    {
+      "song": "Home",
+      "artist": "Edward Sharpe & The Magnetic Zeros",
+      "status": 200,
+      "reason": null,
+      "candidates": [
+        {
+          "videoId": "-zpEMkKJd0M",
+          "video": {
+            "title": "Home",
+            "channelTitle": "Edward Sharpe & The Magnetic Zeros - Topic",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "DHEOF_rcND8",
+          "video": {
+            "title": "Edward Sharpe & The Magnetic Zeros - Home (Official Video)",
+            "channelTitle": "Rough Trade Records",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "zVebMUcSXkk",
+          "video": {
+            "title": "Edward Sharpe & The Magnetic Zeros - Home // Lyrics",
+            "channelTitle": "staywithme",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "DQJpFVzeNp8",
+          "video": {
+            "title": "Edward Sharpe & The Magnetic Zeros – Home",
+            "channelTitle": "Latin City",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "_3hWYXOg1Cg",
+          "video": {
+            "title": "Edward Sharpe & The Magnetic Zeros - Home",
+            "channelTitle": "ShockTVAustralia",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        }
+      ]
+    },
+    {
+      "song": "Fljótavík",
+      "artist": "Sigur Rós",
+      "status": 200,
+      "reason": null,
+      "candidates": [
+        {
+          "videoId": "zVToxvX-3jI",
+          "video": {
+            "title": "Sigur Rós - Fljótavík",
+            "channelTitle": "MusicIsLife",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "AmuRjMPx7eU",
+          "video": {
+            "title": "Sigur Ros - Fljotavik",
+            "channelTitle": "privatepracticemusic",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "eHnP_NNv_3A",
+          "video": {
+            "title": "Sigur Rós-Fljótavík",
+            "channelTitle": "Airidas Petkevičius",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "iuyI9Ecs0ZU",
+          "video": {
+            "title": "Sigur Ròs, Fljótavík (with lyric + english&italian translation in YT description box).",
+            "channelTitle": "C. P.",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "AS7B1sOoZXM",
+          "video": {
+            "title": "Fljótavík (Live)",
+            "channelTitle": "Sigur Rós - Topic",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "live"
+          }
+        }
+      ]
+    },
+    {
+      "song": "Slow Burn",
+      "artist": "Kacey Musgraves",
+      "status": 200,
+      "reason": null,
+      "candidates": [
+        {
+          "videoId": "vYZFN4INkhs",
+          "video": {
+            "title": "Slow Burn",
+            "channelTitle": "Kacey Musgraves - Topic",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "wAs0do4ogNs",
+          "video": {
+            "title": "Kacey Musgraves - Slow Burn (With Lyrics)",
+            "channelTitle": "Absolutelyrics",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "9GXRzKs5F_A",
+          "video": {
+            "title": "Kacey Musgraves - Slow Burn 🔥 Lyrics Video",
+            "channelTitle": "Viral Lyrics Daily",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "04F8Vv2JrAM",
+          "video": {
+            "title": "Kacey Musgraves - Slow Burn (Music Video)",
+            "channelTitle": "Aaron Boylan",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "tg6yBDybcvo",
+          "video": {
+            "title": "Kacey Musgraves - \"Slow Burn\" (Recorded Live for World Cafe)",
+            "channelTitle": "World Cafe",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "live"
+          }
+        }
+      ]
+    },
+    {
+      "song": "Love Like Ghosts",
+      "artist": "Lord Huron",
+      "status": 200,
+      "reason": null,
+      "candidates": [
+        {
+          "videoId": "OsuMZy15SVA",
+          "video": {
+            "title": "Lord Huron - Love Like Ghosts (Lyrics)",
+            "channelTitle": "Urban Paradise",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "8E5NVATAhng",
+          "video": {
+            "title": "Lord Huron - Love Like Ghosts (Lyric video)",
+            "channelTitle": "shades of lyrics ›",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "Q_nQd7Z8WEw",
+          "video": {
+            "title": "Lord Huron - Love Like Ghosts",
+            "channelTitle": "lisonlevesque",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "h6JXVVNDwQw",
+          "video": {
+            "title": "Lord Huron - Love Like Ghosts",
+            "channelTitle": "Michelle Ashton",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "ocQBTn4k9rI",
+          "video": {
+            "title": "Lord Huron - Love Like Ghosts (Alive From Whispering Pines)",
+            "channelTitle": "Roy Casey",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "live"
+          }
+        }
+      ],
+      "latestCheck": {
+        "status": 200,
+        "reason": null,
+        "warning": "rate_limited"
+      },
+      "observationNote": "Latest follow-up preserved verified candidates when a later search was rate limited."
+    },
+    {
+      "song": "Ophelia",
+      "artist": "The Lumineers",
+      "status": 200,
+      "reason": null,
+      "candidates": [
+        {
+          "videoId": "qJF0doztm4c",
+          "video": {
+            "title": "Ophelia",
+            "channelTitle": "The Lumineers - Topic",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "C9XqJ2TxOT8",
+          "video": {
+            "title": "The Lumineers - Ophelia (Lyrics)",
+            "channelTitle": "@Dawn",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "uU8ea6wPQZs",
+          "video": {
+            "title": "The Lumineers - Ophelia (Official Audio)",
+            "channelTitle": "Nielson Lucas",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "pCDPpHLOw6A",
+          "video": {
+            "title": "The Lumineers - Ophelia (Lyrics)",
+            "channelTitle": "AweLyrics",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "WVcy0YdEz0M",
+          "video": {
+            "title": "The Lumineers - Ophelia Lyrics",
+            "channelTitle": "Womans “womanwriterslyrics” Writers Lyrics",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        }
+      ]
+    },
+    {
+      "song": "The Night We Met",
+      "artist": "Lord Huron",
+      "status": 200,
+      "reason": null,
+      "candidates": [
+        {
+          "videoId": "KtlgYxa6BMU",
+          "video": {
+            "title": "Lord Huron - The Night We Met (Official Audio)",
+            "channelTitle": "Lord Huron",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "wGF7PswOENQ",
+          "video": {
+            "title": "Lord Huron - The Night We Met (Official Lyric Video)",
+            "channelTitle": "Lord Huron",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "AKnC-W-JPJk",
+          "video": {
+            "title": "Lord Huron - The Night We Met (Lyrics)",
+            "channelTitle": "Vibe Music",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "K9fAKOnZ9b0",
+          "video": {
+            "title": "Lord Huron - The Night We Met (Lyrics)",
+            "channelTitle": "7clouds",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "C3NxyNFT62w",
+          "video": {
+            "title": "Lord Huron - The Night We Met (Sub. Español + Lyrics)",
+            "channelTitle": "sweetblue.",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        }
+      ]
+    },
+    {
+      "song": "Youth",
+      "artist": "Daughter",
+      "status": 200,
+      "reason": null,
+      "candidates": [
+        {
+          "videoId": "MKJB-L2gW9o",
+          "video": {
+            "title": "Youth",
+            "channelTitle": "Daughter - Topic",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "Mq7wWpHQo3Q",
+          "video": {
+            "title": "Daughter - Youth (Lyrics)",
+            "channelTitle": "MUSIC IS MY LIFE",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "JiwCTqYMVWo",
+          "video": {
+            "title": "Daughter - Youth (Lyrics)",
+            "channelTitle": "Aurora Vibes",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "6I1p_sXflQQ",
+          "video": {
+            "title": "Youth-Daughter (lyrics)",
+            "channelTitle": "v md",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "VEpMj-tqixs",
+          "video": {
+            "title": "Youth - Daughter",
+            "channelTitle": "Ines K.",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        }
+      ]
+    },
+    {
+      "song": "Cherry Wine",
+      "artist": "Hozier",
+      "status": 200,
+      "reason": null,
+      "candidates": [
+        {
+          "videoId": "GW68oLYnL2Y",
+          "video": {
+            "title": "Hozier - Cherry Wine (lyrics)",
+            "channelTitle": "Eternal Music",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "cTGwyWzMpfU",
+          "video": {
+            "title": "hozier // cherry wine lyrics",
+            "channelTitle": "steric",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "5I4iwiDK_lQ",
+          "video": {
+            "title": "Hozier - Cherry Wine (Lyrics)",
+            "channelTitle": "LYRICS",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "H-u4pv3vgs4",
+          "video": {
+            "title": "Hozier - Cherry Wine (Lyrics)",
+            "channelTitle": "Perfect Songs ",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "pWWX0aUW_HY",
+          "video": {
+            "title": "Cherry Wine (live) - Hozier",
+            "channelTitle": "Hozier",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "live"
+          }
+        }
+      ],
+      "latestCheck": {
+        "status": 200,
+        "reason": null,
+        "warning": "rate_limited"
+      }
+    },
+    {
+      "song": "Roslyn",
+      "artist": "Robert Pattinson & St. Vincent",
+      "status": 404,
+      "reason": "no_result",
+      "candidates": []
+    },
+    {
+      "song": "I Will Follow You Into the Dark",
+      "artist": "Death Cab for Cutie",
+      "status": 200,
+      "reason": null,
+      "candidates": [
+        {
+          "videoId": "9FhRQt1vm3A",
+          "video": {
+            "title": "I Will Follow You into the Dark",
+            "channelTitle": "Death Cab For Cutie - Topic",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "3iV_1ESMHaI",
+          "video": {
+            "title": "Death Cab for Cutie - I Will Follow You into the Dark (Official Music Video)",
+            "channelTitle": "Death Cab for Cutie",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "_30V_ncBQtQ",
+          "video": {
+            "title": "Death Cab for Cutie – I Will Follow You into the Dark (‘Directions’ Music Video)",
+            "channelTitle": "Death Cab for Cutie",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "NDHY1D0tKRA",
+          "video": {
+            "title": "Death Cab For Cutie - I Will Follow You Into The Dark +Lyrics",
+            "channelTitle": "Truhffles",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        },
+        {
+          "videoId": "616jn5NLAwU",
+          "video": {
+            "title": "death cab for cutie - i will follow you into the dark (lyrics)",
+            "channelTitle": "deep blue sounds",
+            "embeddable": true,
+            "regionChecked": "US",
+            "version": "studio"
+          }
+        }
+      ]
+    }
+  ],
+  "creditIssue": {
+    "requested": {
+      "song": "Roslyn",
+      "artist": "Robert Pattinson & St. Vincent"
+    },
+    "catalogCredit": {
+      "song": "Rosyln",
+      "artist": "St. Vincent & Bon Iver"
+    },
+    "source": "https://music.apple.com/us/song/334818026",
+    "automaticallySubstituted": false,
+    "correctedReferenceCheck": {
+      "status": 429,
+      "reason": "rate_limited",
+      "candidates": []
+    }
+  },
+  "observedTransientRateLimit": true,
+  "observationDate": "2026-10-16"
+}
