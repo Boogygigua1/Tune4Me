@@ -10,7 +10,6 @@ const ALLOWED_EVENTS = new Set([
     "playlist_deleted",
     "philosophy_opened",
     "upgrade_dialog_viewed",
-    "upgrade_completed",
     "support_form_submitted",
     "playlist_generation_failure",
     "youtube_preview_failure",
@@ -52,10 +51,10 @@ function average(numerator, denominator) {
 
 function buildSummary() {
     const store = getAnalyticsStore();
-    const counts = { ...EMPTY_COUNTS, ...store.counts };
+    // Exclude old, forgeable upgrade reports even in a warm function instance.
+    const counts = Object.fromEntries([...ALLOWED_EVENTS].map(key => [key, store.counts[key] || 0]));
     const visitors = counts.home_page_loaded;
     const playlists = counts.playlist_generated;
-    const upgradesViewed = counts.upgrade_dialog_viewed;
 
     return {
         startedAt: store.startedAt,
@@ -70,7 +69,8 @@ function buildSummary() {
             songLikedTotal: counts.song_liked,
             songDislikedTotal: counts.song_disliked,
             continuePlaylistUsage: counts.continue_playlist,
-            upgradeConversion: percent(counts.upgrade_completed, upgradesViewed),
+            confirmedSales: null,
+            upgradeConversion: null,
             playlistGenerationFailures: counts.playlist_generation_failure,
             youtubePreviewFailures: counts.youtube_preview_failure,
             rateLimitEvents: counts.rate_limit_event

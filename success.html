@@ -3,12 +3,30 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Tune4Me Plus Activated</title>
+    <title>Tune4Me payment follow-up</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         button {
             min-width: 44px;
             min-height: 44px;
+            font-size: 16px;
+            padding: 12px 16px;
+            margin-top: 10px;
+            border: 1px solid #1456A0;
+            border-radius: 10px;
+            background: #1456A0;
+            color: #FFFFFF;
+            cursor: pointer;
+        }
+
+        button:hover:not(:disabled) {
+            background: #004A99;
+            border-color: #004A99;
+        }
+
+        button:active:not(:disabled) {
+            background: #00376E;
+            border-color: #00376E;
         }
 
         button:focus-visible,
@@ -18,7 +36,7 @@
             box-shadow:
                 0 0 0 5px #ffffff,
                 0 0 0 8px #005FCC;
-            border-radius: 6px;
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -27,69 +45,21 @@
 
     <main>
 
-    <h1>🎧 Tune4Me Plus Activated</h1>
+    <h1>🎧 Tune4Me payment follow-up</h1>
 
-    <p>Your saved songs list has been expanded by 25 additional saves.</p>
+    <p>This page cannot confirm a payment or activate additional saves.</p>
 
-    <p>Thank you for supporting Tune4Me.</p>
+    <p>If you already paid, keep your Stripe receipt and contact us using the support form on the home page. Your existing saved songs and capacity are unchanged.</p>
 
     <p style="font-size:13px; color:#4D4D4D; line-height:1.5;">
-        This optional saved songs expansion is stored in this browser on this device.
+        Automatic payment verification is not yet connected. Visiting or refreshing this page does not grant an upgrade.
     </p>
 
-    <button onclick="goBack()" style="
-        padding:12px 16px;
-        border:none;
-        border-radius:6px;
-        background:#1B5E20;
-        color:white;
-        cursor:pointer;
-    ">
+    <button onclick="goBack()">
         Return to Tune4Me
     </button>
 
     <script>
-
-        function trackTune4MeBetaEvent(eventName) {
-            const body = JSON.stringify({ event: eventName });
-
-            if (navigator.sendBeacon) {
-                navigator.sendBeacon(
-                    "/api/analytics",
-                    new Blob([body], { type: "application/json" })
-                );
-                return;
-            }
-
-            fetch("/api/analytics", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body,
-                keepalive: true
-            }).catch(() => { });
-        }
-
-        const upgraded = sessionStorage.getItem("upgradeApplied");
-
-        if (!upgraded) {
-
-            let currentLimit =
-                parseInt(localStorage.getItem("saveLimit")) || 15;
-
-            currentLimit += 25;
-
-            if (currentLimit > 100) {
-                currentLimit = 100;
-            }
-
-            localStorage.setItem("saveLimit", currentLimit);
-
-            localStorage.setItem("tune4mePlus", "active");
-
-            sessionStorage.setItem("upgradeApplied", "true");
-
-            trackTune4MeBetaEvent("upgrade_completed");
-        }
 
         function goBack() {
             window.location.href = "/";

@@ -71,6 +71,8 @@ function playlistFixture(overrides = {}) {
     return {
         intro: "You can miss someone and still feel relieved that it ended.",
         requestedSongs: [],
+        inclusionRequested: false,
+        unavailableRequestedSongs: [],
         songs: [anchor, other],
         explanation: "These songs leave room for longing and relief without pushing you toward a fresh start.",
         ...overrides
@@ -125,13 +127,113 @@ test("mixed soul/era preference and conflicting emotions are preserved together"
     assert.deepEqual(context.avoidSongs, [anchor]);
 });
 
+const complementaryRecordings = Array.from({ length: 10 }, (_, index) => ({
+    song: `Synthetic Complement ${index + 1}`, artist: `Complementary Artist ${index + 1}`
+}));
+
+function assertCohesiveCuratorRequest(mood) {
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0][0], "https://api.openai.com/v1/chat/completions");
+    assert.equal(detailRequests.length, 0);
+    const sent = JSON.parse(requests[0][1].body);
+    const instructions = sent.messages[0].content;
+    assert.match(instructions, /emotional resonance/);
+    assert.match(instructions, /vocal expression and emotional intensity/);
+    assert.match(instructions, /atmosphere, instrumentation and rhythm/);
+    assert.match(instructions, /blues, soul, folk, rock and other influences/);
+    assert.match(instructions, /other artists by default/);
+    assert.match(instructions, /explicit single-artist or genre-only constraint/);
+    assert.match(instructions, /illustrative connections, not a fixed artist roster/);
+    assert.match(instructions, /desired intensity rather than automatically escalating it/);
+    assert.match(instructions, /Do not automatically turn sadness into empowerment/);
+    assert.equal(sent.model, "gpt-4o-mini");
+    assert.equal(sent.max_completion_tokens, 3072);
+    const context = JSON.parse(sent.messages[1].content);
+    assert.equal(context.mood, mood);
+    assert.equal(context.length, 10);
+    return context;
+}
+
+test("an explicit Lose Control request anchors a ten-song cross-artist emotional playlist", async () => {
+    const mood = 'Please include "Lose Control" by Teddy Swims. I feel longing and passion, but I am not ready for a hopeful ending.';
+    const explanation = "The selections share yearning, expressive vocals and a spacious atmosphere without pushing toward resolution.";
+    aiReply(playlistFixture({ songs: complementaryRecordings, explanation }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [anchor, ...complementaryRecordings.slice(0, 9)]);
+    assert.equal(new Set(result.body.playlist.songs.map(item => item.artist)).size, 10);
+    assert.equal(result.body.playlist.explanation, explanation);
+    assert.deepEqual(assertCohesiveCuratorRequest(mood).requiredSongs, [anchor]);
+});
+
+test("a Big Mama Thornton artist reference can preserve emotionally connected Janis Joplin and Etta James selections", async () => {
+    const mood = "I'd like Big Mama Thornton, with raw, passionate singing and songs that feel emotionally connected.";
+    // Synthetic recordings test routing/preservation, not real catalog or audio analysis.
+    const songs = [
+        { song: "Synthetic Blues Vocal", artist: "Big Mama Thornton" },
+        { song: "Synthetic Passionate Vocal", artist: "Janis Joplin" },
+        { song: "Synthetic Soul Vocal", artist: "Etta James" },
+        ...complementaryRecordings.slice(0, 7)
+    ];
+    aiReply(playlistFixture({ songs }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, songs);
+    const context = assertCohesiveCuratorRequest(mood);
+    assert.equal(context.requiredSongs, undefined);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+});
+
+test("cohesion guidance does not override an explicit single-artist request", async () => {
+    const mood = "Make this a Teddy Swims-only playlist about yearning, with no other artists.";
+    const songs = complementaryRecordings.map(item => ({ ...item, artist: "Teddy Swims" }));
+    aiReply(playlistFixture({ songs }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, songs);
+    assertCohesiveCuratorRequest(mood);
+});
+
+test("cross-genre bridges remain optional when the listener explicitly restricts genre", async () => {
+    const mood = "Only blues, please. I want music that understands heartbreak without trying to cheer me up.";
+    aiReply(playlistFixture({ songs: complementaryRecordings }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, complementaryRecordings);
+    assertCohesiveCuratorRequest(mood);
+});
+
+test("cohesion keeps mixed feelings and desired intensity intact rather than imposing an emotional progression", async () => {
+    const mood = "I miss someone and feel relieved they left. I want tenderness, a steady rhythm and company in both feelings, not catharsis or a hopeful ending.";
+    const explanation = "These selections leave room for tenderness, longing and relief together, without demanding a change of feeling.";
+    aiReply(playlistFixture({ songs: complementaryRecordings, explanation }));
+    const result = await invoke(getPlaylist, { mood, likedSongs: [other], avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.equal(result.body.playlist.explanation, explanation);
+    const context = assertCohesiveCuratorRequest(mood);
+    assert.deepEqual(context.likedSongs, [other]);
+    assert.deepEqual(context.avoidSongs, [anchor]);
+});
+
+test("an emotional taste reference guides complementary artists without making the original mandatory", async () => {
+    const mood = "I love Lose Control by Teddy Swims because its yearning vocal captures my mood. Find me emotionally connected music by other artists.";
+    aiReply(playlistFixture({ songs: complementaryRecordings }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, complementaryRecordings);
+    const context = assertCohesiveCuratorRequest(mood);
+    assert.deepEqual(context.requiredSongs, []);
+    assert.deepEqual(context.tasteSongs, [anchor]);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+});
+
 for (const mood of [
     '"Lose Control" by Teddy Swims',
     "Please find Lose Control by Teddy Swims",
     "Lose Control by Teddy Swims because I miss my ex"
 ]) {
     test(`exact song reference uses canonical fields, not surrounding prose: ${mood}`, async () => {
-        // Model semantics are a live evaluation; this fixture tests downstream enforcement.
+        // Canonical model anchors and independently parsed omission recovery are both tested.
         aiReply(playlistFixture({ requestedSongs: [anchor], songs: [other, { song: "Stay With Me", artist: "Sam Smith" }] }));
         const result = await invoke(getPlaylist, { mood, length: 2 });
         assert.equal(result.status, 200);
@@ -155,6 +257,801 @@ test("excluded anchors do not override rejection feedback", async () => {
     assert.equal(result.status, 200);
     assert.equal(result.body.playlist.songs.some(item => item.song === anchor.song), false);
 });
+
+const recommendations = Array.from({ length: 10 }, (_, index) => ({
+    song: `Synthetic Recommendation ${index + 1}`, artist: `Synthetic Artist ${index + 1}`
+}));
+
+const naturalSongRequest = "Play Lose Control by Teddy Swims and recommend other songs that capture the same passion, vulnerability, longing, and soulful intensity. Include artists whose music evokes similar emotions, even across different genres.";
+
+for (const mood of [
+    "Play Lose Control by Teddy Swims",
+    "play Lose Control by Teddy Swims",
+    "Please play Lose Control by Teddy Swims",
+    'Play "Lose Control" by Teddy Swims'
+]) {
+    for (const disliked of [false, true]) {
+        test(`short explicit request survives model omission and historical feedback (${disliked}): ${mood}`, async () => {
+            aiReply(playlistFixture({ songs: recommendations }));
+            const body = { mood, avoidSongs: disliked ? [anchor] : [] };
+            const before = JSON.stringify(body);
+            const result = await invoke(getPlaylist, body);
+            assert.equal(result.status, 200);
+            assert.deepEqual(result.body.playlist.songs, [anchor, ...recommendations.slice(0, 9)]);
+            assert.equal(result.body.playlist.requestNotice, undefined);
+            const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+            assert.deepEqual(context.requiredSongs, [anchor]);
+            assert.deepEqual(context.avoidSongs, []);
+            assert.equal(JSON.stringify(body), before);
+            assert.equal(requests.length, 1);
+            assert.equal(detailRequests.length, 0);
+        });
+    }
+}
+
+for (const mood of [
+    "Play It Again by Luke Bryan",
+    "play It Again by Luke Bryan",
+    'Play "Play It Again" by Luke Bryan',
+    "Play Play It Again by Luke Bryan"
+]) test(`short Play commands preserve a real command-like full title: ${mood}`, async () => {
+    const full = { song: "Play It Again", artist: "Luke Bryan" };
+    const shortened = { song: "It Again", artist: "Luke Bryan" };
+    aiReply(playlistFixture({ requestedSongs: [full, shortened], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood, avoidSongs: [full] });
+    assert.equal(result.status, 200);
+    assert.equal(result.body.playlist.songs[0].song.toLowerCase(), full.song.toLowerCase());
+    assert.equal(result.body.playlist.songs[0].artist, full.artist);
+    assert.deepEqual(result.body.playlist.songs.slice(1), recommendations.slice(0, 9));
+    assert.equal(requests.length, 1);
+});
+
+test("an unresolved short command-like title is not shortened or silently satisfied", async () => {
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Play It Again by Luke Bryan" });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.match(result.body.playlist.requestNotice, /alternative recommendations/);
+    assert.equal(requests.length, 1);
+});
+
+test("informal misspellings use the same curator's canonical identity without fuzzy video matching", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], inclusionRequested: true, songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Play loose control by Teddy Swim", avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [anchor, ...recommendations.slice(0, 9)]);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.equal(context.mood, "Play loose control by Teddy Swim");
+    assert.ok(!context.requiredSongs?.length);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+    assert.equal(requests.length, 1);
+    assert.equal(detailRequests.length, 0);
+});
+
+for (const fields of [{}, { unavailableRequestedSongs: [anchor] }]) {
+    test(`unresolved informal spelling receives a limitation without inventing a recording: ${Object.keys(fields)}`, async () => {
+        aiReply(playlistFixture({ songs: recommendations, ...fields }));
+        const result = await invoke(getPlaylist, { mood: "Play loose control by Teddy Swim" });
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body.playlist.songs, recommendations);
+        assert.match(result.body.playlist.requestNotice, /couldn't/);
+        assert.equal(result.body.playlist.intro, result.body.playlist.requestNotice);
+        assert.match(result.body.choices[0].message.content, /alternative recommendations/);
+        assert.equal(requests.length, 1);
+        assert.equal(detailRequests.length, 0);
+    });
+}
+
+for (const suffix of [
+    ". Actually, don't play Lose Control.",
+    ". Do not include any songs by Teddy Swims.",
+    ". Only recommend similar songs."
+]) test(`short Play recovery cannot override a current exclusion: ${suffix}`, async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Play Lose Control by Teddy Swims" + suffix, avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.match(result.body.playlist.requestNotice, /alternative recommendations/);
+    assert.equal(requests.length, 1);
+});
+
+test("a canonical correction of informal spelling still respects current artist exclusions", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Play loose control by Teddy Swim. Do not include any songs by Teddy Swims." });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.match(result.body.playlist.requestNotice, /current exclusions/);
+    assert.equal(requests.length, 1);
+});
+
+test("an unavailable short explicit request is explained rather than recovered", async () => {
+    aiReply(playlistFixture({ unavailableRequestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Play Lose Control by Teddy Swims", avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.match(result.body.playlist.requestNotice, /recording-availability constraints/);
+    assert.equal(requests.length, 1);
+});
+
+for (const [song, artist, shortened] of [
+    ["Play It Again", "Luke Bryan", "It Again"],
+    ["Listen to Your Heart", "Roxette", "Your Heart"],
+    ["Find Your Love", "Drake", "Your Love"]
+]) {
+    const full = { song, artist };
+    const wrong = { song: shortened, artist };
+    for (const form of ["unquoted", "quoted", "outer command"]) {
+        test(`full command-like identity wins over a conflicting model/parser identity: ${song}, ${form}`, async () => {
+            const reference = form === "quoted" ? `Play "${song}" by ${artist}`
+                : form === "outer command" ? `Please play ${song} by ${artist}` : `${song} by ${artist}`;
+            aiReply(playlistFixture({ requestedSongs: form === "unquoted" ? [full, wrong] : [wrong], songs: recommendations }));
+            const result = await invoke(getPlaylist, { mood: reference + " and recommend other songs with the same longing.", avoidSongs: [full] });
+            assert.equal(result.status, 200);
+            assert.deepEqual(result.body.playlist.songs, [full, ...recommendations.slice(0, 9)]);
+            assert.equal(result.body.playlist.songs.some(item => item.song === shortened && item.artist === artist), false);
+            assert.equal(requests.length, 1);
+            assert.equal(detailRequests.length, 0);
+        });
+    }
+    test(`a full title selected by the curator is not accompanied by its shortened duplicate: ${song}`, async () => {
+        aiReply(playlistFixture({ songs: [full, ...recommendations.slice(0, 9)] }));
+        const result = await invoke(getPlaylist, { mood: `${song} by ${artist} and recommend other songs with similar yearning.` });
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body.playlist.songs, [full, ...recommendations.slice(0, 9)]);
+        assert.equal(requests.length, 1);
+    });
+    test(`unavailable full command-like titles cannot recover through a shortened identity: ${song}`, async () => {
+        aiReply(playlistFixture({ unavailableRequestedSongs: [full], songs: recommendations }));
+        const result = await invoke(getPlaylist, { mood: `${song} by ${artist} and recommend other songs with similar yearning.` });
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body.playlist.songs, recommendations);
+        assert.match(result.body.playlist.requestNotice, /alternative recommendations/);
+        assert.equal(requests.length, 1);
+    });
+    test(`an unresolved unquoted command-like title receives a limitation rather than a shortened recording: ${song}`, async () => {
+        aiReply(playlistFixture({ songs: recommendations }));
+        const result = await invoke(getPlaylist, { mood: `${song} by ${artist} and recommend other songs with the same longing.` });
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body.playlist.songs, recommendations);
+        assert.match(result.body.playlist.requestNotice, /alternative recommendations/);
+        const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+        assert.ok(!context.requiredSongs?.length);
+        assert.ok(context.ambiguousSongTitles.some(item => item.full.song === song && item.full.artist === artist));
+        assert.equal(requests.length, 1);
+    });
+    test(`quoting the full command-like title permits independent recovery without model metadata: ${song}`, async () => {
+        aiReply(playlistFixture({ songs: recommendations }));
+        const result = await invoke(getPlaylist, { mood: `Please play "${song}" by ${artist} and recommend other songs with the same longing.` });
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body.playlist.songs, [full, ...recommendations.slice(0, 9)]);
+        assert.equal(requests.length, 1);
+    });
+}
+
+test("title conflict resolution never substitutes a different artist's recording", async () => {
+    const full = { song: "Play It Again", artist: "Luke Bryan" };
+    const unrelated = { song: "It Again", artist: "Synthetic Different Artist" };
+    aiReply(playlistFixture({ requestedSongs: [full], songs: [unrelated, ...recommendations.slice(0, 9)] }));
+    const result = await invoke(getPlaylist, { mood: "Play It Again by Luke Bryan and recommend other songs with the same longing." });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs.slice(0, 2), [full, unrelated]);
+    assert.equal(result.body.playlist.songs.length, 10);
+});
+
+for (const [mood, requested] of [
+    ["Please play The Night We Met by Lord Huron.", { song: "The Night We Met", artist: "Lord Huron" }],
+    ["Please play The Door by Teddy Swims.", { song: "The Door", artist: "Teddy Swims" }],
+    ["Please play the song The Night We Met by Lord Huron.", { song: "The Night We Met", artist: "Lord Huron" }]
+]) test(`command parsing preserves an article belonging to the title: ${mood}`, async () => {
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood, avoidSongs: [requested] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [requested, ...recommendations.slice(0, 9)]);
+    assert.equal(requests.length, 1);
+});
+
+for (const mood of [
+    "Play the song Lose Control by Teddy Swims and recommend other songs with similar longing.",
+    "Please find me the track Lose Control by Teddy Swims and recommend other songs with similar longing."
+]) test(`an explicit song/track marker is not interpreted as part of an alternative title: ${mood}`, async () => {
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [anchor, ...recommendations.slice(0, 9)]);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.equal(context.ambiguousSongTitles, undefined);
+    assert.equal(requests.length, 1);
+});
+
+test("full-title resolution preserves continuation exclusions and explains the non-repetition", async () => {
+    const full = { song: "Play It Again", artist: "Luke Bryan" };
+    aiReply(playlistFixture({ requestedSongs: [full], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Play It Again by Luke Bryan and recommend other songs with similar longing.", existingSongs: [full] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.match(result.body.playlist.requestNotice, /already in your playlist/);
+    assert.equal(requests.length, 1);
+});
+
+test("ordinary emotional absence does not become a title-only music exclusion", async () => {
+    const hopeful = { song: "Hope", artist: "Synthetic Artist" };
+    aiReply(playlistFixture({ songs: [hopeful, ...recommendations.slice(0, 9)] }));
+    const mood = "Tonight I have no hope. I want gentle company in that feeling.";
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [hopeful, ...recommendations.slice(0, 9)]);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.equal(context.mood, mood);
+    assert.equal(context.requiredSongs, undefined);
+    assert.equal(requests.length, 1);
+});
+
+for (const correction of [
+    "Actually, don't play Lose Control.",
+    'Actually, do not include "Lose Control".',
+    "Actually, don’t recommend ‘Lose Control’.",
+    "Do not include any songs by Teddy Swims.",
+    'Exclude all tracks by "Teddy Swims".',
+    "Don't play music from Teddy Swims.",
+    "No songs by Teddy Swims.",
+    "Avoid Teddy Swims.",
+    "Do not play the song Lose Control by Teddy Swims."
+]) test(`current corrections block recovery despite conflicting model inclusion: ${correction}`, async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const mood = naturalSongRequest + " " + correction;
+    const result = await invoke(getPlaylist, { mood, avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.equal(context.mood, mood);
+    assert.deepEqual(context.requiredSongs, []);
+    assert.deepEqual(context.excludedSongs, [anchor]);
+    assert.deepEqual(context.avoidSongs, [anchor]);
+    assert.match(result.body.playlist.requestNotice, /alternative recommendations/);
+    assert.equal(requests.length, 1);
+    assert.equal(detailRequests.length, 0);
+});
+
+test("a title-only correction overrides recovery even when the curator omits all inclusion metadata", async () => {
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Please play Lose Control by Teddy Swims. Actually, don't play Lose Control." });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.equal(requests.length, 1);
+});
+
+for (const correction of [
+    "Don't play Lose Control Again.",
+    "Don't play Lose Control by Another Artist.",
+    "Do not include any songs by Teddy Swims Junior.",
+    "Don't exclude Lose Control by Teddy Swims.",
+    "Do not avoid Teddy Swims."
+]) test(`current exclusions retain exact identity and do not reverse double negation: ${correction}`, async () => {
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: naturalSongRequest + " " + correction, avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], anchor);
+    assert.equal(result.body.playlist.songs.length, 10);
+    assert.equal(requests.length, 1);
+});
+
+for (const [artist, excludedArtist] of [["Nothing", "Nothing But Thieves"], ["Simon", "Simon and Garfunkel"]]) {
+    test(`artist-wide exclusion does not match a shorter artist prefix: ${excludedArtist}`, async () => {
+        const requested = { song: "Synthetic Requested Song", artist };
+        aiReply(playlistFixture({ songs: recommendations }));
+        const result = await invoke(getPlaylist, { mood: `Please include "${requested.song}" by "${artist}". Do not include any songs by ${excludedArtist}.` });
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body.playlist.songs, [requested, ...recommendations.slice(0, 9)]);
+        assert.equal(requests.length, 1);
+    });
+}
+
+test("artist-wide exclusions cover model-only recommendations and fail closed rather than returning forbidden songs", async () => {
+    const forbidden = { song: "Synthetic Different Track", artist: "Teddy Swims" };
+    aiReply(playlistFixture({ songs: [forbidden, ...recommendations.slice(0, 9)] }));
+    const result = await invoke(getPlaylist, { mood: "I feel hopeful and heartbroken. Do not include any songs by Teddy Swims." });
+    assert.equal(result.status, 502);
+    assert.equal(result.body.reason, "invalid_playlist_response");
+    assert.equal(result.body.playlist, undefined);
+    assert.equal(requests.length, 1);
+    assert.equal(detailRequests.length, 0);
+});
+
+test("artist exclusions still leave room to recover another eligible requested song", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor, other], songs: [{ song: "Synthetic Different Track", artist: "Teddy Swims" }, ...recommendations.slice(0, 9)] }));
+    const result = await invoke(getPlaylist, { mood: 'Please include "Lose Control" by Teddy Swims and "Someone Like You" by Adele. Actually, do not include any songs by Teddy Swims.' });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [other, ...recommendations.slice(0, 9)]);
+    assert.equal(requests.length, 1);
+});
+
+for (const [title, status] of [["C++", 502], ["C++++", 200]]) test(`exclusion targets are literal names rather than regex patterns: ${title}`, async () => {
+    const candidate = { song: "C++", artist: "Artist (Test)" };
+    aiReply(playlistFixture({ songs: [candidate, ...recommendations.slice(0, 9)] }));
+    const result = await invoke(getPlaylist, { mood: `I feel reflective. Don't play "${title}" by "Artist (Test)".` });
+    assert.equal(result.status, status);
+    if (status === 200) assert.deepEqual(result.body.playlist.songs[0], candidate);
+    else assert.equal(result.body.playlist, undefined);
+    assert.equal(requests.length, 1);
+    assert.equal(detailRequests.length, 0);
+});
+
+for (const mood of [
+    naturalSongRequest,
+    "I'm feeling exposed tonight. Play Lose Control by Teddy Swims and recommend other songs that understand that vulnerability.",
+    "I miss someone; could you Play Lose Control by Teddy Swims and recommend more music with that yearning?",
+    "Please play Lose Control by Teddy Swims and suggest other songs with soulful vocals.",
+    "I've had a difficult evening. Can you play Lose Control by Teddy Swims and suggest some music that lets me sit with my feelings?",
+    "I'm hopeful and heartbroken. I want you to include Lose Control by Teddy Swims because I want room for both feelings.",
+    "I'm exhausted tonight. Include Lose Control by Teddy Swims and find me other songs with the same longing."
+]) test(`natural-language explicit inclusion is independently recovered: ${mood}`, async () => {
+    // The provider supplies neither the anchor nor inclusion metadata: recovery must be local.
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood, avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [anchor, ...recommendations.slice(0, 9)]);
+    assert.equal(result.body.playlist.songs.length, 10);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+    const sent = JSON.parse(requests[0][1].body);
+    const context = JSON.parse(sent.messages[1].content);
+    assert.equal(context.mood, mood);
+    assert.deepEqual(context.requiredSongs, [anchor]);
+    assert.deepEqual(context.avoidSongs, []);
+    assert.equal(result.body.playlist.explanation, playlistFixture().explanation);
+    assert.equal(requests.length, 1);
+    assert.match(requests[0][0], /^https:\/\/api\.openai\.com\//);
+    assert.equal(detailRequests.length, 0);
+});
+
+for (const [label, mood, options, excluded] of [
+    ["taste example", "I love Lose Control by Teddy Swims and recommend other songs with similar longing.", {}, false],
+    ["similar-only", "Only recommend similar songs to Lose Control by Teddy Swims and suggest other songs with soulful intensity.", {}, true],
+    ["explicit negative command", "Don't play Lose Control by Teddy Swims and recommend other songs with that intensity.", {}, true],
+    ["later current exclusion", naturalSongRequest + " Do not play Lose Control by Teddy Swims.", {}, true],
+    ["referential exclusion", naturalSongRequest + " But don't play this song.", {}, true],
+    ["later similar-only constraint", naturalSongRequest + " Only recommend similar songs.", {}, true],
+    ["continuation exclusion", naturalSongRequest, { existingSongs: [anchor] }, false]
+]) test(`follow-on music wording preserves ${label}`, async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood, ...options });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.ok(!context.requiredSongs?.length);
+    if (label === "taste example") assert.deepEqual(context.tasteSongs, [anchor]);
+    if (excluded) assert.deepEqual(context.excludedSongs, [anchor]);
+    assert.equal(requests.length, 1);
+    assert.equal(detailRequests.length, 0);
+});
+
+for (const mood of [
+    "I feel overwhelmed by everyone and recommend other songs to my friends, but I need comforting music tonight.",
+    "I'm standing by My Friend and recommend other songs when we talk; I'm lonely now.",
+    "Play music by Teddy Swims and recommend other songs with that intensity."
+]) test(`follow-on wording does not turn ordinary prose or artist preferences into songs: ${mood}`, async () => {
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.ok(!context.requiredSongs?.length);
+    assert.equal(requests.length, 1);
+});
+
+test("follow-on music wording preserves a quoted command-like title and an artist containing But", async () => {
+    const requested = { song: "Play Dead", artist: "Nothing But Thieves" };
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: 'Play "Play Dead" by Nothing But Thieves and recommend other songs with a similar atmosphere.' });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], requested);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.deepEqual(context.requiredSongs, [requested]);
+    assert.equal(requests.length, 1);
+});
+
+for (const title of ["Play Dead", "Find Me", "I Love You"]) test(`follow-on wording leaves a short ambiguous title with the curator: ${title}`, async () => {
+    const requested = { song: title, artist: "Fixture Artist" };
+    aiReply(playlistFixture({ requestedSongs: [requested], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: `${title} by Fixture Artist and recommend other songs with similar longing.` });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], requested);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.ok(!context.requiredSongs?.length);
+    assert.equal(requests.length, 1);
+});
+
+for (const mood of [
+    "Lose Control by Teddy Swims",
+    "Lose Control by Teddy Swims.",
+    '"Lose Control" by Teddy Swims',
+    'Please find "Lose Control" by Teddy Swims because I miss my ex',
+    "Please play Lose Control by Teddy Swims",
+    "Lose Control by Teddy Swims\nI'm feeling overwhelmed, and I want comforting music without a forced happy ending.",
+    "I feel overwhelmed and relieved. Please include Lose Control by Teddy Swims because I want company in both feelings."
+]) test(`an explicit song omitted by the model is recovered without another request: ${mood}`, async () => {
+    aiReply(playlistFixture({ requestedSongs: [], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.equal(result.body.playlist.songs.length, 10);
+    assert.deepEqual(result.body.playlist.songs, [anchor, ...recommendations.slice(0, 9)]);
+    assert.equal(requests.length, 1);
+    assert.equal(detailRequests.length, 0);
+    const sent = JSON.parse(requests[0][1].body);
+    const context = JSON.parse(sent.messages[1].content);
+    assert.equal(context.mood, mood);
+    assert.equal(context.length, 10);
+    assert.deepEqual(context.requiredSongs, [anchor]);
+    assert.deepEqual(context.excludedSongs, []);
+    assert.equal(result.body.playlist.intro, playlistFixture().intro);
+    assert.equal(result.body.playlist.explanation, playlistFixture().explanation);
+});
+
+test("a current explicit inclusion overrides only its own historical dislike without changing stored feedback", async () => {
+    aiReply(playlistFixture({ requestedSongs: [], songs: recommendations }));
+    const body = { mood: "Lose Control by Teddy Swims", avoidSongs: [anchor, other], likedSongs: [other] };
+    const before = JSON.stringify(body);
+    const result = await invoke(getPlaylist, body);
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], anchor);
+    assert.equal(result.body.playlist.songs.length, 10);
+    assert.equal(JSON.stringify(body), before);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.deepEqual(context.avoidSongs, [other]);
+    assert.deepEqual(context.likedSongs, [other]);
+    assert.equal(requests.length, 1);
+});
+
+test("a semantically identified model anchor also overrides its historical dislike", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Please include that Teddy Swims song about losing control", avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], anchor);
+    assert.equal(result.body.playlist.songs.length, 10);
+    assert.equal(requests.length, 1);
+});
+
+test("omitted one-song requests are recovered without increasing the requested count", async () => {
+    aiReply(playlistFixture({ requestedSongs: [], songs: [other] }));
+    const result = await invoke(getPlaylist, { mood: "Lose Control by Teddy Swims", length: 1, avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [anchor]);
+    assert.equal(requests.length, 1);
+});
+
+test("an anchor already present is deduplicated without changing the ten-song count", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: [anchor, ...recommendations.slice(0, 9)] }));
+    const result = await invoke(getPlaylist, { mood: "Lose Control by Teddy Swims", avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [anchor, ...recommendations.slice(0, 9)]);
+    assert.equal(result.body.playlist.songs.filter(item => item.song === anchor.song).length, 1);
+    assert.equal(requests.length, 1);
+});
+
+test("a current exclusion wins over a conflicting inclusion of the same reference", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Don't play Lose Control by Teddy Swims; include Lose Control by Teddy Swims" });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+});
+
+test("multiple explicit requests can satisfy a one-song playlist with one requested song", async () => {
+    aiReply(playlistFixture({ songs: [recommendations[0]] }));
+    const result = await invoke(getPlaylist, {
+        mood: 'Play "Lose Control" by "Teddy Swims" and include "Someone Like You" by "Adele"', length: 1
+    });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [anchor]);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+    assert.equal(requests.length, 1);
+});
+
+test("continuation exclusions still win over explicit inclusion and historical feedback", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, {
+        mood: "Lose Control by Teddy Swims", existingSongs: [anchor], avoidSongs: [anchor]
+    });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.equal(requests.length, 1);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.ok(!context.requiredSongs?.length);
+    assert.deepEqual(context.existingSongs, [anchor]);
+});
+
+for (const mood of [
+    "Don't play Lose Control by Teddy Swims",
+    'Do not include "Lose Control" by Teddy Swims',
+    "Never play Lose Control by Teddy Swims",
+    "Exclude Lose Control by Teddy Swims",
+    "Only recommend similar songs to Lose Control by Teddy Swims",
+    "Songs like Lose Control by Teddy Swims",
+    "Recommend songs similar to Lose Control by Teddy Swims",
+    'I love "Lose Control" by Teddy Swims because I feel overwhelmed. Only recommend similar songs.',
+    "Please play Lose Control by Teddy Swims, but don't play this song",
+    "Lose Control by Teddy Swims, but don't include it"
+]) test(`current exclusion wins even when the model tries to include the anchor: ${mood}`, async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.deepEqual(context.excludedSongs, [anchor]);
+    assert.deepEqual(context.requiredSongs, []);
+    assert.equal(requests.length, 1);
+});
+
+test("excluding a different named song does not veto the requested anchor", async () => {
+    aiReply(playlistFixture({ requestedSongs: [], songs: recommendations }));
+    const mood = 'Play "Lose Control" by Teddy Swims, but do not include "Someone Like You" by Adele';
+    const result = await invoke(getPlaylist, { mood, avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], anchor);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.deepEqual(context.requiredSongs, [anchor]);
+    assert.deepEqual(context.excludedSongs, [other]);
+});
+
+for (const mood of [
+    "I feel judged by everyone.",
+    "I Feel Judged by Everyone",
+    "I feel abandoned by My Friends, and I don't want advice.",
+    'I feel "judged" by everyone.',
+    "Please find comfort by spending time with friends.",
+    "I need music to play in the background while I feel supported by my family."
+]) test(`ordinary emotional prose does not create a required or excluded song: ${mood}`, async () => {
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.equal(context.requiredSongs, undefined);
+    assert.equal(context.excludedSongs, undefined);
+    assert.equal(context.mood, mood);
+});
+
+for (const mood of ["Songs by Teddy Swims", "Find songs by Teddy Swims", "Music by Teddy Swims", "More Songs by Teddy Swims"]) {
+    test(`artist-only preferences do not invent a song: ${mood}`, async () => {
+        aiReply(playlistFixture({ songs: recommendations }));
+        const result = await invoke(getPlaylist, { mood });
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body.playlist.songs, recommendations);
+        const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+        assert.equal(context.requiredSongs, undefined);
+        assert.equal(context.excludedSongs, undefined);
+    });
+}
+
+test("ambiguous double-negation stays with the curator instead of reversing an inclusion", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Don't exclude Lose Control by Teddy Swims", avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], anchor);
+});
+
+test("artist words are not truncated into another recording identity", async () => {
+    const requested = { song: "A Test Song", artist: "Nothing But Thieves" };
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "A Test Song by Nothing But Thieves" });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], requested);
+});
+
+test("an artist initialism retains its meaningful punctuation", async () => {
+    const requested = { song: "A Test Song", artist: "R.E.M." };
+    aiReply(playlistFixture({ requestedSongs: [requested], songs: [other] }));
+    const result = await invoke(getPlaylist, { mood: "A Test Song by R.E.M.", length: 1 });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [requested]);
+});
+
+for (const title of ["Play Dead", "Find Me", "I Love You"]) test(`an ambiguous command-like title is never shortened: ${title}`, async () => {
+    const requested = { song: title, artist: "Fixture Artist" };
+    aiReply(playlistFixture({ requestedSongs: [requested], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: `${title} by Fixture Artist`, avoidSongs: [requested] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], requested);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.equal(context.requiredSongs, undefined);
+});
+
+test("quoting a command-like title allows safe omission recovery with its full identity", async () => {
+    const requested = { song: "Play Dead", artist: "Fixture Artist" };
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: 'Please play "Play Dead" by Fixture Artist' });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], requested);
+});
+
+test("invalid or truncated model output cannot use anchor recovery to bypass response validation or retry", async () => {
+    aiReply(playlistFixture({ songs: recommendations }), { finish_reason: "length" });
+    const result = await invoke(getPlaylist, { mood: "Lose Control by Teddy Swims" });
+    assert.equal(result.status, 502);
+    assert.equal(result.body.reason, "invalid_playlist_response");
+    assert.equal(result.body.playlist, undefined);
+    assert.equal(requests.length, 1);
+});
+
+test("a shared explicit inclusion cue recovers multiple requested songs and preserves emotional recommendations", async () => {
+    const mood = "Please include Lose Control by Teddy Swims and Someone Like You by Adele because I feel overwhelmed and hopeful.";
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood, avoidSongs: [anchor, other] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [anchor, other, ...recommendations.slice(0, 8)]);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.deepEqual(context.requiredSongs, [anchor, other]);
+    assert.deepEqual(context.avoidSongs, []);
+    assert.equal(context.mood, mood);
+    assert.equal(result.body.playlist.explanation, playlistFixture().explanation);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+    assert.equal(requests.length, 1);
+});
+
+test("many explicit requests require at least one rather than displacing all ten emotional recommendations", async () => {
+    const requested = Array.from({ length: 12 }, (_, i) => ({ song: `Requested Track ${i + 1}`, artist: `Requested Artist ${i + 1}` }));
+    const mood = "Please include " + requested.map(item => `"${item.song}" by "${item.artist}"`).join(" and ");
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [...requested.slice(0, 5), ...recommendations.slice(0, 5)]);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+    assert.equal(requests.length, 1);
+});
+
+test("one requested song selected by the curator can satisfy a multiple-song request", async () => {
+    aiReply(playlistFixture({ songs: [other] }));
+    const result = await invoke(getPlaylist, {
+        mood: 'Please include "Lose Control" by Teddy Swims and "Someone Like You" by Adele', length: 1
+    });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [other]);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+});
+
+for (const mood of [
+    "I love Lose Control by Teddy Swims because it captures how overwhelmed I've been feeling. Find me more songs that understand that feeling.",
+    'I like "Lose Control" by Teddy Swims because I feel lonely.',
+    'For example, "Lose Control" by Teddy Swims',
+    'Such as "Lose Control" by Teddy Swims'
+]) test(`taste references are not mandatory inclusions, even when the model mislabels the reference: ${mood}`, async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood, avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.deepEqual(context.requiredSongs, []);
+    assert.deepEqual(context.tasteSongs, [anchor]);
+    assert.deepEqual(context.avoidSongs, [anchor]);
+    assert.equal(requests.length, 1);
+});
+
+test("a shared list of taste examples does not become a list of required songs", async () => {
+    const mood = 'For example, "Lose Control" by Teddy Swims and "Someone Like You" by Adele';
+    aiReply(playlistFixture({ requestedSongs: [anchor, other], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.deepEqual(context.requiredSongs, []);
+    assert.deepEqual(context.tasteSongs, [anchor, other]);
+});
+
+test("taste examples may still appear naturally when the curator selects them", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: [anchor, ...recommendations.slice(0, 9)] }));
+    const result = await invoke(getPlaylist, { mood: 'I enjoy "Lose Control" by Teddy Swims' });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [anchor, ...recommendations.slice(0, 9)]);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+});
+
+test("explicitly asking to include a taste example promotes that reference to an inclusion", async () => {
+    aiReply(playlistFixture({ songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: 'I love "Lose Control" by Teddy Swims. Please include it.', avoidSongs: [anchor] });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], anchor);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+});
+
+test("mixed inclusion, taste and similar-only references have separate roles", async () => {
+    const excluded = { song: "Youth", artist: "Daughter" };
+    const mood = 'Please include "Lose Control" by Teddy Swims. I like "Someone Like You" by Adele. Only recommend similar songs to "Youth" by Daughter.';
+    aiReply(playlistFixture({ requestedSongs: [anchor, other, excluded], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [anchor, ...recommendations.slice(0, 9)]);
+    const context = JSON.parse(JSON.parse(requests[0][1].body).messages[1].content);
+    assert.deepEqual(context.requiredSongs, [anchor]);
+    assert.deepEqual(context.tasteSongs, [other]);
+    assert.deepEqual(context.excludedSongs, [excluded]);
+});
+
+test("a remaining eligible explicit request satisfies the request when another recording cannot be recommended", async () => {
+    aiReply(playlistFixture({ inclusionRequested: true, unavailableRequestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, {
+        mood: 'Please include "Lose Control" by Teddy Swims and "Someone Like You" by Adele', avoidSongs: [other]
+    });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [other, ...recommendations.slice(0, 9)]);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+    assert.equal(requests.length, 1);
+});
+
+test("excluding one of several requested songs still includes another eligible request", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor, other], songs: recommendations }));
+    const result = await invoke(getPlaylist, {
+        mood: 'Please include "Lose Control" by Teddy Swims and "Someone Like You" by Adele. Do not play "Lose Control" by Teddy Swims.'
+    });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, [other, ...recommendations.slice(0, 9)]);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+    assert.equal(requests.length, 1);
+});
+
+test("when no requested recording can be recommended, an explicit alternative notice replaces any success claim", async () => {
+    aiReply(playlistFixture({ intro: "Every requested song is included.", inclusionRequested: true,
+        unavailableRequestedSongs: [anchor, other], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: 'Please include "Lose Control" by Teddy Swims and "Someone Like You" by Adele' });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.match(result.body.playlist.requestNotice, /couldn't include any requested song/);
+    assert.equal(result.body.playlist.intro, result.body.playlist.requestNotice);
+    assert.doesNotMatch(result.body.choices[0].message.content, /Every requested song is included/);
+    assert.match(result.body.choices[0].message.content, /alternative recommendations/);
+    assert.equal(requests.length, 1);
+});
+
+test("unidentified explicit inclusion receives an explanatory alternative rather than silent satisfaction", async () => {
+    aiReply(playlistFixture({ inclusionRequested: true, songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Please include the song from that film; I cannot remember its title or artist." });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.match(result.body.playlist.requestNotice, /couldn't confidently identify/);
+    assert.equal(requests.length, 1);
+});
+
+test("continuation explains why none of the already-present requested songs were added again", async () => {
+    aiReply(playlistFixture({ inclusionRequested: true, requestedSongs: [anchor, other], songs: recommendations }));
+    const result = await invoke(getPlaylist, {
+        mood: 'Please include "Lose Control" by Teddy Swims and "Someone Like You" by Adele', existingSongs: [anchor, other]
+    });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.match(result.body.playlist.requestNotice, /already in your playlist/);
+});
+
+test("current exclusions explain an unsatisfied inclusion without playing an excluded song", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: 'Please include "Lose Control" by Teddy Swims, but do not play this song.' });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.match(result.body.playlist.requestNotice, /current exclusions/);
+});
+
+test("similar-only requests do not incorrectly announce an unsatisfied inclusion", async () => {
+    aiReply(playlistFixture({ requestedSongs: [anchor], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: 'Only recommend similar songs to "Lose Control" by Teddy Swims' });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs, recommendations);
+    assert.equal(result.body.playlist.requestNotice, undefined);
+});
+
+test("recording availability metadata cannot veto another artist's same-title request", async () => {
+    aiReply(playlistFixture({ unavailableRequestedSongs: [{ song: "Lose Control", artist: "Another Artist" }], songs: recommendations }));
+    const result = await invoke(getPlaylist, { mood: "Lose Control by Teddy Swims" });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.playlist.songs[0], anchor);
+});
+
+for (const fields of [{ inclusionRequested: "yes" }, { unavailableRequestedSongs: [{ song: "Bad", artist: "" }] }]) {
+    test("invalid inclusion metadata fails closed without a second provider call: " + Object.keys(fields)[0], async () => {
+        aiReply(playlistFixture({ songs: recommendations, ...fields }));
+        const result = await invoke(getPlaylist, { mood: "Lose Control by Teddy Swims" });
+        assert.equal(result.status, 502);
+        assert.equal(result.body.reason, "invalid_playlist_response");
+        assert.equal(requests.length, 1);
+    });
+}
 
 test("detailed descriptions over the former 500-character limit reach the curator", async () => {
     aiReply();
@@ -414,6 +1311,61 @@ test("exact request survives generation, frontend rendering, and identity-based 
     assert.ok(ui.events.includes("playlist_generated"));
     fetchImpl = async () => response({ items: [video("wrong", "Lose Control (Official Audio)", "OtherVEVO"), exactVideo] });
     assert.equal((await invoke(getYouTubeVideo, rendered[0])).body.videoId, "correct____");
+});
+
+test("the real homepage default remains ten songs when recovering an omitted, historically disliked anchor", async () => {
+    aiReply(playlistFixture({ songs: recommendations }));
+    const ui = frontend();
+    ui.elements.moodInput.value = "Lose Control by Teddy Swims";
+    ui.storage.set("avoidSongs", JSON.stringify([anchor]));
+    ui.context.fetch = async (url, options) => {
+        assert.equal(url, "/api/getPlaylist");
+        const body = JSON.parse(options.body);
+        assert.equal(body.length, undefined); // Use the real default; do not replace it with a fixture length.
+        const result = await invoke(getPlaylist, body);
+        return response(result.body, result.status);
+    };
+    await ui.context.showMood();
+    assert.deepEqual(JSON.parse(JSON.stringify(ui.context.currentPlaylist)), [anchor, ...recommendations.slice(0, 9)]);
+    assert.equal(ui.storage.get("avoidSongs"), JSON.stringify([anchor]));
+    assert.ok(ui.events.includes("playlist_generated"));
+    assert.equal(requests.length, 1);
+    assert.equal(JSON.parse(JSON.parse(requests[0][1].body).messages[1].content).length, 10);
+});
+
+test("the homepage visibly explains an alternative when no requested recording can be included", async () => {
+    aiReply(playlistFixture({ inclusionRequested: true, unavailableRequestedSongs: [anchor], songs: recommendations }));
+    const ui = frontend();
+    ui.elements.moodInput.value = "Lose Control by Teddy Swims";
+    ui.context.fetch = async (url, options) => {
+        assert.equal(url, "/api/getPlaylist");
+        const result = await invoke(getPlaylist, JSON.parse(options.body));
+        return response(result.body, result.status);
+    };
+    await ui.context.showMood();
+    assert.match(textOf(ui.elements.result), /couldn't include any requested song/);
+    assert.match(textOf(ui.elements.result), /alternative recommendations/);
+    assert.deepEqual(JSON.parse(JSON.stringify(ui.context.currentPlaylist)), recommendations);
+    assert.equal(requests.length, 1);
+});
+
+test("continuation exposes the request limitation in an accessible status notice", async () => {
+    aiReply(playlistFixture({ inclusionRequested: true, requestedSongs: [anchor], songs: recommendations }));
+    const ui = frontend();
+    ui.elements.moodInput.value = "Lose Control by Teddy Swims";
+    ui.context.currentPlaylist = [anchor];
+    ui.context.fetch = async (url, options) => {
+        assert.equal(url, "/api/getPlaylist");
+        const result = await invoke(getPlaylist, JSON.parse(options.body));
+        return response(result.body, result.status);
+    };
+    await ui.context.continuePlaylist();
+    const notice = ui.elements.result.children.find(element => element.attributes.role === "status");
+    assert.ok(notice);
+    assert.match(notice.textContent, /already in your playlist/);
+    assert.match(notice.textContent, /alternative recommendations/);
+    assert.equal(ui.context.currentPlaylist.length, 11);
+    assert.equal(requests.length, 1);
 });
 
 test("structured titles and artists containing separators survive both frontend renderers", async () => {

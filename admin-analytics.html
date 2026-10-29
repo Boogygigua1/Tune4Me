@@ -45,6 +45,22 @@
 
         button {
             cursor: pointer;
+            margin-top: 10px;
+            padding: 12px 16px;
+            border: 1px solid #1456A0;
+            border-radius: 10px;
+            background: #1456A0;
+            color: #FFFFFF;
+        }
+
+        button:hover:not(:disabled) {
+            background: #004A99;
+            border-color: #004A99;
+        }
+
+        button:active:not(:disabled) {
+            background: #00376E;
+            border-color: #00376E;
         }
 
         label {
@@ -65,7 +81,7 @@
             box-shadow:
                 0 0 0 5px #ffffff,
                 0 0 0 8px #005FCC;
-            border-radius: 6px;
+            border-radius: 10px;
         }
 
         caption {
@@ -121,7 +137,8 @@
             songLikedTotal: "Song likes",
             songDislikedTotal: "Song dislikes",
             continuePlaylistUsage: "Continue Playlist usage",
-            upgradeConversion: "Upgrade conversion",
+            confirmedSales: "Confirmed sales (verification unavailable)",
+            upgradeConversion: "Verified upgrade conversion",
             playlistGenerationFailures: "Playlist generation failures",
             youtubePreviewFailures: "YouTube preview failures",
             rateLimitEvents: "Rate-limit events"
@@ -139,7 +156,6 @@
             playlist_deleted: "Playlist deleted",
             philosophy_opened: "Philosophy opened",
             upgrade_dialog_viewed: "Upgrade dialog viewed",
-            upgrade_completed: "Upgrade completed",
             support_form_submitted: "Support form submitted",
             playlist_generation_failure: "Playlist generation failure",
             youtube_preview_failure: "YouTube preview failure",
@@ -157,7 +173,7 @@
 
                 labelCell.scope = "row";
                 labelCell.textContent = label;
-                valueCell.textContent = values[key] ?? 0;
+                valueCell.textContent = values[key] === null ? "Unavailable" : values[key] ?? 0;
 
                 row.appendChild(labelCell);
                 row.appendChild(valueCell);

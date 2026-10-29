@@ -1,5 +1,24 @@
 import { recordAnalyticsEvent } from "./analytics.js";
 
+// Per-instance memory bounds; these do not replace shared/edge spending protection.
+const MAX_CACHE_ENTRIES = 200;
+const MAX_RATE_KEYS = 1000;
+const MAX_INFLIGHT_LOOKUPS = 32;
+const providerErrors = new WeakSet();
+
+function pruneCache(cache, ttl) {
+    const now = Date.now();
+    for (const [key, value] of Object.entries(cache)) {
+        if (!Number.isFinite(value?.cachedAt) || now - value.cachedAt > ttl) delete cache[key];
+    }
+    const oldest = Object.keys(cache).sort((a, b) => cache[a].cachedAt - cache[b].cachedAt);
+    for (const key of oldest.slice(0, Math.max(0, oldest.length - MAX_CACHE_ENTRIES))) delete cache[key];
+}
+
+function safeProviderError(error) {
+    return providerErrors.has(error) ? error : { previewStatus: 502, previewReason: "upstream_error" };
+}
+
 const QUOTA_COOLDOWN_MS = 1000 * 60 * 60 * 6;
 const MAX_QUERY_LENGTH = 180;
 const RATE_LIMIT_WINDOW_MS = 1000 * 60;
@@ -226,6 +245,7 @@ async function requestYouTube(url) {
         global.youtubeRateBackoff = { until: Date.now() + delay, attempt, diagnostics: error.diagnostics };
         error.retryAfterSeconds = Math.ceil(delay / 1000);
     }
+    providerErrors.add(error);
     throw error;
 }
 
@@ -262,7 +282,11 @@ function isRateLimited(req) {
 
     global.youtubeRateLimit = global.youtubeRateLimit || {};
 
-    const record = global.youtubeRateLimit[key] || {
+    for (const [ip, entry] of Object.entries(global.youtubeRateLimit)) {
+        if (now > entry.resetAt) delete global.youtubeRateLimit[ip];
+    }
+    if (!Object.hasOwn(global.youtubeRateLimit, key) && Object.keys(global.youtubeRateLimit).length >= MAX_RATE_KEYS) return true;
+    const record = (Object.hasOwn(global.youtubeRateLimit, key) ? global.youtubeRateLimit[key] : null) || {
         count: 0,
         resetAt: now + RATE_LIMIT_WINDOW_MS
     };
@@ -348,6 +372,8 @@ export default async function handler(req, res) {
     global.videoMissCache = global.videoMissCache || {};
     global.youtubeCooldownUntil = global.youtubeCooldownUntil || 0;
     global.youtubeLookups = global.youtubeLookups || new Map();
+    pruneCache(global.videoCache, YOUTUBE_CACHE_TTL_MS);
+    pruneCache(global.videoMissCache, YOUTUBE_MISS_TTL_MS);
 
     const cachedVideo = getFreshCacheEntry(global.videoCache, cacheKey);
 
@@ -431,10 +457,14 @@ export default async function handler(req, res) {
         return sendPreview(res, { status: 429, body: {
             error: "Too many preview requests", reason: "rate_limited",
             diagnostics: { source: "local_guard" },
-            retryAfterSeconds: Math.max(1, Math.ceil((global.youtubeRateLimit[getClientKey(req)].resetAt - Date.now()) / 1000))
+            retryAfterSeconds: Math.max(1, Math.ceil(((global.youtubeRateLimit[getClientKey(req)]?.resetAt || Date.now() + RATE_LIMIT_WINDOW_MS) - Date.now()) / 1000))
         } }, "none");
     }
 
+    if (global.youtubeLookups.size >= MAX_INFLIGHT_LOOKUPS) {
+        return sendPreview(res, { status: 429, body: { error: "Preview service busy", reason: "rate_limited",
+            retryAfterSeconds: 5 } }, "none");
+    }
     const task = lookupVideo({ query, identity, regionCode, excludedIds, includeAlternatives, cacheKey, startedAt, startSearchStage });
     global.youtubeLookups.set(flightKey, task);
     try {
@@ -511,6 +541,7 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
                 if (studioCount && (!includeAlternatives || !identity.artist || artistSourceFound)) break;
             } catch (error) {
                 if (!candidatePool.size) throw error;
+                error = safeProviderError(error);
                 // Stop on a service error, preserving candidates already checked against videos.list.
                 searchWarning = error.previewReason || "upstream_error";
                 searchDiagnostics = error.diagnostics || null;
@@ -542,6 +573,7 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
             global.videoCache[cacheKey] = { candidates, nextSearchStage,
                 warning: searchWarning, diagnostics: searchDiagnostics,
                 retryUntil: retryAfterSeconds ? Date.now() + retryAfterSeconds * 1000 : 0, cachedAt: Date.now() };
+            pruneCache(global.videoCache, YOUTUBE_CACHE_TTL_MS);
             console.log("YOUTUBE PREVIEW FOUND:", {
                 durationMs: Date.now() - startedAt, resultFound: true, candidateCount: candidates.length
             });
@@ -553,6 +585,7 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
 
         if (!startSearchStage && !excludedIds.size && !unavailableCount) {
             global.videoMissCache[cacheKey] = { cachedAt: Date.now() };
+            pruneCache(global.videoMissCache, YOUTUBE_MISS_TTL_MS);
         }
 
         console.log("YOUTUBE PREVIEW NOT FOUND:", {
@@ -567,6 +600,7 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
         } };
 
     } catch (error) {
+        error = safeProviderError(error);
         console.error("YOUTUBE SERVER ERROR:", {
             durationMs: Date.now() - startedAt,
             errorCategory: error.previewReason || "upstream_error",

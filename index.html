@@ -69,18 +69,36 @@
             margin-top: 10px;
             min-width: 44px;
             min-height: 44px;
+            font-size: 16px;
 
-            background: #1B5E20;
-            backdrop-filter: blur(4px);
+            background: #1456A0;
 
-            color: white;
+            color: #FFFFFF;
 
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            border: 1px solid #1456A0;
 
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 10px;
+        }
+
+        button:hover:not(:disabled) {
+            background: #004A99;
+            border-color: #004A99;
+        }
+
+        button:active:not(:disabled) {
+            background: #00376E;
+            border-color: #00376E;
+        }
+
+        button:disabled {
+            cursor: default;
+            background: #E2E8F0;
+            color: #475569;
+            border-color: #64748B;
+            box-shadow: none;
         }
 
         button:focus-visible,
@@ -94,7 +112,7 @@
             box-shadow:
                 0 0 0 5px #ffffff,
                 0 0 0 8px #005FCC;
-            border-radius: 6px;
+            border-radius: 10px;
         }
 
         main:focus {
@@ -181,6 +199,118 @@
             text-align: left;
             font-size: 14px;
             color: #333;
+        }
+
+        .site-header,
+        .mood-creator,
+        .about-tune4me {
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto 24px;
+        }
+
+        .site-title {
+            margin: 12px 0;
+            font-size: clamp(2rem, 5vw, 2.75rem);
+            line-height: 1.2;
+        }
+
+        .site-title span {
+            display: block;
+            margin-top: 8px;
+            color: #004A99;
+            font-size: clamp(1.1rem, 3vw, 1.4rem);
+            font-weight: normal;
+        }
+
+        .site-reassurance,
+        .mood-hint,
+        .favorites-note {
+            color: #4D4D4D;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .mood-creator .form-label {
+            max-width: none;
+            margin-top: 24px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #moodInput {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-height: 160px;
+            margin: 10px 0 0;
+            padding: 16px;
+            resize: vertical;
+            background: #EDF5FF;
+            color: #222222;
+            border: 2px solid #2563B0;
+            border-radius: 14px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .mood-creator .field-error {
+            max-width: none;
+            text-align: left;
+        }
+
+        .create-playlist-button {
+            width: 100%;
+            margin-top: 16px;
+            background: #1456A0;
+            border: 2px solid #1456A0;
+            border-radius: 10px;
+            min-height: 52px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .create-playlist-button:hover:not(:disabled) {
+            background: #004A99;
+        }
+
+        .create-playlist-button:active:not(:disabled) {
+            background: #00376E;
+            border-color: #00376E;
+        }
+
+        .secondary-button {
+            background: #EDF5FF;
+            color: #004A99;
+            border: 1px solid #2563B0;
+            box-shadow: none;
+        }
+
+        .secondary-button:hover:not(:disabled) {
+            background: #DCEBFF;
+            border-color: #004A99;
+        }
+
+        .secondary-button:active:not(:disabled) {
+            background: #C8DFFF;
+            border-color: #004A99;
+        }
+
+        button.secondary-button:disabled,
+        button.create-playlist-button:disabled {
+            background: #E2E8F0;
+            color: #475569;
+            border-color: #64748B;
+        }
+
+        .about-tune4me {
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        #result:empty {
+            display: none;
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -270,135 +400,39 @@
 
     <main id="mainContent" tabindex="-1">
 
-    <div style="
-    font-size: 0.9rem;
-    opacity: 0.88;
-    line-height: 1.7;
-    margin-top: 18px;
-    margin-bottom: 20px;
-    max-width: 620px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 16px;
-    background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(8px);
-    border-radius: 16px;
-">
+    <header class="site-header">
+        <h1 class="site-title">Tune4Me <span>— Music that understands your moment</span></h1>
+        <p class="site-reassurance">Free to try. No account required.</p>
+    </header>
 
-        <p>
-            <strong>🎧 No account required.</strong>
+    <section class="mood-creator" aria-labelledby="createPlaylistHeading">
+        <h2 id="createPlaylistHeading" class="sr-only">Create a Playlist</h2>
+        <label for="moodInput" class="form-label">How are you feeling today? (required)</label>
+        <textarea id="moodInput" rows="5" maxlength="2000" required
+            aria-describedby="moodEntryHint moodLanguageHint moodDiscoveryHint moodError"
+            placeholder="I'm feeling lonely tonight and would love music that's comforting, emotional, and a little hopeful."></textarea>
+        <div id="moodError" class="field-error" role="alert"></div>
+        <button id="createPlaylistBtn" class="create-playlist-button" type="button"
+            onclick="showMood(this)" aria-label="Create playlist from your mood">Create Playlist</button>
+        <p id="moodEntryHint" class="mood-hint">Enter adds a new line. Use Create Playlist when you’re ready. Up to 2,000 characters.</p>
+        <p id="moodLanguageHint" class="mood-hint">
+            Want music in another language? Try: “Spanish heartbreak” or “Turkish late-night mood” 🎧
         </p>
+    </section>
 
-        <p>
-            Tune4Me was created to feel simple, human, and pressure-free.
-        </p>
-
-        <p>
-            Create playlists instantly, explore music that matches your moment,
-            and start free with no email signup required.
-        </p>
-
-        <p>
-            If Tune4Me connects with you, feedback, recommendations, and support are always appreciated 🎧
-        </p>
-
-    </div>
-
-    <h1 style="margin-bottom:5px;">Tune4Me 🎧</h1>
-    <p style="margin-top:0; font-size:14px; color:#4D4D4D;">
-        Music that understands your moment
-    </p>
-
-    <div style="max-width:420px; margin:10px auto; text-align:left;">
-        <p style="line-height:1.5; margin-bottom:5px;">
-            Tell us how you’re feeling — a word or a full sentence — and Tune4Me creates a playlist instantly.
-
-            <span id="moreText" style="display:none; transition: all 0.3s ease;">
-                <br><br>
-
-                No account needed. No scrolling. Just music that fits your mood.
-                Save songs, explore, and come back anytime.
-
-                <br><br>
-
-                ✨ Tune4Me works best with smaller, intentional playlists.
-
-                <br><br>
-
-                Heavy preview usage may temporarily pause until the next day — but your saved songs are
-                always here.
-
-                <br><br>
-
-                Feel free to keep listening on YouTube! 🎧 :)
-            </span>
-
-            <br>
-
-            <button onclick="toggleReadMore(this)" aria-expanded="false" aria-controls="moreText"
-                style="background:none; color:#004A99; margin-top:5px; border:none; padding:2px 0; min-height:44px; min-width:44px; cursor:pointer; font-size:14px; opacity:1;">
-
-                Read More About Tune4Me
-            </button>
-        </p>
-
-        <div style="margin-top:10px;">
-            <button onclick="togglePhilosophy(this)" aria-expanded="false" aria-controls="philosophyText"
-                style="background:none; color:#4630A8; border:none; padding:2px 0; min-height:44px; min-width:44px; cursor:pointer; font-size:14px; opacity:1;">
-
-                ✨ Our Philosophy
-            </button>
-
-            <div id="philosophyText"
-                style="display:none; margin-top:10px; font-size:14px; line-height:1.6; color:#4D4D4D;">
-
-                Tune4Me was built around a simple idea:
-                sometimes people don’t know what they want to hear —
-                they just know how they feel.
-
-                No endless scrolling.
-                No pressure.
-                Just music that fits your moment 🎧
-            </div>
-        </div>
-    </div>
-
-    <h2 class="sr-only">Create a Playlist</h2>
-
-    <label for="moodInput" class="form-label">Describe how you're feeling (required)</label>
-    <input type="text" id="moodInput" maxlength="2000" aria-describedby="moodLanguageHint moodDiscoveryHint moodError"
-        placeholder="Example: peaceful, heartbroken, or ready for a fresh start" onkeydown="handleKey(event)">
-
-    <div id="moodError" class="field-error" role="alert"></div>
-
-    <p id="moodLanguageHint" style="font-size:12px; color:#4D4D4D; margin-top:6px;">
-        Want music in another language? Try: “Spanish heartbreak” or “Turkish late-night mood” 🎧
-    </p>
-
-    <p id="moodDiscoveryHint" style="font-size:12px; color:#4D4D4D; margin-top:6px;">
-        Tune4Me can suggest familiar artists, hidden gems, local-feeling discoveries,
-        festival moods, emotional lesser-known songs, and music beyond the most common recommendations 🎧
-    </p>
-
-    <br><br>
-
-    <div id="lastMood" role="status" aria-live="polite" style="font-size:12px; color:#4D4D4D; margin-top:-10px; margin-bottom:10px;">
-    </div>
+    <div id="lastMood" role="status" aria-live="polite" class="inline-message"></div>
 
     <div class="playlist-button-group" role="group" aria-label="Playlist creation">
-        <button onclick="showMood()" aria-label="Create playlist from your mood">Create Playlist</button>
-
         <button id="continueBtn" onclick="continuePlaylist()" style="display:none;">
             ▶ Continue This Mood
         </button>
     </div>
 
     <div class="playlist-button-group" role="group" aria-label="Playlist management">
-        <button id="floatingSaveBtn" onclick="savePlaylist(event)">
+        <button id="floatingSaveBtn" class="secondary-button" onclick="savePlaylist(event)" disabled>
             💾 Save Playlist
         </button>
-
-        <button onclick="clearNewList()" aria-label="Clear the current playlist">🗑 Clear List</button>
+        <button class="secondary-button" onclick="clearNewList()" aria-label="Clear the current playlist">🗑 Clear List</button>
     </div>
 
     <div id="appStatus" class="inline-message" role="status" aria-live="polite"></div>
@@ -411,6 +445,25 @@
     </p>
 
     <div id="result" role="region" aria-label="Playlist results" aria-live="polite" aria-atomic="false" tabindex="-1"></div>
+
+    <section class="about-tune4me" aria-label="About Tune4Me">
+        <button class="secondary-button" onclick="toggleReadMore(this)" aria-expanded="false" aria-controls="moreText">
+            Read More About Tune4Me
+        </button>
+        <div id="moreText" style="display:none;">
+            <p>Tune4Me was created to feel simple, human, and pressure-free. Tell us how you’re feeling — a word or your full story — and explore music that matches your moment.</p>
+            <p>Create playlists instantly, save songs, and come back anytime. Feedback, recommendations, and support are always appreciated 🎧</p>
+            <p id="moodDiscoveryHint">Tune4Me can suggest familiar artists, hidden gems, local-feeling discoveries, festival moods, emotional lesser-known songs, and music beyond the most common recommendations 🎧</p>
+            <p>Tune4Me works best with smaller, intentional playlists. Heavy preview usage may temporarily pause until the next day, but your saved songs are always here. You can keep listening on YouTube.</p>
+        </div>
+        <div>
+            <button class="secondary-button" onclick="togglePhilosophy(this)" aria-expanded="false" aria-controls="philosophyText">✨ Our Philosophy</button>
+            <div id="philosophyText" style="display:none;">
+                <p>Tune4Me was built around a simple idea: sometimes people don’t know what they want to hear — they just know how they feel.</p>
+                <p>No endless scrolling. No pressure. Just music that fits your moment 🎧</p>
+            </div>
+        </div>
+    </section>
 
     <div class="install-button-group">
         <button id="installBtn" onclick="installTune4Me()" style="display:none;">
@@ -428,14 +481,8 @@
         All music remains the property of its respective owners.
     </p>
 
-    <button onclick="toggleLegal(this)" aria-expanded="false" aria-controls="legalText" style="
-background:none;
-color:#4D4D4D;
-border:none;
-font-size:12px;
-cursor:pointer;
+    <button class="secondary-button" onclick="toggleLegal(this)" aria-expanded="false" aria-controls="legalText" style="
 margin-top:30px;
-opacity:0.85;
 ">
 
         ▼ AI, Usage & Platform Information
@@ -478,7 +525,7 @@ margin-right:auto;
         resource.
         <br><br>
 
-        Optional support helps expand your saved songs list on this device.
+        Saved-song upgrades are temporarily unavailable. Your existing saved songs and capacity are unchanged.
         <br><br>
 
         <span class="legal-links">
@@ -498,7 +545,7 @@ margin-right:auto;
 
     <h2 style="font-size:18px; margin-top:24px;">Saved Songs</h2>
 
-    <p style="font-size:13px; color:#4D4D4D;">Playing from your saved songs</p>
+    <p class="favorites-note">Favorites are stored locally on this device.</p>
 
     <div id="savedPlayer" style="margin-top:15px;"></div>
 
@@ -522,21 +569,16 @@ margin-right:auto;
 
         Create playlists, save the songs you love, and remove favorites whenever you'd like.
 
-        Need more space later?
+        Upgrades are temporarily unavailable. Your saved songs and existing capacity are unchanged.
 
-        <button onclick="window.open('https://buy.stripe.com/dRm6oHdbi0H0bi45x22Nq00','_self')" style="
+        <button class="secondary-button" onclick="handleUpgrade()" style="
 margin-top:10px;
 padding:10px 14px;
-border:none;
-border-radius:6px;
-background:#1B5E20;
-color:white;
-cursor:pointer;
 display:block;
 margin-left:auto;
 margin-right:auto;
 ">
-            Optional: Unlock More Saved Songs 🎧
+            Saved-song upgrade information 🎧
         </button>
 
     </div>
@@ -545,7 +587,7 @@ margin-right:auto;
         ▶ Preview First Song
     </button>
 
-    <button onclick="clearSavedSongs()" aria-label="Clear all saved songs">🗑 Clear Saved Songs</button>
+    <button class="secondary-button" onclick="clearSavedSongs()" aria-label="Clear all saved songs">🗑 Clear Saved Songs</button>
 
     <ul id="savedSongs" class="song-list" aria-label="Saved songs"></ul>
 
@@ -676,6 +718,9 @@ margin-right:auto;
 
             loadSavedSongs();
 
+            const savePlaylistButton = document.getElementById("floatingSaveBtn");
+            if (savePlaylistButton) savePlaylistButton.disabled = currentPlaylist.length === 0;
+
             const skipLink = document.querySelector(".skip-link");
             const mainContent = document.getElementById("mainContent");
 
@@ -718,19 +763,13 @@ margin-right:auto;
 
         // HELPERS
 
-        function handleKey(event) {
-            if (event.key === "Enter") {
-                showMood();
-            }
-        }
-
         function toggleReadMore(button) {
 
             const moreText = document.getElementById("moreText");
 
             const isHidden = moreText.style.display === "none" || moreText.style.display === "";
 
-            moreText.style.display = isHidden ? "inline" : "none";
+            moreText.style.display = isHidden ? "block" : "none";
             button.innerText = isHidden ? "Show Less About Tune4Me" : "Read More About Tune4Me";
             button.setAttribute("aria-expanded", String(isHidden));
         }
@@ -885,7 +924,9 @@ You can continue creating playlists and discovering new music anytime.<br><br>
 
 Your saved favorites remain stored on this device.<br><br>
 
-If you'd like more room for favorites, you can expand your saved songs list by 25 additional saves for $3 🎧
+Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (100-song maximum). Upgrades remain unavailable until secure payment fulfillment is ready. 🎧
+
+<br><br>New upgrades are temporarily unavailable while payment verification is connected. Existing saved songs and capacity are unchanged. If you already paid, keep your Stripe receipt and contact us using the support form.
 
 <br><br>
 
@@ -1059,7 +1100,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
 
                     savedLabel.style.marginTop = "8px";
                     savedLabel.style.fontSize = "12px";
-                    savedLabel.style.color = "#1B5E20";
+                    savedLabel.style.color = "#004A99";
                     savedLabel.style.fontWeight = "bold";
 
                 savedLabel.innerText = "✅ Saved to your saved songs";
@@ -1125,7 +1166,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
 
             trackTune4Me("playlist_deleted");
 
-            const saveBtn = document.getElementById("savePlaylistBtn");
+            const saveBtn = document.getElementById("floatingSaveBtn");
 
             if (saveBtn) {
                 saveBtn.disabled = true;
@@ -1143,17 +1184,9 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
 
             let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
-            let remaining = currentLimit - saved.length;
-
-
             document.getElementById("saveCounter").innerText =
-                saved.length + " / " + currentLimit + " favorite songs saved 🎧" +
-                (remaining > 0
-                    ? "\n\n" + remaining + " favorite song spaces remaining" +
-                    "\n\nFavorites are stored locally on this device."
-                    : "\n\nYour saved songs list is full." +
-                    "\nYou can still discover new music anytime 🎧" +
-                    "\n\nFavorites are stored locally on this device.");
+                "Your favorites: " + saved.length + " of " + currentLimit + " saved" +
+                (saved.length >= currentLimit ? "\nYour saved songs list is full. You can still discover new music anytime 🎧" : "");
 
             const savedSection = document.getElementById("savedSongs");
 
@@ -1190,6 +1223,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
                 slot.setAttribute("aria-live", "polite");
 
                 const deleteBtn = document.createElement("button");
+                deleteBtn.className = "secondary-button";
                 deleteBtn.textContent = "🗑 Remove";
                 deleteBtn.setAttribute("aria-label", `Remove ${item.song} by ${item.artist || "Unknown Artist"} from saved songs`);
 
@@ -1198,16 +1232,12 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
                 });
 
                 const ytBar = document.createElement("button");
+                ytBar.className = "secondary-button";
 
                 ytBar.textContent = "Open YouTube";
                 ytBar.setAttribute("aria-label", `Listen to ${item.song} by ${item.artist || "Unknown Artist"} on YouTube`);
                 ytBar.style.width = "100%";
                 ytBar.style.marginTop = "10px";
-                ytBar.style.fontSize = "13px";
-                ytBar.style.opacity = "0.85";
-                ytBar.style.background = "#f3f3f3";
-                ytBar.style.color = "#444";
-                ytBar.style.border = "1px solid #ddd";
 
                 ytBar.addEventListener("click", () => {
                     trackTune4Me("youtube_search_opened");
@@ -1254,6 +1284,9 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
 
         async function lookupYouTubePreview(song, artist, excludedIds, startSearchStage = 0) {
             const state = window.tune4mePreviewLookups ||= { pools: new Map(), pending: new Map(), limited: null, attempt: 0 };
+            for (const [key, entry] of state.pools) {
+                if (Date.now() - entry.cachedAt >= 5 * 60 * 1000) state.pools.delete(key);
+            }
             const identityKey = getVideoCacheKey(song, artist);
             const excluded = new Set(excludedIds);
             const pool = state.pools.get(identityKey);
@@ -1276,9 +1309,13 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
                     retryAfterSeconds: Math.max(1, Math.ceil((state.limited.until - Date.now()) / 1000)) } };
             }
 
+            if (state.pending.size >= 16) return { ok: false, status: 429,
+                data: { reason: "rate_limited", retryAfterSeconds: 5, cacheSource: "browser_backoff" } };
+
             const task = (async () => {
                 const response = await fetch("/api/getYouTubeVideo", {
                     method: "POST", headers: { "Content-Type": "application/json" },
+                    signal: typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined,
                     body: JSON.stringify({ query: (song + " " + artist).trim(), song, artist,
                         excludeVideoIds: [...excluded], includeAlternatives: true, startSearchStage })
                 });
@@ -1299,6 +1336,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
                     if (Array.isArray(data.candidates)) {
                         data.candidates = data.candidates.filter(item => /^[A-Za-z0-9_-]{11}$/.test(item.videoId || ""));
                         state.pools.set(identityKey, { data, cachedAt: Date.now() });
+                        while (state.pools.size > 100) state.pools.delete(state.pools.keys().next().value);
                     }
                     // A server cache hit is not evidence that an upstream pause has ended.
                     if (!data.warning && !data.cached && data.cacheSource !== "server_cache") {
@@ -1310,6 +1348,18 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
             state.pending.set(key, task);
             try { return await task; } finally { state.pending.delete(key); }
         }
+
+        function logPreviewDiagnostic(level, event, details) {
+            let localDevelopment = false;
+            try {
+                const origin = window.location.origin;
+                localDevelopment = /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::[0-9]+)?$/.test(origin);
+            } catch { /* Hosted and unknown origins fail closed. */ }
+            if (localDevelopment) console[level](event, details);
+            // Production preview diagnostics are event names only: no songs, artists, IDs or provider text.
+            else console[level](event);
+        }
+
 
         function getCachedVideo(song, artist) {
             const key = getVideoCacheKey(song, artist);
@@ -1340,11 +1390,26 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
 
         function saveCachedVideo(song, artist, videoId) {
             const key = getVideoCacheKey(song, artist);
-
-            localStorage.setItem(key, JSON.stringify({
-                videoId,
-                cachedAt: Date.now()
-            }));
+            if (!/^[A-Za-z0-9_-]{11}$/.test(videoId || "")) return;
+            // Preview caches are expendable; never prune saved songs, preferences, or legacy capacity.
+            try {
+                const entries = [];
+                for (let index = 0; index < localStorage.length; index++) {
+                    const cacheKey = localStorage.key(index);
+                    if (/^yt_v[0-9]+_/.test(cacheKey)) entries.push(cacheKey);
+                }
+                const fresh = [];
+                for (const cacheKey of entries) {
+                    let entry;
+                    try { entry = JSON.parse(localStorage.getItem(cacheKey)); } catch { /* Remove corrupt cache only. */ }
+                    if (!Number.isFinite(entry?.cachedAt) || Date.now() - entry.cachedAt > YOUTUBE_CACHE_TTL_MS) {
+                        localStorage.removeItem(cacheKey);
+                    } else if (cacheKey !== key) fresh.push({ key: cacheKey, cachedAt: entry.cachedAt });
+                }
+                fresh.sort((a, b) => a.cachedAt - b.cachedAt);
+                for (const entry of fresh.slice(0, Math.max(0, fresh.length - 199))) localStorage.removeItem(entry.key);
+                localStorage.setItem(key, JSON.stringify({ videoId, cachedAt: Date.now() }));
+            } catch { /* A full/unavailable browser cache must not break playback or saved songs. */ }
         }
 
         function forgetCachedVideo(song, artist) {
@@ -1392,6 +1457,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
             previewHeader.style.marginBottom = "8px";
 
             const closeBtn = document.createElement("button");
+            closeBtn.className = "secondary-button";
             closeBtn.type = "button";
             closeBtn.textContent = "✖";
             closeBtn.setAttribute("aria-label", "Close YouTube preview");
@@ -1430,7 +1496,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
                         onReady: () => {
                             clearTimeout(wrapper.previewReadyTimeout);
                             if (!wrapper.previewDisposed && wrapper.isConnected)
-                                console.log("youtube_preview_player_ready", diagnostics);
+                                logPreviewDiagnostic("log", "youtube_preview_player_ready", diagnostics);
                         },
                         onError: event => {
                             clearTimeout(wrapper.previewReadyTimeout);
@@ -1438,7 +1504,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
                         },
                         onStateChange: event => {
                             if (wrapper.previewDisposed || !wrapper.isConnected) return;
-                            console.log("youtube_preview_player_state", { ...diagnostics, state: event.data });
+                            logPreviewDiagnostic("log", "youtube_preview_player_state", { ...diagnostics, state: event.data });
                             if (event.data === 1) { clearTimeout(wrapper.previewReadyTimeout); onPlaying?.(); }
                         },
                         onAutoplayBlocked: () => {
@@ -1483,7 +1549,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
             message.textContent = messages[reason] || "The preview could not play in this browser.";
             const link = document.createElement("button");
             link.textContent = "▶ Listen on YouTube";
-            link.className = "fallbackYTBtn";
+            link.className = "fallbackYTBtn secondary-button";
             link.setAttribute("aria-label", `Search for ${song} by ${artist} on YouTube`);
             link.addEventListener("click", () => {
                 trackTune4Me("youtube_search_opened");
@@ -1568,7 +1634,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
                     const response = await lookupYouTubePreview(song, artist, failedIds, nextSearchStage);
                     const data = response.data;
                     if (!isCurrent()) return;
-                    console.log("youtube_preview_lookup", { song, artist, status: response.status, reason: data.reason || null,
+                    logPreviewDiagnostic("log", "youtube_preview_lookup", { song, artist, status: response.status, reason: data.reason || null,
                         warning: data.warning || null, videoId: data.videoId || null,
                         video: data.video || null, candidateIds: data.candidates?.map(item => item.videoId) || [],
                         candidateCount: data.candidates?.length || 0, cacheSource: data.cacheSource || "upstream",
@@ -1602,7 +1668,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
                 }
                 attemptedIds.add(videoId);
                 const diagnostics = { song, artist, videoId, cacheSource, lookupSource, attempt: attemptedIds.size };
-                console.log("youtube_preview_attempt", diagnostics);
+                logPreviewDiagnostic("log", "youtube_preview_attempt", diagnostics);
                 window.currentDurationSeconds = 30;
                 const embedUrl = "https://www.youtube-nocookie.com/embed/" + videoId +
                     "?enablejsapi=1&autoplay=1&rel=0&playsinline=1&origin=" + encodeURIComponent(window.location.origin);
@@ -1610,7 +1676,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
                 const { wrapper, closeBtn } = createYouTubePreviewWrapper(embedUrl, playBtn, async code => {
                     if (failed || !isCurrent()) return;
                     failed = true;
-                    console.warn("youtube_preview_playback_error", { song, artist, videoId, code, attempt: attemptedIds.size });
+                    logPreviewDiagnostic("warn", "youtube_preview_playback_error", { song, artist, videoId, code, attempt: attemptedIds.size });
                     trackTune4Me("youtube_preview_failure");
                     forgetCachedVideo(song, artist);
                     destroyYouTubePreview(wrapper);
@@ -1645,7 +1711,7 @@ If you'd like more room for favorites, you can expand your saved songs list by 2
 
             try { await loadPreview(true); } catch (error) {
                 if (!isCurrent()) return;
-                console.error("youtube_preview_lookup_error", { category: error.name });
+                console.error("youtube_preview_lookup_error");
                 trackTune4Me("youtube_preview_failure");
                 fail("upstream_error");
             }
@@ -1818,7 +1884,7 @@ Building something intentional.
 </div>
 `;
 
-            const saveBtn = document.getElementById("savePlaylistBtn");
+            const saveBtn = document.getElementById("floatingSaveBtn");
 
             if (saveBtn) {
                 saveBtn.disabled = true;
@@ -2023,7 +2089,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                         const saveBtn = document.createElement("button");
                         saveBtn.textContent = "💾 Save";
-                        saveBtn.className = "save-song-btn";
+                        saveBtn.className = "save-song-btn secondary-button";
                         saveBtn.setAttribute("aria-label", `Save ${song} by ${artist}`);
                         saveBtn.addEventListener("click", (e) => {
                             e.stopPropagation();
@@ -2037,6 +2103,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         controls.appendChild(saveBtn);
 
                         const goodBtn = document.createElement("button");
+                        goodBtn.className = "secondary-button";
                         goodBtn.textContent = "👍 Good";
                         goodBtn.setAttribute("aria-label", `Mark ${song} by ${artist} as good`);
 
@@ -2045,25 +2112,21 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         });
 
                         const badBtn = document.createElement("button");
+                        badBtn.className = "secondary-button";
                         badBtn.textContent = "👎 Bad";
                         badBtn.setAttribute("aria-label", `Mark ${song} by ${artist} as bad`);
 
                         badBtn.addEventListener("click", () => {
                             saveFeedback(song, artist, "bad");
                         });
-
-                        goodBtn.style.fontSize = "12px";
                         goodBtn.style.padding = "6px 8px";
-
-                        badBtn.style.fontSize = "12px";
                         badBtn.style.padding = "6px 8px";
 
                         const deleteBtn = document.createElement("button");
+                        deleteBtn.className = "secondary-button";
 
                         deleteBtn.textContent = "🗑 Remove";
                         deleteBtn.setAttribute("aria-label", `Remove ${song} by ${artist} from this playlist`);
-
-                        deleteBtn.style.fontSize = "12px";
                         deleteBtn.style.padding = "6px 8px";
 
                         deleteBtn.addEventListener("click", () => {
@@ -2089,17 +2152,13 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         });
 
                         const ytBar = document.createElement("button");
+                        ytBar.className = "secondary-button";
 
                         ytBar.textContent = "Open YouTube";
                         ytBar.setAttribute("aria-label", `Listen to ${song} by ${artist} on YouTube`);
 
                         ytBar.style.width = "100%";
                         ytBar.style.marginTop = "10px";
-                        ytBar.style.fontSize = "13px";
-                        ytBar.style.opacity = "0.85";
-                        ytBar.style.background = "#f3f3f3";
-                        ytBar.style.color = "#444";
-                        ytBar.style.border = "1px solid #ddd";
 
                         ytBar.addEventListener("click", () => {
 
@@ -2149,7 +2208,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                 let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
 
-                const saveBtn2 = document.getElementById("savePlaylistBtn");
+                const saveBtn2 = document.getElementById("floatingSaveBtn");
 
                 if (saveBtn2) {
                     saveBtn2.disabled = false;
@@ -2158,7 +2217,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
             } catch (err) {
                 trackTune4Me("playlist_generation_failure");
                 console.error("playlist_error", {
-                    errorCategory: err.name || "playlist_error"
+                    errorCategory: "playlist_error"
                 });
                 result.innerHTML = "Error loading playlist";
                 if (button) button.disabled = false;
@@ -2221,6 +2280,14 @@ or continue again in a moment 🎧
                     return;
                 }
 
+                if (data.playlist?.requestNotice) {
+                    const notice = document.createElement("p");
+                    notice.className = "inline-message";
+                    notice.setAttribute("role", "status");
+                    notice.textContent = data.playlist.requestNotice;
+                    result.appendChild(notice);
+                }
+
                 const raw = data.choices[0].message.content;
                 const lines = raw.split("\n");
 
@@ -2231,7 +2298,7 @@ or continue again in a moment 🎧
 
                 label.innerHTML = `
 Need more songs? 🎧<br>
-Optional $3 support = unlock 25 more saved songs on this device 🎧
+Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrades are temporarily unavailable. 🎧
 `;
 
                 result.appendChild(label);
@@ -2330,7 +2397,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
                     const saveBtn = document.createElement("button");
                     saveBtn.textContent = "💾 Save";
-                    saveBtn.className = "save-song-btn";
+                    saveBtn.className = "save-song-btn secondary-button";
                     saveBtn.setAttribute("aria-label", `Save ${song} by ${artist}`);
                     saveBtn.addEventListener("click", (e) => {
                         e.stopPropagation();
@@ -2342,9 +2409,9 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     slot.setAttribute("aria-live", "polite");
 
                     const goodBtn = document.createElement("button");
+                    goodBtn.className = "secondary-button";
                     goodBtn.textContent = "👍 Good";
                     goodBtn.setAttribute("aria-label", `Mark ${song} by ${artist} as good`);
-                    goodBtn.style.fontSize = "12px";
                     goodBtn.style.padding = "6px 8px";
 
                     goodBtn.addEventListener("click", () => {
@@ -2352,9 +2419,9 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     });
 
                     const badBtn = document.createElement("button");
+                    badBtn.className = "secondary-button";
                     badBtn.textContent = "👎 Bad";
                     badBtn.setAttribute("aria-label", `Mark ${song} by ${artist} as bad`);
-                    badBtn.style.fontSize = "12px";
                     badBtn.style.padding = "6px 8px";
 
                     badBtn.addEventListener("click", () => {
@@ -2362,9 +2429,9 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     });
 
                     const deleteBtn = document.createElement("button");
+                    deleteBtn.className = "secondary-button";
                     deleteBtn.textContent = "🗑 Remove";
                     deleteBtn.setAttribute("aria-label", `Remove ${song} by ${artist} from this playlist`);
-                    deleteBtn.style.fontSize = "12px";
                     deleteBtn.style.padding = "6px 8px";
 
                     deleteBtn.addEventListener("click", () => {
@@ -2388,17 +2455,13 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
                     });
 
                     const ytBar = document.createElement("button");
+                    ytBar.className = "secondary-button";
 
                     ytBar.textContent = "Open YouTube";
                     ytBar.setAttribute("aria-label", `Listen to ${song} by ${artist} on YouTube`);
 
                     ytBar.style.width = "100%";
                     ytBar.style.marginTop = "10px";
-                    ytBar.style.fontSize = "13px";
-                    ytBar.style.opacity = "0.85";
-                    ytBar.style.background = "#f3f3f3";
-                    ytBar.style.color = "#444";
-                    ytBar.style.border = "1px solid #ddd";
 
                     ytBar.addEventListener("click", () => {
 
@@ -2446,7 +2509,7 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
             } catch (err) {
                 console.error("continue_playlist_error", {
-                    errorCategory: err.name || "playlist_error"
+                    errorCategory: "playlist_error"
                 });
                 continueBtn.innerText = "Error, try again";
             }
@@ -2455,47 +2518,10 @@ Optional $3 support = unlock 25 more saved songs on this device 🎧
 
         // $$$$
 
+        // Existing local capacity is legacy access, never evidence of a verified purchase.
+        // New paid grants require the purchaser-bound durable ledger described in PAYMENT_SECURITY.md.
         window.handleUpgrade = function () {
-            trackTune4Me("upgrade_completed");
-
-            const oldBox = document.getElementById("upgradeBox");
-
-            if (oldBox) {
-                oldBox.remove();
-            }
-
-            document.getElementById("continueBtn").style.display = "inline-block";
-
-            const saveBtn3 = document.getElementById("savePlaylistBtn");
-
-            if (saveBtn3) {
-                saveBtn3.disabled = false;
-            }
-
-            const continueBtn = document.getElementById("continueBtn");
-
-            if (continueBtn) {
-                continueBtn.innerText = "▶ Continue This Mood";
-                continueBtn.style.display = "inline-block";
-            }
-
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
-
-            if (currentLimit < 25) {
-                currentLimit = 25;
-            } else if (currentLimit < 50) {
-                currentLimit = 50;
-            } else if (currentLimit < 75) {
-                currentLimit = 75;
-            } else {
-                currentLimit = 100;
-            }
-
-            localStorage.setItem("saveLimit", currentLimit);
-
-            loadSavedSongs();
-
-            showStatusMessage("Your saved songs list has expanded 🎧");
+            showStatusMessage("Saved-song upgrades are temporarily unavailable while payment verification is connected. Your saved songs and existing capacity are unchanged. If you already paid, keep your Stripe receipt and contact us using the support form.");
         };
 
         let deferredPrompt;

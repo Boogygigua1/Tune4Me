@@ -17,7 +17,6 @@ Tune4Me analytics are aggregate, count-only product events. Events must not incl
 | `playlist_deleted` | `index.html` `clearNewList()` | Current playlist clears |
 | `philosophy_opened` | `index.html` `togglePhilosophy()` when opened | Philosophy panel opens |
 | `upgrade_dialog_viewed` | `index.html` `showUpgradeBox()` and save-limit path | Upgrade prompt views |
-| `upgrade_completed` | `success.html` first successful upgrade page visit and `index.html` `handleUpgrade()` | Upgrade completions |
 | `support_form_submitted` | `index.html` support form submit and Enter-to-submit path | Support submissions |
 | `playlist_generation_failure` | `index.html` playlist response parse, invalid response, and request catch paths | Playlist generation failures |
 | `youtube_preview_failure` | `index.html` YouTube preview missing/error/catch paths | YouTube preview failures |
@@ -30,3 +29,10 @@ The admin dashboard lives at `admin-analytics.html` and fetches aggregate counts
 Set `ANALYTICS_ADMIN_TOKEN` in the hosting environment. The dashboard accepts the token in the page input and sends it with the `Authorization: Bearer` request header.
 
 The summary is intentionally lightweight and in-memory. It is useful for Early Public Beta directional counts, but it is not a durable analytics warehouse.
+
+## Payment reporting
+
+`upgrade_completed` is rejected by the public event endpoint and is no longer emitted by the browser.
+Legacy client-reported upgrade counts are excluded, including counts in a warm function instance.
+Confirmed sales and verified conversion are unavailable (`null`), not zero, until a durable verified
+payment ledger exists. Never use these directional client event counts for financial reporting.
