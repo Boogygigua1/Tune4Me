@@ -27,6 +27,8 @@ const YOUTUBE_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 const YOUTUBE_MISS_TTL_MS = 1000 * 60 * 5;
 const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const MAX_PREVIEW_CANDIDATES = 5;
+// Ordinary full-song requests may include genuinely short songs, but not sub-30-second clips.
+const MIN_RECORDING_SECONDS = 30;
 const RATE_BACKOFF_BASE_MS = 5000;
 const RATE_BACKOFF_MAX_MS = 60000;
 const RETRY_AFTER_MAX_MS = 300000;
@@ -97,6 +99,28 @@ function includesKeyword(value, keyword) {
 
 function includesAny(value, keywords) {
     return keywords.some(keyword => includesKeyword(value, keyword));
+}
+
+function parseVideoDuration(value) {
+    if (typeof value !== "string" || value.length > 64) return null;
+    const match = /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/.exec(value);
+    if (!match || !match.slice(1).some(part => part !== undefined) ||
+        (value.includes("T") && !match.slice(2).some(part => part !== undefined))) return null;
+    const seconds = Number(match[1] || 0) * 86400 + Number(match[2] || 0) * 3600 +
+        Number(match[3] || 0) * 60 + Number(match[4] || 0);
+    return Number.isFinite(seconds) && seconds > 0 && seconds <= Number.MAX_SAFE_INTEGER ? seconds : null;
+}
+
+function hasEligibleDuration(video) {
+    const seconds = parseVideoDuration(video?.duration);
+    return seconds !== null && seconds >= MIN_RECORDING_SECONDS && seconds === video.durationSeconds;
+}
+
+function isIncompletePresentation(title, identity) {
+    const normalized = normalizeIdentity(title || "");
+    // A marker in the requested recording/artist is not itself an unwanted presentation qualifier.
+    return ["trailer", "teaser", "clip", "snippet", "excerpt", "preview"].some(marker =>
+        includesKeyword(normalized, marker) && !includesKeyword(identity.query, marker));
 }
 
 function normalizeIdentity(value) {
@@ -333,12 +357,17 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Invalid JSON body" });
     }
 
-    const song = String(body?.song || "").trim();
-    const artist = String(body?.artist || "").trim();
+    if (!body || typeof body !== "object" || Array.isArray(body) ||
+        ["song", "artist", "query", "regionCode"].some(key =>
+            body[key] != null && typeof body[key] !== "string")) {
+        return res.status(400).json({ error: "Invalid preview request" });
+    }
+    const song = (body.song || "").trim();
+    const artist = (body.artist || "").trim();
     if (Boolean(song) !== Boolean(artist)) {
         return res.status(400).json({ error: "Both song and artist are required" });
     }
-    const query = song && artist ? `${artist} ${song}` : String(body?.query || "").trim();
+    const query = song && artist ? `${artist} ${song}` : (body.query || "").trim();
 
     if (!query) {
         return res.status(400).json({ error: "Missing query" });
@@ -376,8 +405,11 @@ export default async function handler(req, res) {
     pruneCache(global.videoMissCache, YOUTUBE_MISS_TTL_MS);
 
     const cachedVideo = getFreshCacheEntry(global.videoCache, cacheKey);
+    const cachedDurationRejected = cachedVideo?.candidates?.some(item => !hasEligibleDuration(item.video) ||
+        isIncompletePresentation(item.video?.title, identity));
 
-    const cachedCandidates = cachedVideo?.candidates?.filter(item => !excludedIds.has(item.videoId));
+    const cachedCandidates = cachedVideo?.candidates?.filter(item => !excludedIds.has(item.videoId) &&
+        hasEligibleDuration(item.video) && !isIncompletePresentation(item.video.title, identity));
     if (cachedCandidates?.length) {
         console.log("YOUTUBE PREVIEW CACHE HIT:", {
             durationMs: Date.now() - startedAt,
@@ -394,12 +426,20 @@ export default async function handler(req, res) {
             cached: true,
             cacheSource: "server_cache",
             video: cachedCandidates[0].video,
+            duration: cachedCandidates[0].video.durationSeconds,
             candidates: cachedCandidates,
-            nextSearchStage: Math.max(requestedStage, cachedVideo.nextSearchStage ?? SEARCH_STAGES.length),
+            nextSearchStage: cachedDurationRejected ? SEARCH_STAGES.length : Math.max(requestedStage, cachedVideo.nextSearchStage ?? SEARCH_STAGES.length),
             warning,
             diagnostics: cachedVideo.diagnostics || null,
             retryAfterSeconds: warning && limitUntil > Date.now() ? Math.ceil((limitUntil - Date.now()) / 1000) : undefined
         });
+    }
+
+    if (cachedDurationRejected) {
+        // An old/unverified cached ID cannot trigger a background status refresh or search.
+        delete global.videoCache[cacheKey];
+        return res.status(404).json({ error: "No suitable recording", reason: "unplayable",
+            nextSearchStage: SEARCH_STAGES.length, cacheSource: "server_cache" });
     }
 
     const cachedMiss = getFreshCacheEntry(global.videoMissCache, cacheKey, YOUTUBE_MISS_TTL_MS);
@@ -498,6 +538,7 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
         let searchDiagnostics = null;
         let retryAfterSeconds;
         let nextSearchStage = startSearchStage;
+        let durationOrPresentationRejected = false;
 
         for (let stageIndex = startSearchStage; stageIndex < SEARCH_STAGES.length; stageIndex++) {
             const stage = SEARCH_STAGES[stageIndex];
@@ -511,7 +552,11 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
                     `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchTerm)}&key=${YOUTUBE_API_KEY}&maxResults=25&type=video&videoEmbeddable=true&videoSyndicated=true${categoryParam}${regionCode ? "&regionCode=" + regionCode : ""}`
                 );
 
-                const matching = data.items.filter(item => !excludedIds.has(item.id?.videoId) && scoreVideo(item, identity, true));
+                const identityMatches = data.items.filter(item => !excludedIds.has(item.id?.videoId) && scoreVideo(item, identity, true));
+                const matching = identityMatches.filter(item => {
+                    if (!isIncompletePresentation(item.snippet?.title, identity)) return true;
+                    durationOrPresentationRejected = true; unavailableCount++; return false;
+                });
                 const uncheckedIds = [...new Set(matching.map(item => item.id.videoId))].filter(id => !checkedVideos.has(id));
                 if (uncheckedIds.length) {
                     const details = await requestYouTube(`https://www.googleapis.com/youtube/v3/videos?part=snippet,status,contentDetails&id=${uncheckedIds.join(",")}&key=${YOUTUBE_API_KEY}`);
@@ -523,6 +568,10 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
                     if (!details || !isPlayable(details, regionCode)) {
                         unavailableCount++;
                         return false;
+                    }
+                    const seconds = parseVideoDuration(details.contentDetails.duration);
+                    if (seconds === null || seconds < MIN_RECORDING_SECONDS) {
+                        durationOrPresentationRejected = true; unavailableCount++; return false;
                     }
                     return true;
                 }).map(item => ({ ...item, snippet: checkedVideos.get(item.id.videoId).snippet || item.snippet }));
@@ -538,7 +587,8 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
                 nextSearchStage = stageIndex + 1;
                 // One strong verified source is sufficient; retain all alternatives found in that response.
                 // Broaden only for missing/weak sources or when playback exhausts this pool later.
-                if (studioCount && (!includeAlternatives || !identity.artist || artistSourceFound)) break;
+                if (durationOrPresentationRejected ||
+                    (studioCount && (!includeAlternatives || !identity.artist || artistSourceFound))) break;
             } catch (error) {
                 if (!candidatePool.size) throw error;
                 error = safeProviderError(error);
@@ -550,7 +600,10 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
             }
         }
 
-        if (!searchWarning) global.youtubeRateBackoff = null;
+        // A successful in-flight lookup must not clear a newer, unexpired pause.
+        if (!searchWarning && (!global.youtubeRateBackoff || Date.now() >= global.youtubeRateBackoff.until)) {
+            global.youtubeRateBackoff = null;
+        }
         const ranked = [...candidatePool.values()]
             .sort((a, b) => (liveRequested ? 0 : Number(b.studio) - Number(a.studio)) || b.score - a.score);
         const selected = ranked.slice(0, MAX_PREVIEW_CANDIDATES);
@@ -564,10 +617,16 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
             .map(({ item, studio }) => ({
                 videoId: item.id.videoId,
                 video: { title: item.snippet.title, channelTitle: item.snippet.channelTitle,
+                    duration: checkedVideos.get(item.id.videoId).contentDetails.duration,
+                    durationSeconds: parseVideoDuration(checkedVideos.get(item.id.videoId).contentDetails.duration),
+                    // Status was fetched in the existing videos.list request. Unknown is not false.
+                    madeForKids: typeof checkedVideos.get(item.id.videoId)?.status?.madeForKids === "boolean"
+                        ? checkedVideos.get(item.id.videoId).status.madeForKids : null,
                     embeddable: true, regionChecked: regionCode, version: studio ? "studio" : "live" }
             }));
         // Keep progress even when a continuation finds no new candidates. Browser-specific
         // failures do not erase a previously verified pool for other callers.
+        if (durationOrPresentationRejected) nextSearchStage = SEARCH_STAGES.length;
         if (global.videoCache[cacheKey]) global.videoCache[cacheKey].nextSearchStage = nextSearchStage;
         if (candidates.length) {
             global.videoCache[cacheKey] = { candidates, nextSearchStage,
@@ -578,7 +637,7 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
                 durationMs: Date.now() - startedAt, resultFound: true, candidateCount: candidates.length
             });
             return { status: 200, body: {
-                ...candidates[0], duration: null, reason: null, cached: false, candidates, nextSearchStage, warning: searchWarning,
+                ...candidates[0], duration: candidates[0].video.durationSeconds, reason: null, cached: false, candidates, nextSearchStage, warning: searchWarning,
                 diagnostics: searchDiagnostics, retryAfterSeconds
             } };
         }

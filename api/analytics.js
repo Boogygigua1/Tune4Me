@@ -100,7 +100,10 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: "Invalid JSON body" });
         }
 
-        const accepted = recordAnalyticsEvent(String(body?.event || ""));
+        if (!body || typeof body !== "object" || Array.isArray(body) || typeof body.event !== "string") {
+            return res.status(400).json({ ok: false });
+        }
+        const accepted = recordAnalyticsEvent(body.event);
 
         return res.status(accepted ? 202 : 400).json({
             ok: accepted

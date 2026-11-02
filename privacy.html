@@ -40,31 +40,87 @@
 <body>
     <main>
         <h1>Tune4Me Privacy Policy</h1>
-        <p>Last updated: June 29, 2026</p>
+        <p>Last updated: November 1, 2026</p>
 
         <p>
             Tune4Me is built to feel simple and low-pressure. This policy explains what information is used when you
-            create playlists, preview music, save songs, contact support, or use optional paid support features.
+            create playlists, preview music, save songs, give feedback, or contact support. Checkout and new paid upgrades
+            are currently disabled.
+        </p>
+
+        <h2>Your Agreement and Controls</h2>
+        <p>
+            You can browse the homepage, read information and draft a mood description without agreement. Drafting
+            does not send or automatically save that text. Before the first active music action or support submission,
+            a short inline notice asks you to read and agree to this policy and the terms. Agree and create playlist
+            resumes that requested creation once; saved-song playback uses Agree and play YouTube preview. Not now
+            cancels the waiting action, keeps your draft and returns focus to the control you used. Escape also cancels.
+            No waiting action is automatically restored on reload. Optional browser usage analytics is off by default
+            and can be enabled separately in Privacy and stored data controls; music features do not require that choice. The YouTube player script is loaded only when
+            you request a preview after agreeing. Your browser stores the policy version and acceptance time, without
+            your name or mood description, along with the optional analytics choice, so you do not have to agree again on every visit. If storage is unavailable,
+            agreement lasts only for that visit. A changed policy version requires a new agreement.
+        </p>
+        <p>
+            Withdraw privacy agreement stops playback and cancels waiting actions without reloading the page.
+            Your typed request, displayed playlist, introduction and explanation stay on this page without automatically saving your request.
+            Active music actions require agreement again; no notice opens automatically on arrival. Withdrawal removes
+            the local agreement record where storage permits and suppresses subsequent optional browser analytics, while keeping saved songs and
+            preferences. Close or reload other open Tune4Me tabs when withdrawing; an already-open page keeps its
+            visit state until reloaded. Pending music requests are aborted where possible and their late responses are ignored.
+            A non-sensitive review flag in this page's address prevents agreement from being restored on reload if storage cannot be updated.
+            If both address updates and stored withdrawal fail, a warning explains how to reload with the review flag; an old receipt may otherwise return.
+            Withdrawal cannot undo requests already sent or processing already performed by service providers. Privacy links and preference
+            deletion remain available without agreement. This choice does not grant access to your Google account;
+            Tune4Me does not request a YouTube account login or OAuth permission.
         </p>
 
         <h2>Information You Provide</h2>
         <p>
-            When you describe a mood or music idea, that text is sent to our playlist service so an AI model can help
-            create recommendations. If you use the support form, your name, contact information, topic, and message are
+            When you agree and activate playlist creation or continuation, your description is sent to our playlist
+            service so an AI model can help create recommendations. Tune4Me does not send or automatically save
+            text merely because you type it. If you submit the support form, your name, contact information, topic, and message are
             sent to Formspree so we can receive and respond to your request.
         </p>
 
         <h2>Local Device Storage</h2>
         <p>
-            Tune4Me stores saved songs, liked songs, disliked songs, playlist history, preview counts, and saved-song
-            limit information in your browser's localStorage. This information stays on your device unless your browser,
-            extensions, device backups, or other tools sync or expose it. Clearing browser data can remove it.
+            Tune4Me stores saved songs, liked songs, dislikes/avoidance preferences, dated song feedback, the current playlist, counters, and saved-song
+            limit information in your browser's localStorage. Recent recommendation memory contains at most 30 song
+            titles and artist names with recommendation times for 30-day expiration, without mood descriptions.
+            Recent entries are removed when history is next read after expiry; an unopened browser is not purged in the
+            background. Clear Recent History removes this memory independently of favorites and feedback. Other song
+            preferences and feedback have no automatic expiry: they persist until cleared. Confirmed-playback video IDs
+            are reused for up to seven days, with a bounded cache; these are not audio files or proof of future availability.
+            Clearing browser data can remove local records; your browser, extensions, backups, or other tools may sync or expose them.
+        </p>
+        <p>
+            Bad remembers avoidance of that recording, not its entire artist. Remove and avoid also removes it from
+            the displayed playlist and remembers future avoidance. Good remembers a liked recording. An eligible
+            explicit song request can override historical dislikes, while current exclusions remain authoritative.
+            Clear Likes, Dislikes and Avoidance deletes stored feedback, likes and avoidance independently of saved
+            songs, saved-song capacity, the current playlist and recent history. Clear Saved Songs deletes favorites
+            after confirmation; Clear List only clears the displayed/current playlist. To clear all app records,
+            including agreement and preview caches, use your browser's site-data controls. Clearing local data does
+            not delete information already held by YouTube or other providers; use their privacy controls or contact
+            us for help with information submitted through support.
+        </p>
+        <p>
+            If storage is blocked, full or unreadable, the app uses visit-memory where possible and shows a notice.
+            Changes may disappear after reload. Unreadable existing records are not silently erased or overwritten;
+            changes to affected song records remain in visit-memory until you explicitly clear the record or fix browser storage.
         </p>
 
         <h2>AI Processing</h2>
         <p>
             Mood prompts and local song preference context may be sent to OpenAI to generate playlist recommendations.
+            When you create a fresh playlist, recent song titles and artist names are included as soft preferences for
+            variety. Expiration times are not sent, and recent recommendations are not dislikes or hard exclusions.
+            Request context can include up to 30 liked, 30 avoided and 30 recent song/artist pairs. Continuation
+            requests can also include up to 40 existing playlist pairs. Raw feedback dates and ratings are not sent
+            as feedback records, but the resulting liked/avoided song identities can be included.
             Do not enter sensitive personal, medical, emergency, financial, or confidential information into Tune4Me.
+            Musical assessments and explanations are AI judgments, not measured audio analysis or verified facts.
         </p>
 
         <h2>YouTube Previews</h2>
@@ -73,6 +129,14 @@
             and artist search text may be sent to the YouTube API when you request a preview. Playback and YouTube pages
             are governed by the <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a> and the
             <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.
+            An embedded player can share device, network and playback information with YouTube and display third-party
+            content and advertisements. Privacy-enhanced embedding does not mean that no information is shared.
+            YouTube retains its own controls, branding and content restrictions. Tune4Me stores only bounded lookup
+            metadata and video IDs, not copies of audio/video, and does not provide offline music downloads.
+            Tune4Me does not embed recordings marked Made for Kids or with an unknown child-directed status.
+            An older cached video ID without that status cannot authorize a preview and does not cause an automatic
+            verification request. You can instead choose to open YouTube. Scripted playback starts only when player
+            visibility can be confirmed; otherwise use the video's own Play control.
         </p>
 
         <h2>Analytics</h2>
@@ -80,39 +144,52 @@
             Tune4Me may collect basic usage analytics, such as app loads, playlist creation, preview clicks, save counts,
             limit events, and error categories. Tune4Me does not intentionally send song titles, artist names, raw mood
             prompts, or full playlist responses in analytics events.
+            Application diagnostics use fixed error categories and numeric counters. Vercel receives IP addresses
+            and request/device metadata to host and protect the service, including IP-based rate limiting. Provider
+            security logs and server-side aggregate operational counters are separate from optional browser analytics.
+            Optional browser analytics is loaded only after agreement and a separate opt-in. To turn it off, withdraw
+            agreement, then agree again without choosing analytics. Hosting necessarily receives requests when you open the website, including before agreement.
         </p>
 
         <h2>Payments</h2>
         <p>
-            Optional paid saved songs expansion is processed by Stripe. Tune4Me does not receive or store full payment card
-            details. Stripe may collect payment, billing, fraud-prevention, and transaction information under its own
-            policies.
+            New paid saved-song expansion, Stripe checkout and the planned $1.99 offer are unavailable. Upgrade buttons
+            and success-page visits do not grant additional saves. Existing saved songs and legacy capacity are retained,
+            subject to the application's 100-song limit. If you paid previously, keep your receipt and contact support.
+            Historical transactions may remain with Stripe under its policies; Tune4Me does not receive or store full
+            payment-card details. No Stripe checkout script is loaded by the current app.
         </p>
 
         <h2>Cookies</h2>
         <p>
-            Tune4Me itself mainly uses localStorage. Third-party services such as YouTube, Vercel Analytics, Formspree,
-            and Stripe may use cookies or similar technologies according to their own policies.
+            Tune4Me itself mainly uses localStorage, including for your agreement choice. YouTube and other third-party
+            services may use cookies or similar technologies when you use their features. Privacy-enhanced YouTube
+            embedding does not eliminate information sharing. Additional choices or consent may be required under
+            applicable law. Stripe is relevant to historical transactions, not active checkout.
         </p>
 
         <h2>Sharing</h2>
         <p>
             Tune4Me uses service providers to operate the app: OpenAI for playlist generation, YouTube/Google for
-            previews, Vercel for hosting and analytics, Formspree for support messages, and Stripe for payments. We do
+            previews, Vercel for hosting and analytics, and Formspree for support messages. Stripe handled historical
+            payments; new checkout is disabled. We do
             not sell personal information.
         </p>
 
         <h2>Your Choices</h2>
         <p>
-            You can avoid entering sensitive information, clear browser localStorage, choose not to use previews, choose
-            not to submit the support form, and choose not to use optional paid support features. You may contact us to
+            You can avoid entering sensitive information, withdraw agreement, clear the separate categories described
+            above, choose not to use previews, and choose not to submit the support form. You may contact us to
             ask questions about privacy or request help with information you submitted through support.
         </p>
 
         <h2>International Users</h2>
         <p>
             Tune4Me and its service providers may process information in the United States and other countries. By using
-            the app, you understand that information may be handled outside your location.
+            the app, you understand that information may be handled outside your location. This notice does not waive
+            rights you may have under applicable law. We have not set a single deletion period for all provider records;
+            processing and retention depend on each service and account configuration. Contact support to request
+            information or deletion assistance. Removing local data does not automatically erase provider records.
         </p>
 
         <h2>Contact</h2>

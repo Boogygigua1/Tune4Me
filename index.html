@@ -11,12 +11,8 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <script src="https://www.youtube.com/iframe_api"></script>
-
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#000000">
-
-    <script defer src="/_vercel/insights/script.js"></script>
 
     <link rel="icon" href="/favicon.ico">
 
@@ -238,6 +234,27 @@
             font-weight: bold;
         }
 
+        [hidden] { display: none !important; }
+
+        .privacy-choices {
+            max-width: 680px;
+            margin: 20px auto;
+            padding: 16px;
+            border: 2px solid #2563B0;
+            border-radius: 14px;
+            background: #EDF5FF;
+            text-align: left;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .privacy-choices a { color: #004A99; }
+        .analytics-choice { display: flex; gap: 10px; align-items: center; min-height: 44px; }
+        .analytics-choice input { width: 24px; min-height: 24px; margin: 0; flex: 0 0 24px; }
+        .privacy-choices summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
+        .privacy-choices h2:focus { outline: 3px solid #005FCC; outline-offset: 3px; }
+        summary:focus-visible { outline: 3px solid #005FCC; outline-offset: 3px; }
+
         #moodInput {
             display: block;
             width: 100%;
@@ -405,6 +422,8 @@
         <p class="site-reassurance">Free to try. No account required.</p>
     </header>
 
+    <div id="appFeatures">
+
     <section class="mood-creator" aria-labelledby="createPlaylistHeading">
         <h2 id="createPlaylistHeading" class="sr-only">Create a Playlist</h2>
         <label for="moodInput" class="form-label">How are you feeling today? (required)</label>
@@ -420,6 +439,26 @@
         </p>
     </section>
 
+    <div id="privacyAgreementHome">
+    <section id="privacyAgreement" class="privacy-choices" aria-labelledby="privacyHeading" hidden>
+        <h2 id="privacyHeading" tabindex="-1">Before we continue</h2>
+        <p id="privacyAgreementText">Playlist requests share your description and bounded song preferences with OpenAI.
+            YouTube previews share search and playback information with Google and may show ads. Support messages use Formspree.
+            By choosing Agree, you accept our <a href="/privacy.html">Privacy Policy</a> and
+            <a href="/terms.html">Terms of Service</a>, including the
+            <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a>.
+            See the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.
+            Optional analytics is off unless you separately enable it in Privacy and stored data controls.</p>
+        <button id="acceptPrivacyBtn" type="button" onclick="acceptPrivacyPolicy()"
+            aria-describedby="privacyAgreementText">Agree and create playlist</button>
+        <button id="cancelPrivacyBtn" class="secondary-button" type="button" onclick="cancelPrivacyAgreement()">Not now</button>
+    </section>
+    </div>
+
+    <p id="privacyStatus" class="inline-message" role="status" aria-live="polite"></p>
+    <p id="storageStatus" class="inline-message" role="status" aria-live="polite"></p>
+    <noscript><p>JavaScript is required for music features. You can still read the homepage, Privacy Policy and Terms of Service.</p></noscript>
+
     <div id="lastMood" role="status" aria-live="polite" class="inline-message"></div>
 
     <div class="playlist-button-group" role="group" aria-label="Playlist creation">
@@ -432,8 +471,15 @@
         <button id="floatingSaveBtn" class="secondary-button" onclick="savePlaylist(event)" disabled>
             💾 Save Playlist
         </button>
-        <button class="secondary-button" onclick="clearNewList()" aria-label="Clear the current playlist">🗑 Clear List</button>
+        <button class="secondary-button" onclick="clearNewList()" aria-label="Clear List: clear the current playlist">🗑 Clear List</button>
+        <button class="secondary-button" type="button" onclick="clearRecentRecommendations()"
+            aria-describedby="recentRecommendationNote">Clear Recent History</button>
     </div>
+    <p id="recentRecommendationNote" class="mood-hint">For variety, this browser remembers up to 30 recent recommendations for 30 days.
+        Song titles and artists are shared with the curator when you create a playlist. Clearing this history keeps your favorites and feedback.</p>
+    <p class="mood-hint">Good and Bad remember song preferences for future playlists. Remove and avoid removes a song
+        from this playlist and remembers it for future avoidance. These preferences do not ban an entire artist;
+        an eligible song you explicitly request can override an older dislike. Clear them using Privacy and stored data controls.</p>
 
     <div id="appStatus" class="inline-message" role="status" aria-live="polite"></div>
 
@@ -514,6 +560,7 @@ margin-right:auto;
         <br><br>
 
         Saved songs, likes, dislikes, and playlist history are stored locally on your device unless otherwise stated.
+        Up to 30 recent song and artist pairs are shared with the playlist service for variety; recent-history entries expire after 30 days and can be cleared separately.
         <br><br>
 
         Basic usage analytics may be collected to improve reliability and your experience. Tune4Me does not intentionally
@@ -583,11 +630,11 @@ margin-right:auto;
 
     </div>
 
-    <button class="play-saved-btn" onclick="playSavedSongs(this)" aria-label="Preview the first saved song">
+    <button class="play-saved-btn" onclick="playSavedSongs(this)" aria-label="Preview First Song from your saved songs">
         ▶ Preview First Song
     </button>
 
-    <button class="secondary-button" onclick="clearSavedSongs()" aria-label="Clear all saved songs">🗑 Clear Saved Songs</button>
+    <button class="secondary-button" onclick="clearSavedSongs()" aria-label="Clear Saved Songs: remove all saved songs">🗑 Clear Saved Songs</button>
 
     <ul id="savedSongs" class="song-list" aria-label="Saved songs"></ul>
 
@@ -635,7 +682,9 @@ margin-right:auto;
         <script>
             const supportMessage = document.getElementById("supportMessage");
 
-            supportMessage.form.addEventListener("submit", function () {
+            supportMessage.form.addEventListener("submit", function (event) {
+                if (!requirePrivacyAcceptance(() => supportMessage.form.requestSubmit(), event.submitter,
+                    "Agree and send support message")) { event.preventDefault(); return; }
                 trackTune4Me("support_form_submitted");
             });
         </script>
@@ -648,9 +697,317 @@ margin-right:auto;
 
     </form>
 
+    </div>
+
     <script>
 
+        // Browser-only support controls. These do not select or rank playlist candidates.
+        const PRIVACY_POLICY_VERSION = "2026-11-01";
+        const PRIVACY_ACCEPTANCE_KEY = "tune4mePrivacyAcceptance";
+        const tune4meStorage = (() => {
+            const memory = new Map(), pending = new Set(), unreadable = new Set();
+            let unavailable = false, invalidData = false;
+            function noteUnavailable() {
+                unavailable = true;
+                const status = globalThis.document?.getElementById?.("storageStatus");
+                if (status) status.textContent = "Browser storage is unavailable or full. Changes may last only for this visit; existing stored data has not been cleared.";
+            }
+            function keys() {
+                const found = new Set(memory.keys());
+                try {
+                    const store = globalThis.localStorage;
+                    for (let i = 0; i < store.length; i++) found.add(store.key(i));
+                } catch { noteUnavailable(); }
+                return [...found].filter(key => key != null && !(pending.has(key) && memory.get(key) === null));
+            }
+            return {
+                getItem(key) {
+                    if (/^yt_v[0-9]+_/.test(key)) {
+                        try { return globalThis.localStorage.getItem(key); }
+                        catch { noteUnavailable(); return null; }
+                    }
+                    if (pending.has(key) || unreadable.has(key)) return memory.get(key) ?? null;
+                    try {
+                        const value = globalThis.localStorage.getItem(key);
+                        memory.set(key, value);
+                        return value;
+                    } catch { unreadable.add(key); noteUnavailable(); return memory.get(key) ?? null; }
+                },
+                setItem(key, value) {
+                    // Playback-ID caches are expendable and keep their existing bounds;
+                    // do not create an unbounded second copy in visit-memory storage.
+                    if (/^yt_v[0-9]+_/.test(key)) {
+                        try { globalThis.localStorage.setItem(key, String(value)); return true; }
+                        catch { noteUnavailable(); return false; }
+                    }
+                    value = String(value); memory.set(key, value);
+                    // Never overwrite an existing record we could not read on this visit.
+                    if (unreadable.has(key)) { pending.add(key); return false; }
+                    try { globalThis.localStorage.setItem(key, value); pending.delete(key); return true; }
+                    catch { noteUnavailable(); pending.add(key); return false; }
+                },
+                removeItem(key) {
+                    if (/^yt_v[0-9]+_/.test(key)) {
+                        try { globalThis.localStorage.removeItem(key); return true; }
+                        catch { noteUnavailable(); return false; }
+                    }
+                    memory.set(key, null);
+                    try { globalThis.localStorage.removeItem(key); pending.delete(key); unreadable.delete(key); memory.delete(key); return true; }
+                    catch { noteUnavailable(); pending.add(key); return false; }
+                },
+                key(index) { return keys()[index] ?? null; },
+                get length() { return keys().length; },
+                get unavailable() { return unavailable; },
+                get invalidData() { return invalidData; },
+                noteInvalid(key) {
+                    invalidData = true;
+                    if (key) unreadable.add(key);
+                    const status = globalThis.document?.getElementById?.("storageStatus");
+                    if (status) status.textContent = "Some browser data could not be read. Changes to those records last only for this visit; unreadable stored records were left untouched. Other saved data is unchanged.";
+                }
+            };
+        })();
+
+        function readStoredSongs(key) {
+            const raw = tune4meStorage.getItem(key);
+            if (raw == null) return [];
+            try {
+                const items = JSON.parse(raw);
+                if (!Array.isArray(items)) throw new Error("Invalid storage shape");
+                const valid = items.filter(item => item && typeof item.song === "string" && item.song.trim() &&
+                    (item.artist == null || typeof item.artist === "string"));
+                if (valid.length !== items.length) tune4meStorage.noteInvalid(key);
+                return valid.map(item => ({ ...item, artist: item.artist || "" }));
+            } catch { tune4meStorage.noteInvalid(key); return []; }
+        }
+
+        function hasPrivacyReviewMarker() {
+            return /(?:^|[?&])privacy=review(?:&|$)/.test(window.location.search || "") ||
+                /(?:^#|&)tune4me-privacy=review(?:&|$)/.test(window.location.hash || "");
+        }
+
+        function readPrivacyAcceptance() {
+            if (hasPrivacyReviewMarker()) return false;
+            try {
+                const receipt = JSON.parse(tune4meStorage.getItem(PRIVACY_ACCEPTANCE_KEY));
+                const valid = receipt?.version === PRIVACY_POLICY_VERSION && Number.isFinite(receipt.acceptedAt) &&
+                    receipt.acceptedAt >= 0 && receipt.acceptedAt <= Date.now();
+                if (valid) analyticsAllowed = receipt.analytics === true;
+                return valid;
+            } catch { return false; }
+        }
+        let analyticsAllowed = false;
+        let privacyAccepted = readPrivacyAcceptance();
+        let analyticsStarted = false;
+        let pendingPrivacyAction = null;
+        let privacyActionRunning = false;
+        let privacyAgreementPanel = null;
+        let privacyRevision = 0;
+        const privacyRequests = new Set();
+
+        function beginPrivacyRequest(release = null, timeoutMs = 0) {
+            const revision = privacyRevision;
+            const controller = typeof AbortController === "function" ? new AbortController() : null;
+            const timeout = timeoutMs && typeof AbortSignal !== "undefined" && AbortSignal.timeout
+                ? AbortSignal.timeout(timeoutMs) : null;
+            const abortOnTimeout = () => controller?.abort();
+            if (timeout && controller) timeout.addEventListener("abort", abortOnTimeout, { once: true });
+            const request = {
+                signal: controller?.signal || timeout || undefined,
+                isCurrent: () => privacyAccepted && revision === privacyRevision,
+                abort: () => controller?.abort(),
+                finish() {
+                    if (privacyRequests.delete(request)) {
+                        timeout?.removeEventListener("abort", abortOnTimeout);
+                        release?.();
+                    }
+                }
+            };
+            privacyRequests.add(request);
+            return request;
+        }
+
+        function markPrivacyWithdrawal() {
+            // A non-sensitive URL flag survives reload even if receipt deletion fails.
+            // It never contains a draft, playlist, or other user-created content.
+            try {
+                if (!hasPrivacyReviewMarker()) {
+                    const search = window.location.search || "";
+                    window.history.replaceState(null, "", window.location.pathname + search +
+                        (search ? "&" : "?") + "privacy=review" + (window.location.hash || ""));
+                }
+                return true;
+            } catch {
+                // A fragment-only change also preserves the page and sends no request.
+                try {
+                    if (!hasPrivacyReviewMarker()) window.location.hash = (window.location.hash || "#") +
+                        (window.location.hash ? "&" : "") + "tune4me-privacy=review";
+                    return hasPrivacyReviewMarker();
+                } catch { return false; }
+            }
+        }
+
+        function privacyPanel() {
+            return privacyAgreementPanel ||= document.getElementById("privacyAgreement");
+        }
+
+        function requirePrivacyAcceptance(action = null, trigger = null, label = "Agree and continue") {
+            if (privacyAccepted) return true;
+            // Keep the first intent until the visitor accepts or cancels it. Repeated
+            // activation cannot enqueue another provider request or replace that intent.
+            if (!pendingPrivacyAction) pendingPrivacyAction = {
+                run: action,
+                trigger: trigger || document.activeElement || document.getElementById("createPlaylistBtn"),
+                label
+            };
+            const panel = privacyPanel();
+            const origin = pendingPrivacyAction.trigger;
+            if (panel && origin && !panel.contains?.(origin)) {
+                const list = origin.closest?.(".song-list");
+                if (list) list.insertAdjacentElement?.("beforebegin", panel);
+                else origin.insertAdjacentElement?.("afterend", panel);
+            }
+            updatePrivacyControls();
+            const status = document.getElementById("privacyStatus");
+            if (status) status.textContent = "Please review the agreement beside your selected action. No request has been sent.";
+            document.getElementById("privacyHeading")?.focus();
+            return false;
+        }
+
+        function updatePrivacyControls() {
+            const panel = privacyPanel();
+            if (panel) panel.hidden = privacyAccepted || !pendingPrivacyAction;
+            if (panel?.hidden) document.getElementById("privacyAgreementHome")?.appendChild(panel);
+            const accept = document.getElementById("acceptPrivacyBtn"), withdraw = document.getElementById("withdrawPrivacyBtn");
+            if (accept) {
+                accept.disabled = privacyActionRunning;
+                accept.textContent = pendingPrivacyAction?.label || "Agree and continue";
+            }
+            if (withdraw) withdraw.hidden = !privacyAccepted;
+            const analyticsChoice = document.getElementById("analyticsChoice");
+            if (analyticsChoice) {
+                if (privacyAccepted) analyticsChoice.checked = analyticsAllowed;
+                analyticsChoice.disabled = privacyAccepted;
+            }
+            const status = document.getElementById("privacyStatus");
+            if (status) status.textContent = privacyAccepted
+                ? "Privacy agreement active. Optional analytics is " + (analyticsAllowed ? "on." : "off.") + " You can withdraw agreement here; your saved songs and preferences will be kept."
+                : "";
+            const storageStatus = document.getElementById("storageStatus");
+            if (storageStatus) storageStatus.textContent = tune4meStorage.unavailable
+                ? "Browser storage is unavailable or full. Changes may last only for this visit; existing stored data has not been cleared."
+                : tune4meStorage.invalidData ? "Some browser data could not be read. Changes to those records last only for this visit; unreadable stored records were left untouched. Other saved data is unchanged." : "";
+            if (privacyAccepted && analyticsAllowed && !analyticsStarted && document.head) {
+                analyticsStarted = true;
+                // Register before loading the script, including when withdrawal occurs
+                // while it is loading. The callback checks live consent at send time.
+                window.va ||= function () { (window.vaq ||= []).push(arguments); };
+                window.va("beforeSend", event => privacyAccepted && analyticsAllowed ? event : null);
+                const script = document.createElement("script");
+                script.src = "/_vercel/insights/script.js";
+                script.defer = true;
+                document.head.appendChild(script);
+                trackTune4Me("home_page_loaded");
+            }
+        }
+
+        async function acceptPrivacyPolicy() {
+            if (privacyActionRunning || !pendingPrivacyAction) return;
+            if (pendingPrivacyAction.trigger?.isConnected === false) {
+                cancelPrivacyAgreement();
+                return;
+            }
+            const pending = pendingPrivacyAction;
+            const revision = privacyRevision;
+            pendingPrivacyAction = null;
+            privacyActionRunning = true;
+            analyticsAllowed = document.getElementById("analyticsChoice")?.checked === true;
+            privacyAccepted = true;
+            const receiptSaved = tune4meStorage.setItem(PRIVACY_ACCEPTANCE_KEY, JSON.stringify({ version: PRIVACY_POLICY_VERSION, acceptedAt: Date.now(), analytics: analyticsAllowed }));
+            // Remove the withdrawal marker only after a fresh explicit agreement.
+            if (receiptSaved && hasPrivacyReviewMarker()) {
+                try {
+                    const search = (window.location.search || "").replace(/([?&])privacy=review(?=&|$)/g, "$1")
+                        .replace(/\?&/, "?").replace(/&&+/g, "&").replace(/[?&]$/, "");
+                    const hash = (window.location.hash || "").replace(/(^#|&)tune4me-privacy=review(?=&|$)/g, "$1")
+                        .replace(/#&/, "#").replace(/&&+/g, "&").replace(/[#&]$/, "");
+                    window.history.replaceState(null, "", window.location.pathname + search + hash);
+                } catch { /* Keep the fail-closed marker when address updates are blocked. */ }
+            }
+            updatePrivacyControls();
+            try {
+                pending.trigger?.focus?.();
+                // Invoke once in the Agree click's activation. Nothing is resumed on
+                // page load, receipt restoration, cancellation or a repeated Agree click.
+                await pending.run?.();
+            } catch {
+                if (revision !== privacyRevision) return;
+                const status = document.getElementById("privacyStatus");
+                if (status) status.textContent = "Agreement saved. The selected action could not finish. You can start it again manually; no automatic retry was made.";
+            } finally {
+                if (revision === privacyRevision) {
+                    privacyActionRunning = false;
+                    const accept = document.getElementById("acceptPrivacyBtn");
+                    if (accept) accept.disabled = false;
+                }
+            }
+        }
+
+        function cancelPrivacyAgreement() {
+            const pending = pendingPrivacyAction;
+            pendingPrivacyAction = null;
+            const panel = privacyPanel();
+            if (panel) panel.hidden = true;
+            if (panel) document.getElementById("privacyAgreementHome")?.appendChild(panel);
+            const status = document.getElementById("privacyStatus");
+            if (status) status.textContent = "Not now. No request was sent. Your draft is unchanged and you can keep browsing.";
+            if (pending) {
+                const target = pending.trigger?.isConnected === false ? document.getElementById("moodInput") : pending.trigger;
+                target?.focus?.();
+            }
+        }
+
+        function withdrawPrivacyAcceptance() {
+            privacyAccepted = false;
+            analyticsAllowed = false;
+            privacyRevision++;
+            pendingPrivacyAction = null;
+            privacyActionRunning = false;
+            stopPlayback();
+            for (const request of [...privacyRequests]) {
+                request.abort();
+                request.finish();
+            }
+            // Old promises may still settle, but cannot delete a new visit's work.
+            window.tune4mePreviewLookups?.pending?.clear();
+            const marked = markPrivacyWithdrawal();
+            const removed = tune4meStorage.removeItem(PRIVACY_ACCEPTANCE_KEY);
+            const revoked = removed || tune4meStorage.setItem(PRIVACY_ACCEPTANCE_KEY, JSON.stringify({ withdrawn: true }));
+            const analyticsChoice = document.getElementById("analyticsChoice");
+            if (analyticsChoice) analyticsChoice.checked = false;
+            updatePrivacyControls();
+            const status = document.getElementById("privacyStatus");
+            if (status) status.textContent = "Agreement withdrawn. Playback stopped. Your draft and playlist are unchanged. Music features need renewed agreement." +
+                (!marked && !revoked ? " This browser could not remember withdrawal. Before reloading, add ?privacy=review to this page's address or close the page; an old stored agreement may otherwise return." : "");
+            document.getElementById("privacyControlsToggle")?.focus();
+        }
+
+        function clearStoredPreferences() {
+            if (!confirm("Clear stored likes, dislikes, song feedback and avoidance preferences?\n\nYour saved songs, capacity, current playlist and recent history will be kept.")) return;
+            let persisted = true;
+            for (const key of ["songFeedback", "likedSongs", "avoidSongs"]) {
+                if (!tune4meStorage.removeItem(key)) {
+                    if (!tune4meStorage.setItem(key, "[]")) persisted = false;
+                }
+            }
+            const status = document.getElementById("privacyStatus");
+            if (status) status.textContent = persisted
+                ? "Likes, dislikes, feedback and avoidance preferences cleared. Your saved songs and capacity are unchanged."
+                : "Preferences cleared for this visit. Browser storage could not be updated; old preferences may return after reload. Your saved songs and capacity are unchanged.";
+        }
+
         function trackTune4Me(eventName) {
+            if (!privacyAccepted || !analyticsAllowed) return;
             if (window.va) {
                 window.va("event", {
                     name: eventName
@@ -681,11 +1038,11 @@ margin-right:auto;
 
         let isPlayingAll = false;
 
-        let continueCount = parseInt(localStorage.getItem("continueCount")) || 0;
+        let continueCount = parseInt(tune4meStorage.getItem("continueCount")) || 0;
 
         let activeSong = null;
 
-        let currentPlaylist = JSON.parse(localStorage.getItem("currentPlaylist")) || [];
+        let currentPlaylist = readStoredSongs("currentPlaylist");
 
         let DEFAULT_SONG_PLAY_MS = 30000; // 30 seconds
         let YOUTUBE_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
@@ -693,28 +1050,35 @@ margin-right:auto;
         let BASE_SAVE_LIMIT = 15;
         let MAX_SAVE_LIMIT = 100;
 
-        let savedSongs = JSON.parse(localStorage.getItem("savedSongs")) || [];
+        let savedSongs = readStoredSongs("savedSongs");
 
         let grandfatheredCount = savedSongs.length;
 
         let FREE_SAVE_LIMIT = Math.max(
-            parseInt(localStorage.getItem("saveLimit")) || 15,
+            parseInt(tune4meStorage.getItem("saveLimit")) || 15,
             grandfatheredCount
         );
 
-        let playsToday = parseInt(localStorage.getItem("playsToday")) || 0;
-        let lastDate = localStorage.getItem("playDate");
+        let playsToday = parseInt(tune4meStorage.getItem("playsToday")) || 0;
+        let lastDate = tune4meStorage.getItem("playDate");
 
         let today = new Date().toDateString();
 
         if (lastDate !== today) {
             playsToday = 0;
-            localStorage.setItem("playDate", today);
+            tune4meStorage.setItem("playDate", today);
         }
 
         window.onload = function () {
 
-            trackTune4Me("home_page_loaded");
+            if (!privacyAccepted) {
+                const analyticsChoice = document.getElementById("analyticsChoice");
+                if (analyticsChoice) analyticsChoice.checked = false;
+            }
+            updatePrivacyControls();
+            document.getElementById("privacyAgreement")?.addEventListener("keydown", event => {
+                if (event.key === "Escape") { event.preventDefault(); cancelPrivacyAgreement(); }
+            });
 
             loadSavedSongs();
 
@@ -748,11 +1112,11 @@ margin-right:auto;
                 }
             }
 
-            const saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
-            const currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
+            const saved = readStoredSongs("savedSongs");
+            const currentLimit = parseInt(tune4meStorage.getItem("saveLimit")) || 15;
 
             if (currentLimit > MAX_SAVE_LIMIT) {
-                localStorage.setItem("saveLimit", MAX_SAVE_LIMIT);
+                tune4meStorage.setItem("saveLimit", MAX_SAVE_LIMIT);
             }
 
             if (saved.length < currentLimit) {
@@ -848,7 +1212,8 @@ margin-right:auto;
         }
 
         function saveFeedback(song, artist, rating) {
-            let feedback = JSON.parse(localStorage.getItem("songFeedback")) || [];
+            if (!requirePrivacyAcceptance(() => saveFeedback(song, artist, rating), null, "Agree and save song feedback")) return;
+            let feedback = readStoredSongs("songFeedback");
 
             feedback.push({
                 song,
@@ -857,13 +1222,13 @@ margin-right:auto;
                 date: new Date().toISOString()
             });
 
-            localStorage.setItem("songFeedback", JSON.stringify(feedback));
+            tune4meStorage.setItem("songFeedback", JSON.stringify(feedback));
 
             trackTune4Me(rating === "good" ? "song_liked" : "song_disliked");
 
             if (rating === "bad") {
 
-                let avoidSongs = JSON.parse(localStorage.getItem("avoidSongs")) || [];
+                let avoidSongs = readStoredSongs("avoidSongs");
 
                 let exists = avoidSongs.some(item =>
                     item.song.toLowerCase() === song.toLowerCase() &&
@@ -872,13 +1237,13 @@ margin-right:auto;
 
                 if (!exists) {
                     avoidSongs.push({ song, artist });
-                    localStorage.setItem("avoidSongs", JSON.stringify(avoidSongs));
+                    tune4meStorage.setItem("avoidSongs", JSON.stringify(avoidSongs));
                 }
             }
 
             if (rating === "good") {
 
-                let likedSongs = JSON.parse(localStorage.getItem("likedSongs")) || [];
+                let likedSongs = readStoredSongs("likedSongs");
 
                 let exists = likedSongs.some(item =>
                     item.song.toLowerCase() === song.toLowerCase() &&
@@ -887,7 +1252,7 @@ margin-right:auto;
 
                 if (!exists) {
                     likedSongs.push({ song, artist });
-                    localStorage.setItem("likedSongs", JSON.stringify(likedSongs));
+                    tune4meStorage.setItem("likedSongs", JSON.stringify(likedSongs));
                 }
             }
 
@@ -943,13 +1308,14 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
 
         function saveSong(song, artist) {
+            if (!requirePrivacyAcceptance(() => saveSong(song, artist), null, "Agree and save song")) return;
 
             if (!song || !artist) return;
 
             song = song.trim();
             artist = artist.trim();
 
-            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+            let saved = readStoredSongs("savedSongs");
 
             let exists = saved.some(item =>
                 item.song.toLowerCase() === song.toLowerCase() &&
@@ -961,7 +1327,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                 return;
             }
 
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
+            let currentLimit = Math.min(MAX_SAVE_LIMIT, parseInt(tune4meStorage.getItem("saveLimit")) || 15);
 
             if (saved.length >= currentLimit) {
 
@@ -979,7 +1345,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
             saved.push({ song, artist });
 
-            localStorage.setItem("savedSongs", JSON.stringify(saved));
+            tune4meStorage.setItem("savedSongs", JSON.stringify(saved));
 
             if (!isPlayingAll) {
                 loadSavedSongs();
@@ -991,6 +1357,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
         }
 
         function saveSongWithVideo(event, song, artist) {
+            if (!requirePrivacyAcceptance(() => saveSongWithVideo(event, song, artist), event?.currentTarget || event?.target, "Agree and save song")) return;
 
             // ✅ Only allow real button clicks
             if (!event || !event.isTrusted) return;
@@ -1004,7 +1371,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
             if (!song || !artist) return;
 
-            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+            let saved = readStoredSongs("savedSongs");
 
             let exists = saved.some(item =>
                 item.song.toLowerCase() === song.toLowerCase() &&
@@ -1013,7 +1380,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
             if (exists) return;
 
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
+            let currentLimit = Math.min(MAX_SAVE_LIMIT, parseInt(tune4meStorage.getItem("saveLimit")) || 15);
 
             if (saved.length >= currentLimit) {
 
@@ -1032,7 +1399,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
             // ✅ Save ONLY (no video, no API)
             saved.push({ song, artist });
 
-            localStorage.setItem("savedSongs", JSON.stringify(saved));
+            tune4meStorage.setItem("savedSongs", JSON.stringify(saved));
 
             loadSavedSongs();
 
@@ -1040,6 +1407,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
         }
 
         function savePlaylist(event) {
+            if (!requirePrivacyAcceptance(() => savePlaylist(event), event?.currentTarget || event?.target || document.getElementById("floatingSaveBtn"), "Agree and save playlist")) return;
 
             if (event) {
                 event.preventDefault();
@@ -1050,12 +1418,12 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                 return;
             }
 
-            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+            let saved = readStoredSongs("savedSongs");
             let addedCount = 0;
 
             let hitLimit = false;
 
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
+            let currentLimit = Math.min(MAX_SAVE_LIMIT, parseInt(tune4meStorage.getItem("saveLimit")) || 15);
 
             for (let { song, artist } of currentPlaylist) {
 
@@ -1111,7 +1479,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                 addedCount++;
             }
 
-            localStorage.setItem("savedSongs", JSON.stringify(saved));
+            tune4meStorage.setItem("savedSongs", JSON.stringify(saved));
             loadSavedSongs();
 
             if (hitLimit) {
@@ -1147,7 +1515,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
         function clearSavedSongs() {
             if (confirm("Clear all saved songs?\n\nThis will free space in your Tune4Me saved songs list 🎧")) {
-                localStorage.removeItem("savedSongs");
+                tune4meStorage.removeItem("savedSongs");
                 loadSavedSongs();
             }
         }
@@ -1160,7 +1528,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
             currentPlaylist = [];
 
-            localStorage.removeItem("currentPlaylist");
+            tune4meStorage.removeItem("currentPlaylist");
 
             stopPlayback();
 
@@ -1180,9 +1548,9 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
         function loadSavedSongs() {
 
-            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+            let saved = readStoredSongs("savedSongs");
 
-            let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
+            let currentLimit = Math.min(MAX_SAVE_LIMIT, parseInt(tune4meStorage.getItem("saveLimit")) || 15);
 
             document.getElementById("saveCounter").innerText =
                 "Your favorites: " + saved.length + " of " + currentLimit + " saved" +
@@ -1235,11 +1603,12 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                 ytBar.className = "secondary-button";
 
                 ytBar.textContent = "Open YouTube";
-                ytBar.setAttribute("aria-label", `Listen to ${item.song} by ${item.artist || "Unknown Artist"} on YouTube`);
+                ytBar.setAttribute("aria-label", `Open YouTube for ${item.song} by ${item.artist || "Unknown Artist"}`);
                 ytBar.style.width = "100%";
                 ytBar.style.marginTop = "10px";
 
                 ytBar.addEventListener("click", () => {
+                    if (!requirePrivacyAcceptance(() => ytBar.click(), ytBar, "Agree and open YouTube")) return;
                     trackTune4Me("youtube_search_opened");
 
                     const ytQuery = encodeURIComponent(
@@ -1266,13 +1635,13 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
 
         function deleteSavedSong(song, artist) {
-            let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+            let saved = readStoredSongs("savedSongs");
 
             saved = saved.filter(item =>
                 !(item.song === song && item.artist === artist)
             );
 
-            localStorage.setItem("savedSongs", JSON.stringify(saved));
+            tune4meStorage.setItem("savedSongs", JSON.stringify(saved));
 
             loadSavedSongs();
         }
@@ -1282,7 +1651,23 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                 .normalize("NFKC").toLowerCase().trim()));
         }
 
+        function parsePreviewDuration(value) {
+            if (typeof value !== "string" || value.length > 64) return null;
+            const match = /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/.exec(value);
+            if (!match || !match.slice(1).some(part => part !== undefined) ||
+                (value.includes("T") && !match.slice(2).some(part => part !== undefined))) return null;
+            const seconds = Number(match[1] || 0) * 86400 + Number(match[2] || 0) * 3600 +
+                Number(match[3] || 0) * 60 + Number(match[4] || 0);
+            return Number.isFinite(seconds) && seconds > 0 && seconds <= Number.MAX_SAFE_INTEGER ? seconds : null;
+        }
+
+        function hasEligiblePreviewDuration(video) {
+            const seconds = parsePreviewDuration(video?.duration);
+            return seconds !== null && seconds >= 30 && seconds === video.durationSeconds;
+        }
+
         async function lookupYouTubePreview(song, artist, excludedIds, startSearchStage = 0) {
+            if (!requirePrivacyAcceptance()) return { ok: false, status: 403, data: { reason: "privacy_required" } };
             const state = window.tune4mePreviewLookups ||= { pools: new Map(), pending: new Map(), limited: null, attempt: 0 };
             for (const [key, entry] of state.pools) {
                 if (Date.now() - entry.cachedAt >= 5 * 60 * 1000) state.pools.delete(key);
@@ -1291,9 +1676,16 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
             const excluded = new Set(excludedIds);
             const pool = state.pools.get(identityKey);
             if (pool && Date.now() - pool.cachedAt < 5 * 60 * 1000) {
-                const candidates = pool.data.candidates.filter(item => !excluded.has(item.videoId));
+                const durationRejected = pool.data.candidates.some(item => !hasEligiblePreviewDuration(item.video));
+                const candidates = pool.data.candidates.filter(item => !excluded.has(item.videoId) && hasEligiblePreviewDuration(item.video));
                 if (candidates.length) return { ok: true, status: 200,
-                    data: { ...pool.data, ...candidates[0], candidates, cacheSource: "browser_candidates" } };
+                    data: { ...pool.data, ...candidates[0], candidates,
+                        duration: candidates[0].video.durationSeconds,
+                        nextSearchStage: durationRejected ? 4 : pool.data.nextSearchStage, cacheSource: "browser_candidates" } };
+                if (durationRejected) {
+                    state.pools.delete(identityKey);
+                    return { ok: false, status: 404, data: { reason: "unplayable", nextSearchStage: 4, cacheSource: "browser_candidates" } };
+                }
                 startSearchStage = Math.max(startSearchStage, pool.data.nextSearchStage || 0);
                 if (startSearchStage >= 4) return { ok: false, status: 404,
                     data: { reason: "unplayable", nextSearchStage: 4, cacheSource: "browser_candidates" } };
@@ -1312,59 +1704,73 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
             if (state.pending.size >= 16) return { ok: false, status: 429,
                 data: { reason: "rate_limited", retryAfterSeconds: 5, cacheSource: "browser_backoff" } };
 
+            const consentRequest = beginPrivacyRequest(null, 20000);
             const task = (async () => {
-                const response = await fetch("/api/getYouTubeVideo", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    signal: typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined,
-                    body: JSON.stringify({ query: (song + " " + artist).trim(), song, artist,
-                        excludeVideoIds: [...excluded], includeAlternatives: true, startSearchStage })
-                });
-                const data = await response.json();
-                if (response.status === 429 || ["rate_limited", "quota_limited"].includes(data.warning)) {
-                    state.attempt = state.limited && Date.now() < state.limited.until + 300000
-                        ? Math.min(state.attempt + 1, 5) : 1;
-                    const seconds = Number(data.retryAfterSeconds || response.headers?.get?.("retry-after"));
-                    const backoff = Math.min(5 * 2 ** (state.attempt - 1), 60);
-                    data.retryAfterSeconds = Math.max(backoff, Number.isFinite(seconds) && seconds > 0
-                        ? Math.min(Math.ceil(seconds), (data.reason || data.warning) === "quota_limited" ? 21600 : 300)
-                        : backoff);
-                    state.limited = { until: Date.now() + data.retryAfterSeconds * 1000,
-                        data: { reason: data.reason || data.warning, diagnostics: data.diagnostics, retryAfterSeconds: data.retryAfterSeconds } };
-                }
-                if (response.ok && /^[A-Za-z0-9_-]{11}$/.test(data.videoId || "")) {
-                    // Only verified pools are reused; a single legacy ID still follows the existing retry path.
-                    if (Array.isArray(data.candidates)) {
-                        data.candidates = data.candidates.filter(item => /^[A-Za-z0-9_-]{11}$/.test(item.videoId || ""));
-                        state.pools.set(identityKey, { data, cachedAt: Date.now() });
-                        while (state.pools.size > 100) state.pools.delete(state.pools.keys().next().value);
+                try {
+                    const response = await fetch("/api/getYouTubeVideo", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        signal: consentRequest.signal,
+                        body: JSON.stringify({ query: (song + " " + artist).trim(), song, artist,
+                            excludeVideoIds: [...excluded], includeAlternatives: true, startSearchStage })
+                    });
+                    if (!consentRequest.isCurrent()) return { ok: false, status: 403, data: { reason: "privacy_required" } };
+                    const data = await response.json();
+                    if (!consentRequest.isCurrent()) return { ok: false, status: 403, data: { reason: "privacy_required" } };
+                    if (response.status === 429 || ["rate_limited", "quota_limited"].includes(data.warning)) {
+                        state.attempt = state.limited && Date.now() < state.limited.until + 300000
+                            ? Math.min(state.attempt + 1, 5) : 1;
+                        const seconds = Number(data.retryAfterSeconds || response.headers?.get?.("retry-after"));
+                        const backoff = Math.min(5 * 2 ** (state.attempt - 1), 60);
+                        data.retryAfterSeconds = Math.max(backoff, Number.isFinite(seconds) && seconds > 0
+                            ? Math.min(Math.ceil(seconds), (data.reason || data.warning) === "quota_limited" ? 21600 : 300)
+                            : backoff);
+                        state.limited = { until: Date.now() + data.retryAfterSeconds * 1000,
+                            data: { reason: data.reason || data.warning, diagnostics: data.diagnostics, retryAfterSeconds: data.retryAfterSeconds } };
                     }
-                    // A server cache hit is not evidence that an upstream pause has ended.
-                    if (!data.warning && !data.cached && data.cacheSource !== "server_cache") {
-                        state.limited = null; state.attempt = 0;
+                    if (response.ok && /^[A-Za-z0-9_-]{11}$/.test(data.videoId || "")) {
+                        const pool = Array.isArray(data.candidates) ? data.candidates : [{ videoId: data.videoId, video: data.video }];
+                        const durationRejected = pool.some(item => !hasEligiblePreviewDuration(item.video));
+                        const eligible = pool.filter(item => /^[A-Za-z0-9_-]{11}$/.test(item.videoId || "") && hasEligiblePreviewDuration(item.video));
+                        if (!eligible.length) return { ok: false, status: 404, data: { reason: "unplayable", nextSearchStage: 4 } };
+                        Object.assign(data, eligible[0]);
+                        data.duration = eligible[0].video.durationSeconds;
+                        if (durationRejected) data.nextSearchStage = 4;
+                        // Only verified pools are reused; a single legacy ID still follows the existing retry path.
+                        if (Array.isArray(data.candidates)) {
+                            data.candidates = eligible;
+                            state.pools.set(identityKey, { data, cachedAt: Date.now() });
+                            while (state.pools.size > 100) state.pools.delete(state.pools.keys().next().value);
+                        }
+                        // Neither a cache hit nor an in-flight success can end an active upstream pause.
+                        if (!data.warning && !data.cached && data.cacheSource !== "server_cache" &&
+                            (!state.limited || Date.now() >= state.limited.until)) {
+                            state.limited = null; state.attempt = 0;
+                        }
                     }
-                }
-                return { ok: response.ok, status: response.status, data };
+                    return { ok: response.ok, status: response.status, data };
+                } catch (error) {
+                    if (!consentRequest.isCurrent()) return { ok: false, status: 403, data: { reason: "privacy_required" } };
+                    throw error;
+                } finally { consentRequest.finish(); }
             })();
             state.pending.set(key, task);
-            try { return await task; } finally { state.pending.delete(key); }
+            try { return await task; } finally {
+                if (state.pending.get(key) === task) state.pending.delete(key);
+            }
         }
 
-        function logPreviewDiagnostic(level, event, details) {
-            let localDevelopment = false;
-            try {
-                const origin = window.location.origin;
-                localDevelopment = /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::[0-9]+)?$/.test(origin);
-            } catch { /* Hosted and unknown origins fail closed. */ }
-            if (localDevelopment) console[level](event, details);
-            // Production preview diagnostics are event names only: no songs, artists, IDs or provider text.
-            else console[level](event);
+        function logPreviewDiagnostic(level, event) {
+            // The same fixed event-only diagnostics apply locally and when hosted.
+            if (["log", "warn", "error"].includes(level) && ["youtube_preview_lookup",
+                "youtube_preview_attempt", "youtube_preview_playback_error", "youtube_preview_player_ready",
+                "youtube_preview_player_state"].includes(event)) console[level](event);
         }
 
 
         function getCachedVideo(song, artist) {
             const key = getVideoCacheKey(song, artist);
 
-            const cached = localStorage.getItem(key);
+            const cached = tune4meStorage.getItem(key);
 
             if (!cached) return null;
 
@@ -1372,48 +1778,63 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                 const entry = JSON.parse(cached);
 
                 if (!/^[A-Za-z0-9_-]{11}$/.test(entry.videoId || "") || !entry.cachedAt) {
-                    localStorage.removeItem(key);
+                    tune4meStorage.removeItem(key);
                     return null;
                 }
 
                 if (Date.now() - entry.cachedAt > YOUTUBE_CACHE_TTL_MS) {
-                    localStorage.removeItem(key);
+                    tune4meStorage.removeItem(key);
                     return null;
                 }
 
                 return entry.videoId;
             } catch {
-                localStorage.removeItem(key);
+                tune4meStorage.removeItem(key);
                 return null;
             }
         }
 
-        function saveCachedVideo(song, artist, videoId) {
+        function cachedMadeForKidsStatus(song, artist) {
+            try {
+                const entry = JSON.parse(tune4meStorage.getItem(getVideoCacheKey(song, artist)));
+                return typeof entry?.madeForKids === "boolean" ? entry.madeForKids : null;
+            } catch { return null; }
+        }
+
+        function cachedPreviewDuration(song, artist) {
+            try {
+                const entry = JSON.parse(tune4meStorage.getItem(getVideoCacheKey(song, artist)));
+                return { duration: entry?.duration, durationSeconds: entry?.durationSeconds };
+            } catch { return {}; }
+        }
+
+        function saveCachedVideo(song, artist, videoId, video) {
             const key = getVideoCacheKey(song, artist);
-            if (!/^[A-Za-z0-9_-]{11}$/.test(videoId || "")) return;
+            if (!/^[A-Za-z0-9_-]{11}$/.test(videoId || "") || video?.madeForKids !== false || !hasEligiblePreviewDuration(video)) return;
             // Preview caches are expendable; never prune saved songs, preferences, or legacy capacity.
             try {
                 const entries = [];
-                for (let index = 0; index < localStorage.length; index++) {
-                    const cacheKey = localStorage.key(index);
+                for (let index = 0; index < tune4meStorage.length; index++) {
+                    const cacheKey = tune4meStorage.key(index);
                     if (/^yt_v[0-9]+_/.test(cacheKey)) entries.push(cacheKey);
                 }
                 const fresh = [];
                 for (const cacheKey of entries) {
                     let entry;
-                    try { entry = JSON.parse(localStorage.getItem(cacheKey)); } catch { /* Remove corrupt cache only. */ }
+                    try { entry = JSON.parse(tune4meStorage.getItem(cacheKey)); } catch { /* Remove corrupt cache only. */ }
                     if (!Number.isFinite(entry?.cachedAt) || Date.now() - entry.cachedAt > YOUTUBE_CACHE_TTL_MS) {
-                        localStorage.removeItem(cacheKey);
+                        tune4meStorage.removeItem(cacheKey);
                     } else if (cacheKey !== key) fresh.push({ key: cacheKey, cachedAt: entry.cachedAt });
                 }
                 fresh.sort((a, b) => a.cachedAt - b.cachedAt);
-                for (const entry of fresh.slice(0, Math.max(0, fresh.length - 199))) localStorage.removeItem(entry.key);
-                localStorage.setItem(key, JSON.stringify({ videoId, cachedAt: Date.now() }));
+                for (const entry of fresh.slice(0, Math.max(0, fresh.length - 199))) tune4meStorage.removeItem(entry.key);
+                tune4meStorage.setItem(key, JSON.stringify({ videoId, madeForKids: false,
+                    duration: video.duration, durationSeconds: video.durationSeconds, cachedAt: Date.now() }));
             } catch { /* A full/unavailable browser cache must not break playback or saved songs. */ }
         }
 
         function forgetCachedVideo(song, artist) {
-            localStorage.removeItem(getVideoCacheKey(song, artist));
+            tune4meStorage.removeItem(getVideoCacheKey(song, artist));
         }
 
         function destroyYouTubePreview(wrapper) {
@@ -1433,8 +1854,10 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
         }
 
         function waitForYouTubeApi() {
+            if (!requirePrivacyAcceptance()) return Promise.reject(new Error("Privacy agreement required"));
             if (window.YT?.Player) return Promise.resolve(window.YT);
-            return new Promise((resolve, reject) => {
+            if (window.tune4meYouTubeApiPromise) return window.tune4meYouTubeApiPromise;
+            window.tune4meYouTubeApiPromise = new Promise((resolve, reject) => {
                 const previous = window.onYouTubeIframeAPIReady;
                 const timeout = setTimeout(() => reject(new Error("YouTube player API unavailable")), 10000);
                 window.onYouTubeIframeAPIReady = () => {
@@ -1442,11 +1865,24 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                     if (previous) previous();
                     resolve(window.YT);
                 };
+                const script = document.createElement("script");
+                script.src = "https://www.youtube.com/iframe_api";
+                script.onerror = () => {
+                    clearTimeout(timeout);
+                    reject(new Error("YouTube player API unavailable"));
+                };
+                document.head.appendChild(script);
+            }).catch(error => {
+                window.tune4meYouTubeApiPromise = null;
+                throw error;
             });
+            return window.tune4meYouTubeApiPromise;
         }
 
         function createYouTubePreviewWrapper(embedUrl, playBtn, onError, onPlaying, diagnostics = {}) {
 
+            const revision = privacyRevision;
+            const playbackAllowed = () => privacyAccepted && revision === privacyRevision;
             const wrapper = document.createElement("div");
             wrapper.className = "video-wrapper";
             wrapper.style.marginTop = "10px";
@@ -1476,7 +1912,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
             const iframe = document.createElement("iframe");
             iframe.width = "100%";
             iframe.height = "200";
-            iframe.src = embedUrl;
+            if (playbackAllowed()) iframe.src = embedUrl;
             iframe.referrerPolicy = "strict-origin-when-cross-origin";
             iframe.title = "YouTube preview";
             iframe.setAttribute("allow", "autoplay; encrypted-media");
@@ -1486,38 +1922,58 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
             wrapper.appendChild(previewHeader);
             wrapper.appendChild(iframe);
 
+            function offerNativePlay() {
+                if (!playbackAllowed() || wrapper.previewDisposed || !wrapper.isConnected || wrapper.autoplayNotice) return;
+                const notice = document.createElement("p");
+                notice.textContent = "Press Play in the video to start the preview.";
+                wrapper.appendChild(notice);
+                wrapper.autoplayNotice = notice;
+            }
+
             waitForYouTubeApi().then(api => {
-                if (wrapper.previewDisposed || !wrapper.isConnected) return;
+                if (!playbackAllowed() || wrapper.previewDisposed || !wrapper.isConnected) return;
                 wrapper.previewReadyTimeout = setTimeout(() => {
-                    if (!wrapper.previewDisposed && wrapper.isConnected) onError?.("player_not_ready");
+                    if (playbackAllowed() && !wrapper.previewDisposed && wrapper.isConnected) onError?.("player_not_ready");
                 }, 15000);
                 wrapper.youtubePlayer = new api.Player(iframe, {
                     events: {
-                        onReady: () => {
+                        onReady: event => {
                             clearTimeout(wrapper.previewReadyTimeout);
-                            if (!wrapper.previewDisposed && wrapper.isConnected)
-                                logPreviewDiagnostic("log", "youtube_preview_player_ready", diagnostics);
+                            if (!playbackAllowed() || wrapper.previewDisposed || !wrapper.isConnected) return;
+                            logPreviewDiagnostic("log", "youtube_preview_player_ready", diagnostics);
+                            if (wrapper.scriptedPlayConsidered) return;
+                            wrapper.scriptedPlayConsidered = true;
+                            // iframe autoplay is off. Scripted playback is a single, visibility-gated attempt.
+                            let visible = false;
+                            try {
+                                const rect = iframe.getBoundingClientRect();
+                                const style = window.getComputedStyle(iframe);
+                                const width = Math.max(0, Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0));
+                                const height = Math.max(0, Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0));
+                                visible = document.visibilityState === "visible" && rect.width >= 200 && rect.height >= 200 &&
+                                    style.display !== "none" && style.visibility === "visible" && Number(style.opacity) > 0 &&
+                                    width * height > rect.width * rect.height / 2;
+                            } catch { /* Unknown visibility requires the native Play control. */ }
+                            const player = event?.target || wrapper.youtubePlayer;
+                            if (visible && !wrapper.scriptedPlayAttempted && typeof player?.playVideo === "function") {
+                                wrapper.scriptedPlayAttempted = true;
+                                try { player.playVideo(); } catch { offerNativePlay(); }
+                            } else offerNativePlay();
                         },
                         onError: event => {
                             clearTimeout(wrapper.previewReadyTimeout);
-                            if (!wrapper.previewDisposed && wrapper.isConnected) return onError?.(event.data);
+                            if (playbackAllowed() && !wrapper.previewDisposed && wrapper.isConnected) return onError?.(event.data);
                         },
                         onStateChange: event => {
-                            if (wrapper.previewDisposed || !wrapper.isConnected) return;
+                            if (!playbackAllowed() || wrapper.previewDisposed || !wrapper.isConnected) return;
                             logPreviewDiagnostic("log", "youtube_preview_player_state", { ...diagnostics, state: event.data });
                             if (event.data === 1) { clearTimeout(wrapper.previewReadyTimeout); onPlaying?.(); }
                         },
-                        onAutoplayBlocked: () => {
-                            if (wrapper.previewDisposed || !wrapper.isConnected || wrapper.autoplayNotice) return;
-                            const notice = document.createElement("p");
-                            notice.textContent = "Press Play in the video to start the preview.";
-                            wrapper.appendChild(notice);
-                            wrapper.autoplayNotice = notice;
-                        }
+                        onAutoplayBlocked: offerNativePlay
                     }
                 });
             }).catch(() => {
-                if (!wrapper.previewDisposed && wrapper.isConnected) onError?.("player_api_unavailable");
+                if (playbackAllowed() && !wrapper.previewDisposed && wrapper.isConnected) onError?.("player_api_unavailable");
             });
 
             return {
@@ -1534,6 +1990,8 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                 rate_limited: "YouTube preview lookup is temporarily limited. Please wait before retrying.",
                 access_denied: "YouTube preview access is unavailable right now.",
                 missing_key: "Previews are temporarily unavailable right now.",
+                made_for_kids: "This recording is marked Made for Kids. Tune4Me does not embed it; you can choose to open YouTube instead.",
+                metadata_unverified: "This recording's child-directed status could not be verified. No preview or automatic verification request was started. You can choose to open YouTube instead.",
                 no_result: "Tune4Me could not find a reliable preview for this song.",
                 unplayable: "A matching recording was found, but it cannot play here right now.",
                 embed_restricted: "YouTube does not allow this recording to play in an embedded player.",
@@ -1550,9 +2008,10 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
             const link = document.createElement("button");
             link.textContent = "▶ Listen on YouTube";
             link.className = "fallbackYTBtn secondary-button";
-            link.setAttribute("aria-label", `Search for ${song} by ${artist} on YouTube`);
+            link.setAttribute("aria-label", `Listen on YouTube: search for ${song} by ${artist}`);
             link.addEventListener("click", () => {
-                trackTune4Me("youtube_search_opened");
+                if (!requirePrivacyAcceptance(() => link.click(), link, "Agree and open YouTube")) return;
+                    trackTune4Me("youtube_search_opened");
                 window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${song} ${artist} official audio`)}`, "_blank");
             });
             note.appendChild(message);
@@ -1581,12 +2040,12 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
         }
 
         async function playSong(song, artist, playBtn) {
+            if (!requirePrivacyAcceptance(() => playSong(song, artist, playBtn), playBtn, "Agree and play YouTube preview")) return;
             if (playBtn.disabled) return;
             playBtn.disabled = true;
             setTimeout(() => { playBtn.disabled = false; }, 1000);
             if (!isPlayingAll) stopPlayback();
             document.querySelectorAll(".video-wrapper").forEach(destroyYouTubePreview);
-            trackTune4Me("song_preview_opened");
 
             const card = playBtn.closest(".card");
             let slot = card.querySelector(".video-slot");
@@ -1619,7 +2078,8 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                 let videoId = useCache ? getCachedVideo(song, artist) : null;
                 if (failedIds.includes(videoId)) videoId = null;
                 let cacheSource = videoId ? "browser_cache" : "candidate_pool";
-                let candidate;
+                let candidate = videoId ? { videoId, video: { madeForKids: cachedMadeForKidsStatus(song, artist),
+                    ...cachedPreviewDuration(song, artist) } } : null;
                 while (candidates.length && !candidate) {
                     const next = candidates.shift();
                     if (!failedIds.includes(next.videoId) && !attemptedIds.has(next.videoId)) candidate = next;
@@ -1662,6 +2122,25 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                     cacheSource = lookupSource = data.cacheSource || "upstream";
                 }
                 if (!isCurrent()) return;
+                if (candidate?.video?.madeForKids !== false) {
+                    // Reuse an already-returned verified alternative, never search again for a policy restriction.
+                    const alternateIndex = candidates.findIndex(item => item.video?.madeForKids === false && hasEligiblePreviewDuration(item.video) &&
+                        !failedIds.includes(item.videoId) && !attemptedIds.has(item.videoId));
+                    if (alternateIndex < 0) {
+                        // Discard only an obsolete browser ID. A later, explicit Play can make a normal lookup.
+                        if (cacheSource === "browser_cache" && candidate?.video?.madeForKids == null)
+                            forgetCachedVideo(song, artist);
+                        fail(candidate?.video?.madeForKids === true ? "made_for_kids" : "metadata_unverified");
+                        return;
+                    }
+                    candidate = candidates.splice(alternateIndex, 1)[0];
+                    videoId = candidate.videoId;
+                }
+                if (!hasEligiblePreviewDuration(candidate?.video)) {
+                    // A stale confirmed ID must not cause an automatic lookup to verify its duration.
+                    if (cacheSource === "browser_cache") forgetCachedVideo(song, artist);
+                    fail("unplayable"); return;
+                }
                 if (attemptedIds.has(videoId) || attemptedIds.size >= 5) {
                     fail(lastPlaybackReason);
                     return;
@@ -1671,8 +2150,9 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                 logPreviewDiagnostic("log", "youtube_preview_attempt", diagnostics);
                 window.currentDurationSeconds = 30;
                 const embedUrl = "https://www.youtube-nocookie.com/embed/" + videoId +
-                    "?enablejsapi=1&autoplay=1&rel=0&playsinline=1&origin=" + encodeURIComponent(window.location.origin);
+                    "?enablejsapi=1&autoplay=0&rel=0&playsinline=1&origin=" + encodeURIComponent(window.location.origin);
                 let failed = false;
+                let playbackRecorded = false;
                 const { wrapper, closeBtn } = createYouTubePreviewWrapper(embedUrl, playBtn, async code => {
                     if (failed || !isCurrent()) return;
                     failed = true;
@@ -1696,9 +2176,12 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                     fail(reason);
                 }, () => {
                     // A lookup is not proof of playback. Cache only after the player starts.
-                    if (!failed && isCurrent()) saveCachedVideo(song, artist, videoId);
+                    if (!failed && isCurrent()) {
+                        saveCachedVideo(song, artist, videoId, candidate.video);
+                        if (!playbackRecorded) { playbackRecorded = true; trackTune4Me("song_preview_opened"); }
+                    }
                 }, diagnostics);
-                if (candidate?.video) {
+                if (candidate?.video?.title && candidate.video.channelTitle) {
                     const source = document.createElement("p");
                     source.style.fontSize = "12px";
                     source.textContent = `${candidate.video.title} — ${candidate.video.channelTitle}` +
@@ -1721,7 +2204,8 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
         async function playNextSong(index, containerSelector = "#result", playlist = currentPlaylist) {
 
-            if (!isPlayingAll || index >= playlist.length) {
+            const revision = privacyRevision;
+            if (!privacyAccepted || !isPlayingAll || index >= playlist.length) {
                 isPlayingAll = false;
                 return;
             }
@@ -1747,6 +2231,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
             // play the song
             await playSong(song, artist, currentBtn);
+            if (!privacyAccepted || revision !== privacyRevision || !isPlayingAll) return;
 
             // 🔴 clear previous timer (ONLY once)
             if (playlistTimer) clearTimeout(playlistTimer);
@@ -1764,6 +2249,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
         }
 
         function playAllSongs(button) {
+            if (!requirePrivacyAcceptance(() => playAllSongs(button), button, "Agree and play YouTube preview")) return;
 
             // 🔴 toggle OFF
             if (isPlayingAll) {
@@ -1777,6 +2263,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
             isPlayingAll = true;
 
             button.innerText = "⏹ Stop";
+            button.setAttribute("aria-label", "Stop preview");
 
             playNextSong(0, "#result", currentPlaylist);
         }
@@ -1804,16 +2291,19 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
             // reset buttons
             document.querySelectorAll(".play-all-btn").forEach(btn => {
                 btn.innerText = "▶ Preview First Song (30s)";
+                btn.setAttribute("aria-label", "Preview First Song (30s) from this playlist");
             });
 
             document.querySelectorAll(".play-saved-btn").forEach(btn => {
                 btn.innerText = "▶ Preview First Song";
+                btn.setAttribute("aria-label", "Preview First Song from your saved songs");
             });
         }
 
         function playSavedSongs(button) {
+            if (!requirePrivacyAcceptance(() => playSavedSongs(button), button, "Agree and play YouTube preview")) return;
 
-            const saved = JSON.parse(localStorage.getItem("savedSongs") || "[]");
+            const saved = readStoredSongs("savedSongs");
 
             if (!saved.length) {
                 showStatusMessage("No saved songs yet. Save a song first, then preview your saved songs.", "error");
@@ -1832,6 +2322,7 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
             isPlayingAll = true;
 
             button.innerText = "⏹ Stop";
+            button.setAttribute("aria-label", "Stop preview");
 
             const savedInDisplayOrder = [...document.querySelectorAll("#savedSongs .card")].map(card => {
                 return {
@@ -1844,10 +2335,83 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
 
         }
 
+        // Recent recommendation memory contains identities and expiration times only.
+        const RECENT_RECOMMENDATION_KEY = "tune4meRecentRecommendations";
+        const RECENT_RECOMMENDATION_LIMIT = 30;
+        const RECENT_RECOMMENDATION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+        let recentRecommendationHistory = null;
+        let recentRecommendationSnapshot;
+
+        function normalizeRecentRecommendations(entries, now = Date.now()) {
+            if (!Array.isArray(entries)) return [];
+            const seen = new Set();
+            return entries.filter(item => item && typeof item.song === "string" && typeof item.artist === "string" &&
+                item.song.trim() && item.artist.trim() && item.song.length <= 120 && item.artist.length <= 120 &&
+                !/[\r\n]/.test(item.song + item.artist) && Number.isFinite(item.recommendedAt) &&
+                item.recommendedAt >= 0 && item.recommendedAt <= now && now - item.recommendedAt < RECENT_RECOMMENDATION_TTL_MS)
+                .sort((a, b) => b.recommendedAt - a.recommendedAt)
+                .flatMap(item => {
+                    const clean = { song: item.song.trim(), artist: item.artist.trim(), recommendedAt: item.recommendedAt };
+                    const key = JSON.stringify([clean.song, clean.artist].map(value => value.normalize("NFKC").toLowerCase()));
+                    if (seen.has(key)) return [];
+                    seen.add(key);
+                    return [clean];
+                }).slice(0, RECENT_RECOMMENDATION_LIMIT);
+        }
+
+        function persistRecentRecommendations() {
+            try {
+                const raw = JSON.stringify(recentRecommendationHistory);
+                if (tune4meStorage.setItem(RECENT_RECOMMENDATION_KEY, raw) === false) return false;
+                recentRecommendationSnapshot = raw;
+            }
+            catch { /* Keep bounded memory for this visit when browser storage is unavailable. */ }
+        }
+
+        function readRecentRecommendationHistory() {
+            try {
+                const stored = tune4meStorage.getItem(RECENT_RECOMMENDATION_KEY);
+                const raw = stored && stored.length > 20000 ? "" : stored;
+                // Observe another tab's updates or clear without discarding unsaved visit memory.
+                if (recentRecommendationHistory === null || raw !== recentRecommendationSnapshot) {
+                    recentRecommendationHistory = [];
+                    recentRecommendationSnapshot = raw;
+                    recentRecommendationHistory = raw ? JSON.parse(raw) : [];
+                }
+            } catch { if (recentRecommendationHistory === null) recentRecommendationHistory = []; }
+            recentRecommendationHistory = normalizeRecentRecommendations(recentRecommendationHistory);
+            persistRecentRecommendations();
+            return recentRecommendationHistory;
+        }
+
+        function getRecentRecommendations() {
+            return readRecentRecommendationHistory().map(({ song, artist }) => ({ song, artist }));
+        }
+
+        function rememberRecentRecommendations(songs) {
+            const now = Date.now();
+            const entries = (Array.isArray(songs) ? songs.slice(0, RECENT_RECOMMENDATION_LIMIT) : []).map(item => ({
+                song: item?.song, artist: item?.artist, recommendedAt: now
+            }));
+            recentRecommendationHistory = normalizeRecentRecommendations([...entries, ...readRecentRecommendationHistory()], now);
+            persistRecentRecommendations();
+        }
+
+        function clearRecentRecommendations() {
+            recentRecommendationHistory = [];
+            let persisted = false;
+            try { persisted = tune4meStorage.removeItem(RECENT_RECOMMENDATION_KEY) !== false;
+                if (!persisted) persisted = tune4meStorage.setItem(RECENT_RECOMMENDATION_KEY, "[]") !== false; }
+            catch {
+                try { persisted = tune4meStorage.setItem(RECENT_RECOMMENDATION_KEY, "[]") !== false; } catch { /* No storage access. */ }
+            }
+            showStatusMessage(persisted ? "Recent recommendation history cleared. Your favorites and feedback are unchanged."
+                : "Recent history cleared for this visit. Browser storage could not be updated; your favorites and feedback are unchanged.");
+        }
+
         // AI 
 
         async function showMood(button) {
-
             const mood = document.getElementById("moodInput").value.trim();
 
             if (!mood) {
@@ -1859,12 +2423,14 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
                 showMoodError("Please keep your mood note under 2000 characters, then try again 🎧");
                 return;
             }
+            if (!requirePrivacyAcceptance(() => showMood(button),
+                button || document.getElementById("createPlaylistBtn"), "Agree and create playlist")) return;
 
             clearMoodError();
             clearStatusMessage();
 
             continueCount = 0;
-            localStorage.setItem("continueCount", continueCount);
+            tune4meStorage.setItem("continueCount", continueCount);
 
             const result = document.getElementById("result");
             const continueBtn = document.getElementById("continueBtn");
@@ -1892,18 +2458,25 @@ Building something intentional.
 
             if (button) button.disabled = true;
 
+            const consentRequest = beginPrivacyRequest(() => {
+                if (button) button.disabled = false;
+                if (saveBtn) saveBtn.disabled = currentPlaylist.length === 0;
+            });
             try {
                 const response = await fetch("/api/getPlaylist", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
+                    signal: consentRequest.signal,
                     body: JSON.stringify({
                         mood,
-                        avoidSongs: JSON.parse(localStorage.getItem("avoidSongs")) || [],
-                        likedSongs: JSON.parse(localStorage.getItem("likedSongs")) || []
+                        recentSongs: getRecentRecommendations(),
+                        avoidSongs: readStoredSongs("avoidSongs"),
+                        likedSongs: readStoredSongs("likedSongs")
                     })
                 });
 
                 const text = await response.text();
+                if (!consentRequest.isCurrent()) return;
 
                 let data;
                 try {
@@ -1936,6 +2509,9 @@ Building something intentional.
 The playlist did not load correctly. Please try again in a moment 🎧
 </div>
 `;
+                    if (data.reason === "insufficient_musical_fit") {
+                        result.textContent = "Tune4Me couldn't assemble enough distinct songs with consistent musical connections to your reference. No replacement playlist was generated. Try relaxing a musical requirement.";
+                    }
                     if (button) button.disabled = false;
                     return;
                 }
@@ -2125,8 +2701,8 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         const deleteBtn = document.createElement("button");
                         deleteBtn.className = "secondary-button";
 
-                        deleteBtn.textContent = "🗑 Remove";
-                        deleteBtn.setAttribute("aria-label", `Remove ${song} by ${artist} from this playlist`);
+                        deleteBtn.textContent = "🗑 Remove and avoid";
+                        deleteBtn.setAttribute("aria-label", `Remove and avoid ${song} by ${artist} in future recommendations`);
                         deleteBtn.style.padding = "6px 8px";
 
                         deleteBtn.addEventListener("click", () => {
@@ -2137,7 +2713,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                                 !(item.song === song && item.artist === artist)
                             );
 
-                            let avoidSongs = JSON.parse(localStorage.getItem("avoidSongs")) || [];
+                            let avoidSongs = readStoredSongs("avoidSongs");
 
                             let exists = avoidSongs.some(item =>
                                 item.song.toLowerCase() === song.toLowerCase() &&
@@ -2146,7 +2722,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
 
                             if (!exists) {
                                 avoidSongs.push({ song, artist });
-                                localStorage.setItem("avoidSongs", JSON.stringify(avoidSongs));
+                                tune4meStorage.setItem("avoidSongs", JSON.stringify(avoidSongs));
                             }
 
                         });
@@ -2155,7 +2731,7 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         ytBar.className = "secondary-button";
 
                         ytBar.textContent = "Open YouTube";
-                        ytBar.setAttribute("aria-label", `Listen to ${song} by ${artist} on YouTube`);
+                        ytBar.setAttribute("aria-label", `Open YouTube for ${song} by ${artist}`);
 
                         ytBar.style.width = "100%";
                         ytBar.style.marginTop = "10px";
@@ -2163,7 +2739,8 @@ The playlist did not load correctly. Please try again in a moment 🎧
                         ytBar.addEventListener("click", () => {
 
 
-                            trackTune4Me("youtube_search_opened");
+                            if (!requirePrivacyAcceptance(() => ytBar.click(), ytBar, "Agree and open YouTube")) return;
+                    trackTune4Me("youtube_search_opened");
 
                             const ytQuery = encodeURIComponent(
                                 `${song} ${artist} official audio`
@@ -2201,12 +2778,13 @@ The playlist did not load correctly. Please try again in a moment 🎧
                 continueBtn.style.display = "inline-block";
                 continueBtn.innerText = "▶ Continue This Mood";
 
-                localStorage.setItem("currentPlaylist", JSON.stringify(currentPlaylist));
+                tune4meStorage.setItem("currentPlaylist", JSON.stringify(currentPlaylist));
+                rememberRecentRecommendations(currentPlaylist);
                 result.focus({ preventScroll: true });
 
-                let saved = JSON.parse(localStorage.getItem("savedSongs")) || [];
+                let saved = readStoredSongs("savedSongs");
 
-                let currentLimit = parseInt(localStorage.getItem("saveLimit")) || 15;
+                let currentLimit = Math.min(MAX_SAVE_LIMIT, parseInt(tune4meStorage.getItem("saveLimit")) || 15);
 
                 const saveBtn2 = document.getElementById("floatingSaveBtn");
 
@@ -2215,16 +2793,18 @@ The playlist did not load correctly. Please try again in a moment 🎧
                 }
 
             } catch (err) {
+                if (!consentRequest.isCurrent()) return;
                 trackTune4Me("playlist_generation_failure");
                 console.error("playlist_error", {
                     errorCategory: "playlist_error"
                 });
                 result.innerHTML = "Error loading playlist";
                 if (button) button.disabled = false;
-            }
+            } finally { consentRequest.finish(); }
         }
 
         async function continuePlaylist() {
+            if (!requirePrivacyAcceptance(() => continuePlaylist(), document.getElementById("continueBtn"), "Agree and continue playlist")) return;
 
             console.log("USER CONTINUED PLAYLIST");
 
@@ -2234,24 +2814,29 @@ The playlist did not load correctly. Please try again in a moment 🎧
             const continueBtn = document.getElementById("continueBtn");
 
             continueCount++;
-            localStorage.setItem("continueCount", continueCount);
+            tune4meStorage.setItem("continueCount", continueCount);
 
             const mood = document.getElementById("moodInput").value.trim();
 
             continueBtn.innerText = "Loading...";
+            const consentRequest = beginPrivacyRequest(() => {
+                if (!consentRequest.isCurrent()) continueBtn.innerText = "▶ Continue This Mood";
+            });
             try {
                 const response = await fetch("/api/getPlaylist", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
+                    signal: consentRequest.signal,
                     body: JSON.stringify({
                         mood,
                         existingSongs: currentPlaylist,
-                        avoidSongs: JSON.parse(localStorage.getItem("avoidSongs")) || [],
-                        likedSongs: JSON.parse(localStorage.getItem("likedSongs")) || []
+                        avoidSongs: readStoredSongs("avoidSongs"),
+                        likedSongs: readStoredSongs("likedSongs")
                     })
                 });
 
                 const data = await response.json();
+                if (!consentRequest.isCurrent()) return;
 
                 if (!data.choices || !data.choices[0] || !data.choices[0].message) {
                     if (response.status === 429) {
@@ -2275,6 +2860,9 @@ Tune4Me is taking a short pause while building more recommendations.<br><br>
 Try previewing your saved songs, exploring YouTube suggestions,
 or continue again in a moment 🎧
 `;
+                    if (data.reason === "insufficient_musical_fit") {
+                        fallbackCard.textContent = "Tune4Me couldn't assemble enough distinct songs with consistent musical connections to your reference. Your existing playlist is unchanged. Try relaxing a musical requirement.";
+                    }
 
                     result.prepend(fallbackCard);
                     return;
@@ -2306,6 +2894,7 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
                 const songList = document.createElement("ul");
                 songList.className = "song-list";
                 songList.setAttribute("aria-label", "Continued playlist songs");
+                const recommendedSongs = [];
 
                 let songSection = false;
                 let songIndex = 0;
@@ -2367,6 +2956,7 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
                     if (alreadyExists) return;
 
                     currentPlaylist.unshift({ song, artist });
+                    recommendedSongs.push({ song, artist });
 
                     // ✅ safe card build
                     const card = document.createElement("li");
@@ -2430,8 +3020,8 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
 
                     const deleteBtn = document.createElement("button");
                     deleteBtn.className = "secondary-button";
-                    deleteBtn.textContent = "🗑 Remove";
-                    deleteBtn.setAttribute("aria-label", `Remove ${song} by ${artist} from this playlist`);
+                    deleteBtn.textContent = "🗑 Remove and avoid";
+                    deleteBtn.setAttribute("aria-label", `Remove and avoid ${song} by ${artist} in future recommendations`);
                     deleteBtn.style.padding = "6px 8px";
 
                     deleteBtn.addEventListener("click", () => {
@@ -2441,7 +3031,7 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
                             !(item.song === song && item.artist === artist)
                         );
 
-                        let avoidSongs = JSON.parse(localStorage.getItem("avoidSongs")) || [];
+                        let avoidSongs = readStoredSongs("avoidSongs");
 
                         let exists = avoidSongs.some(item =>
                             item.song.toLowerCase() === song.toLowerCase() &&
@@ -2450,7 +3040,7 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
 
                         if (!exists) {
                             avoidSongs.push({ song, artist });
-                            localStorage.setItem("avoidSongs", JSON.stringify(avoidSongs));
+                            tune4meStorage.setItem("avoidSongs", JSON.stringify(avoidSongs));
                         }
                     });
 
@@ -2458,7 +3048,7 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
                     ytBar.className = "secondary-button";
 
                     ytBar.textContent = "Open YouTube";
-                    ytBar.setAttribute("aria-label", `Listen to ${song} by ${artist} on YouTube`);
+                    ytBar.setAttribute("aria-label", `Open YouTube for ${song} by ${artist}`);
 
                     ytBar.style.width = "100%";
                     ytBar.style.marginTop = "10px";
@@ -2466,7 +3056,8 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
                     ytBar.addEventListener("click", () => {
 
 
-                        trackTune4Me("youtube_search_opened");
+                        if (!requirePrivacyAcceptance(() => ytBar.click(), ytBar, "Agree and open YouTube")) return;
+                    trackTune4Me("youtube_search_opened");
 
                         const ytQuery = encodeURIComponent(
                             `${song} ${artist} official audio`
@@ -2499,7 +3090,8 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
 
                 continueBtn.innerText = "▶ Continue This Mood";
 
-                localStorage.setItem("currentPlaylist", JSON.stringify(currentPlaylist));
+                tune4meStorage.setItem("currentPlaylist", JSON.stringify(currentPlaylist));
+                rememberRecentRecommendations(recommendedSongs);
                 result.focus({ preventScroll: true });
 
                 continueBtn.scrollIntoView({
@@ -2508,11 +3100,12 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
                 });
 
             } catch (err) {
+                if (!consentRequest.isCurrent()) return;
                 console.error("continue_playlist_error", {
                     errorCategory: "playlist_error"
                 });
                 continueBtn.innerText = "Error, try again";
-            }
+            } finally { consentRequest.finish(); }
         }
 
 
@@ -2550,6 +3143,27 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
         }
 
     </script>
+
+    <details class="privacy-choices">
+        <summary id="privacyControlsToggle">Privacy and stored data controls</summary>
+        <p>Browse without agreement. Before your first active music action or support submission, a short agreement
+            appears beside that action. Your unsent mood draft is not automatically saved or shared.</p>
+        <p><a href="/privacy.html">Privacy Policy</a> · <a href="/terms.html">Terms of Service</a> ·
+            <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a> ·
+            <a href="https://policies.google.com/privacy">Google Privacy Policy</a></p>
+        <label class="analytics-choice" for="analyticsChoice">
+            <input id="analyticsChoice" type="checkbox" aria-describedby="analyticsChoiceHint">
+            Enable optional usage analytics (optional)
+        </label>
+        <p id="analyticsChoiceHint">Music features work with analytics off. This separate choice is saved when you agree.
+            To change it later, withdraw agreement and choose again.</p>
+        <button id="withdrawPrivacyBtn" class="secondary-button" type="button" onclick="withdrawPrivacyAcceptance()" hidden>
+            Withdraw privacy agreement</button>
+        <p id="preferenceResetHint">Clear stored song feedback, likes, dislikes and avoidance preferences.
+            This keeps your saved songs, saved-song capacity, current playlist and recent history.</p>
+        <button class="secondary-button" type="button" onclick="clearStoredPreferences()"
+            aria-describedby="preferenceResetHint">Clear Likes, Dislikes and Avoidance</button>
+    </details>
 
     <p class="legal-links" style="font-size:12px; color:#4D4D4D; margin-top:24px;">
         <a href="/privacy.html">Privacy Policy</a>

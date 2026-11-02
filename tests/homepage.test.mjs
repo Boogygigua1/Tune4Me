@@ -16,6 +16,7 @@ function source(start, end) {
 class Element {
     constructor() { this.style = {}; this.attributes = {}; this.children = []; this.events = {}; this.dataset = {}; this.value = ""; this.textContent = ""; this.innerText = ""; this.disabled = false; }
     appendChild(child) { this.children.push(child); child.isConnected = true; return child; }
+    prepend(child) { this.children.unshift(child); child.isConnected = true; }
     setAttribute(key, value) { this.attributes[key] = value; }
     removeAttribute(key) { delete this.attributes[key]; }
     addEventListener(key, fn) { this.events[key] = fn; }
@@ -44,7 +45,12 @@ function browser(initial = {}) {
             return { status: 200, text: async () => JSON.stringify(data), json: async () => data };
         }
     });
+    // Existing behavior tests exercise an already-agreed visit. Privacy gating is
+    // exercised from a real unaccepted bootstrap in privacy-controls.test.mjs.
+    vm.runInContext(source("const PRIVACY_POLICY_VERSION", "function trackTune4Me("), context);
+    vm.runInContext("privacyAccepted = true;", context);
     for (const [start, end] of [
+        ["const RECENT_RECOMMENDATION_KEY", "// AI"],
         ["function preferredScrollBehavior()", "function saveFeedback("],
         ["function loadSavedSongs()", "function deleteSavedSong("],
         ["function clearNewList()", "// LOAD"],
@@ -54,6 +60,248 @@ function browser(initial = {}) {
     ]) vm.runInContext(source(start, end), context);
     return { context, values, elements, calls, events, opened };
 }
+
+const recentKey = "tune4meRecentRecommendations";
+const recentNow = 1800000000000;
+const recentTTL = 30 * 86400000;
+function clock(ui, now = recentNow) { vm.runInContext(`Date.now = () => ${now}`, ui.context); }
+function plain(value) { return JSON.parse(JSON.stringify(value)); }
+function recentEntries(ui) { return JSON.parse(ui.values.get(recentKey) || "[]"); }
+
+for (const continuation of [false, true]) test(`musical-fit limitation is clear, safe, and never retries (continuation: ${continuation})`, async () => {
+    const ui = browser({ currentPlaylist: JSON.stringify([song]), saveLimit: "100", likedSongs: JSON.stringify([song]) });
+    clock(ui); ui.context.rememberRecentRecommendations([song]);
+    const before = Object.fromEntries(ui.values);
+    ui.elements.moodInput.value = 'Play "Lose Control" by Teddy Swims. Find similar vocals and groove.';
+    ui.context.fetch = async url => {
+        ui.calls.push({ url });
+        const data = { reason: "insufficient_musical_fit", error: "<img src=x onerror=PRIVATE_UNSUPPORTED>" };
+        return { status: 502, text: async () => JSON.stringify(data), json: async () => data };
+    };
+    if (continuation) {
+        vm.runInContext(source("async function continuePlaylist()", "// $$$$"), ui.context);
+        await ui.context.continuePlaylist();
+        assert.match(ui.elements.result.children[0].textContent, /couldn't assemble enough distinct songs/);
+        assert.doesNotMatch(ui.elements.result.children[0].textContent, /PRIVATE|<img/);
+    } else {
+        await ui.context.showMood(new Element());
+        assert.match(ui.elements.result.textContent, /couldn't assemble enough distinct songs/);
+        assert.doesNotMatch(ui.elements.result.textContent, /PRIVATE|<img/);
+    }
+    assert.equal(ui.calls.length, 1); assert.equal(ui.calls[0].url, "/api/getPlaylist");
+    assert.deepEqual(plain(ui.context.currentPlaylist), [song]);
+    for (const key of [recentKey, "currentPlaylist", "saveLimit", "likedSongs"]) assert.equal(ui.values.get(key), before[key]);
+});
+
+test("recent recommendations survive a page reload and contain only identities and expiration metadata", () => {
+    const ui = browser(); clock(ui);
+    ui.context.rememberRecentRecommendations([{ ...song, mood: "PRIVATE-MOOD", rating: "bad", videoId: "abcdefghijk" }]);
+    assert.deepEqual(recentEntries(ui), [{ ...song, recommendedAt: recentNow }]);
+    const reloaded = browser(Object.fromEntries(ui.values)); clock(reloaded, recentNow + 1);
+    assert.deepEqual(plain(reloaded.context.getRecentRecommendations()), [song]);
+    assert.deepEqual(Object.keys(recentEntries(reloaded)[0]).sort(), ["artist", "recommendedAt", "song"]);
+    assert.ok(!ui.values.get(recentKey).includes("PRIVATE-MOOD"));
+    assert.equal(ui.calls.length, 0); assert.equal(reloaded.calls.length, 0);
+});
+
+test("history keeps the 30 most recent distinct recordings across batches", () => {
+    const ui = browser();
+    for (let index = 0; index < 45; index++) {
+        clock(ui, recentNow + index);
+        ui.context.rememberRecentRecommendations([{ song: `Recent ${index}`, artist: "Fixture Artist" }]);
+        assert.ok(recentEntries(ui).length <= 30);
+    }
+    assert.deepEqual(recentEntries(ui).map(item => item.song), Array.from({ length: 30 }, (_, index) => `Recent ${44 - index}`));
+});
+
+test("normalization deduplicates identities, refreshes repeated songs, and preserves different artists", () => {
+    const ui = browser(); clock(ui);
+    ui.context.rememberRecentRecommendations([{ song: "Song", artist: "Artist" }, { song: "Song", artist: "Other Artist" }]);
+    clock(ui, recentNow + 100);
+    ui.context.rememberRecentRecommendations([{ song: " Ｓｏｎｇ ", artist: " ARTIST " }]);
+    assert.deepEqual(recentEntries(ui), [
+        { song: "Ｓｏｎｇ", artist: "ARTIST", recommendedAt: recentNow + 100 },
+        { song: "Song", artist: "Other Artist", recommendedAt: recentNow }
+    ]);
+});
+
+test("30-day expiry removes old and boundary entries but retains a still-current recommendation", () => {
+    const entries = [
+        { ...song, recommendedAt: recentNow - recentTTL + 1 },
+        { song: "Exactly 30 Days", artist: "Artist", recommendedAt: recentNow - recentTTL },
+        { song: "Older", artist: "Artist", recommendedAt: recentNow - recentTTL - 1 },
+        { song: "Future", artist: "Artist", recommendedAt: recentNow + 1 },
+        { song: "Invalid", artist: "Artist", recommendedAt: "yesterday" }
+    ];
+    const ui = browser({ [recentKey]: JSON.stringify(entries) }); clock(ui);
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), [song]);
+    assert.equal(recentEntries(ui).length, 1);
+    clock(ui, recentNow + 1);
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), []);
+    assert.deepEqual(recentEntries(ui), []);
+});
+
+test("recommending a song again renews its own expiry without renewing older entries", () => {
+    const old = { song: "Old", artist: "Artist", recommendedAt: recentNow - recentTTL + 50 };
+    const ui = browser({ [recentKey]: JSON.stringify([{ ...song, recommendedAt: old.recommendedAt }, old]) }); clock(ui);
+    ui.context.rememberRecentRecommendations([song]);
+    clock(ui, recentNow + 50);
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), [song]);
+    assert.equal(recentEntries(ui)[0].recommendedAt, recentNow);
+});
+
+for (const raw of ["not JSON", "null", "{}", '"not an array"', "[".repeat(20001)]) {
+    test(`corrupted or oversized recent storage is repaired safely (${raw.length} characters)`, () => {
+        const ui = browser({ [recentKey]: raw }); clock(ui);
+        assert.deepEqual(plain(ui.context.getRecentRecommendations()), []);
+        assert.deepEqual(recentEntries(ui), []);
+        assert.equal(ui.calls.length, 0);
+    });
+}
+
+test("invalid stored history entries are discarded and unknown fields never survive normalization", () => {
+    const entries = [null, { song: {}, artist: "Artist", recommendedAt: recentNow },
+        { song: " ", artist: "Artist", recommendedAt: recentNow },
+        { song: "Bad\nTitle", artist: "Artist", recommendedAt: recentNow },
+        { song: "x".repeat(121), artist: "Artist", recommendedAt: recentNow },
+        { ...song, recommendedAt: recentNow, mood: "PRIVATE", anotherField: "discard" }];
+    const ui = browser({ [recentKey]: JSON.stringify(entries) }); clock(ui);
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), [song]);
+    assert.deepEqual(recentEntries(ui), [{ ...song, recommendedAt: recentNow }]);
+});
+
+test("clearing history is independent of favorites, feedback, current playlist, and saved capacity", () => {
+    const initial = { savedSongs: JSON.stringify([song]), saveLimit: "65", currentPlaylist: JSON.stringify([song]),
+        likedSongs: JSON.stringify([song]), avoidSongs: JSON.stringify([song]), songFeedback: '[{"rating":"bad"}]' };
+    const ui = browser(initial); clock(ui);
+    ui.context.rememberRecentRecommendations([song]);
+    ui.context.clearRecentRecommendations();
+    assert.equal(ui.values.has(recentKey), false);
+    assert.equal(ui.elements.appStatus.textContent, "Recent recommendation history cleared. Your favorites and feedback are unchanged.");
+    assert.deepEqual(Object.fromEntries(ui.values), initial);
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), []);
+    assert.equal(ui.calls.length, 0); assert.deepEqual(ui.events, []);
+});
+
+test("the history clear control uses a native accessible blue button and describes data sharing", () => {
+    assert.match(html, /<button class="secondary-button" type="button" onclick="clearRecentRecommendations\(\)"\s+aria-describedby="recentRecommendationNote">Clear Recent History<\/button>/);
+    assert.match(html, /id="recentRecommendationNote"[^>]*>[\s\S]*?30 recent recommendations for 30 days/);
+    assert.match(html, /Song titles and artists are shared with the curator when you create a playlist/);
+});
+
+test("denied history storage uses bounded visit memory without throwing or making requests", () => {
+    const ui = browser(); clock(ui);
+    ui.context.localStorage.getItem = () => { throw new Error("PRIVATE storage failure"); };
+    ui.context.localStorage.setItem = () => { throw new Error("PRIVATE storage failure"); };
+    for (let index = 0; index < 40; index++) {
+        clock(ui, recentNow + index);
+        ui.context.rememberRecentRecommendations([{ song: `Song ${index}`, artist: "Artist" }]);
+    }
+    assert.equal(ui.context.getRecentRecommendations().length, 30);
+    assert.equal(ui.context.getRecentRecommendations()[0].song, "Song 39");
+    assert.equal(ui.calls.length, 0); assert.deepEqual(ui.events, []);
+});
+
+test("a quota failure preserves readable history and new visit-memory recommendations", () => {
+    const ui = browser({ [recentKey]: JSON.stringify([{ ...song, recommendedAt: recentNow - 1 }]) }); clock(ui);
+    ui.context.localStorage.setItem = () => { throw new Error("QuotaExceededError"); };
+    const fresh = { song: "Fresh", artist: "Artist" };
+    ui.context.rememberRecentRecommendations([fresh]);
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), [fresh, song]);
+});
+
+test("readable updates and clears from another tab replace stale in-memory history", () => {
+    const ui = browser(); clock(ui); ui.context.rememberRecentRecommendations([song]);
+    const external = { song: "Another Tab", artist: "Artist", recommendedAt: recentNow };
+    ui.values.set(recentKey, JSON.stringify([external]));
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), [{ song: external.song, artist: external.artist }]);
+    ui.values.delete(recentKey);
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), []);
+    assert.deepEqual(recentEntries(ui), []);
+});
+
+test("a denied history store does not stop generation or log history, mood, or storage exception details", async () => {
+    const ui = browser(); clock(ui);
+    const logs = [];
+    ui.context.console = { log: (...args) => logs.push(args), warn: (...args) => logs.push(args), error: (...args) => logs.push(args) };
+    const get = ui.context.localStorage.getItem, set = ui.context.localStorage.setItem;
+    ui.context.localStorage.getItem = key => { if (key === recentKey) throw new Error("PRIVATE-HISTORY"); return get(key); };
+    ui.context.localStorage.setItem = (key, value) => { if (key === recentKey) throw new Error("PRIVATE-HISTORY"); return set(key, value); };
+    const prior = { song: "PRIVATE-HISTORY", artist: "PRIVATE-ARTIST" };
+    ui.context.rememberRecentRecommendations([prior]);
+    ui.elements.moodInput.value = "PRIVATE-MOOD";
+    await ui.context.showMood(new Element());
+    await ui.context.showMood(new Element());
+    assert.equal(ui.calls.length, 2); assert.ok(ui.calls.every(call => call.url === "/api/getPlaylist"));
+    assert.deepEqual(ui.calls[0].body.recentSongs, [prior]);
+    assert.deepEqual(ui.calls[1].body.recentSongs, [song, prior]);
+    assert.deepEqual(plain(ui.context.currentPlaylist), [song]);
+    assert.doesNotMatch(JSON.stringify(logs), /PRIVATE-HISTORY|PRIVATE-ARTIST|PRIVATE-MOOD/);
+});
+
+test("failed removal can clear persisted history using an empty replacement", () => {
+    const ui = browser(); clock(ui); ui.context.rememberRecentRecommendations([song]);
+    ui.context.localStorage.removeItem = () => { throw new Error("Synthetic removal failure"); };
+    ui.context.clearRecentRecommendations();
+    assert.deepEqual(recentEntries(ui), []);
+    assert.match(ui.elements.appStatus.textContent, /^Recent recommendation history cleared/);
+});
+
+test("a blocked persistent clear reports the limitation and still clears visit memory", () => {
+    const ui = browser(); clock(ui); ui.context.rememberRecentRecommendations([song]);
+    ui.context.localStorage.removeItem = () => { throw new Error("PRIVATE"); };
+    ui.context.localStorage.setItem = () => { throw new Error("PRIVATE"); };
+    ui.context.clearRecentRecommendations();
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), []);
+    assert.match(ui.elements.appStatus.textContent, /cleared for this visit\. Browser storage could not be updated/);
+    assert.doesNotMatch(ui.elements.appStatus.textContent, /PRIVATE/);
+});
+
+test("fresh requests send only prior history pairs and record the successfully rendered recommendations", async () => {
+    const prior = { song: "Prior", artist: "Prior Artist" };
+    const ui = browser(); clock(ui); ui.context.rememberRecentRecommendations([prior]);
+    ui.elements.moodInput.value = "PRIVATE emotional description";
+    await ui.context.showMood(new Element());
+    assert.equal(ui.calls.length, 1); assert.equal(ui.calls[0].url, "/api/getPlaylist");
+    assert.deepEqual(ui.calls[0].body.recentSongs, [prior]);
+    assert.equal(ui.calls[0].body.existingSongs, undefined);
+    assert.deepEqual(ui.calls[0].body.avoidSongs, []);
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), [song, prior]);
+    assert.ok(!ui.values.get(recentKey).includes("PRIVATE"));
+    assert.ok(recentEntries(ui).every(item => Object.keys(item).length === 3));
+});
+
+test("clearing the current playlist does not erase recent memory or feedback", async () => {
+    const ui = browser({ likedSongs: JSON.stringify([song]) }); clock(ui);
+    ui.elements.moodInput.value = "Quiet nostalgia"; await ui.context.showMood(new Element());
+    ui.context.clearNewList();
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), [song]);
+    assert.equal(ui.values.get("likedSongs"), JSON.stringify([song]));
+});
+
+test("failed playlist generation records no recommendations and never retries", async () => {
+    const ui = browser(); clock(ui); ui.elements.moodInput.value = "Synthetic mood";
+    ui.context.fetch = async (url, options) => {
+        ui.calls.push({ url, body: JSON.parse(options.body) });
+        return { status: 502, text: async () => JSON.stringify({ error: "Synthetic failure" }) };
+    };
+    await ui.context.showMood(new Element());
+    assert.equal(ui.calls.length, 1);
+    assert.deepEqual(plain(ui.context.getRecentRecommendations()), []);
+});
+
+test("continuation remembers only new recommendations without refreshing the older playlist's expiry", async () => {
+    const older = { song: "Older", artist: "Older Artist" };
+    const ui = browser({ currentPlaylist: JSON.stringify([older]) }); clock(ui, recentNow - 500);
+    ui.context.rememberRecentRecommendations([older]); clock(ui);
+    ui.elements.moodInput.value = "Still missing someone";
+    vm.runInContext(source("async function continuePlaylist()", "// $$$$"), ui.context);
+    await ui.context.continuePlaylist();
+    assert.equal(ui.calls.length, 1); assert.equal(ui.calls[0].url, "/api/getPlaylist");
+    assert.deepEqual(ui.calls[0].body.existingSongs, [older]);
+    assert.equal(ui.calls[0].body.recentSongs, undefined);
+    assert.deepEqual(recentEntries(ui), [{ ...song, recommendedAt: recentNow }, { ...older, recommendedAt: recentNow - 500 }]);
+});
 
 test("mood entry is a labeled five-line required textarea with the requested example", () => {
     assert.ok(textarea);
@@ -250,7 +498,7 @@ test("generated, continued, and saved song controls retain behavior hooks and us
         return [element, ...element.children.flatMap(controls)].filter(item => item.attributes["aria-label"]);
     }
     function check(elements) {
-        const buttons = elements.flatMap(controls).filter(item => /^(Save |Mark |Remove |Listen to )/.test(item.attributes["aria-label"]));
+        const buttons = elements.flatMap(controls).filter(item => /^(Save |Mark |Remove |Open YouTube )/.test(item.attributes["aria-label"]));
         assert.ok(buttons.length >= 2);
         for (const button of buttons) {
             assert.ok(button.className.split(/\s+/).includes("secondary-button"), button.attributes["aria-label"]);

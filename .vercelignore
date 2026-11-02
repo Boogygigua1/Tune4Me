@@ -1,0 +1,10 @@
+# Historical provider responses are not application assets. Do not republish them.
+tests/local-preview-audit.json
+# Internal reference documents stay local, not public deployment assets.
+tests/README.md
+PAYMENT_SECURITY.md
+ANALYTICS_EVENTS.md
+tests/homepage.test.mjs
+tests/privacy-controls.test.mjs
+tests/regression.test.mjs
+tests/security.test.mjs

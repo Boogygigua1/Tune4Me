@@ -40,8 +40,356 @@ async function invoke(handler, body, method = "POST", extraHeaders = {}) {
 }
 function validAI(extra = {}) {
     return { choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ intro: secret, requestedSongs: [], inclusionRequested: false,
-        unavailableRequestedSongs: [], songs: [song], explanation: secret }) } }], ...extra };
+        unavailableRequestedSongs: [], songs: [song], explanation: { connections: [
+            { songIndex: 0, emotionalTheme: "longing", musicalTrait: "expressive vocals" }
+        ] } }) } }], ...extra };
 }
+
+const diagnosticCategories = ["completion_incomplete", "completion_missing", "completion_refused", "invalid_response_json",
+    "invalid_response_structure", "invalid_playlist_json", "invalid_playlist_structure", "candidate_count_mismatch",
+    "assessment_count_mismatch", "reference_identity_mismatch", "invalid_musical_priorities", "invalid_song_assessments",
+    "invalid_explanation", "insufficient_eligible_songs", "unexpected_validation_failure"];
+
+for (const category of diagnosticCategories) test(`validation diagnostic redaction covers ${category}`, async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    fetchImpl = async () => {
+        const data = validAI(), playlist = JSON.parse(data.choices[0].message.content);
+        playlist.intro = "Synthetic playlist.";
+        playlist.songs.push({ song: secret, artist: "PRIVATE-ARTIST-NEVER-LOG" });
+        playlist.musicalFit = { reference: { ...song },
+            priorities: [{ dimension: "vocals", character: secret }, { dimension: "groove", character: "Steady groove" }],
+            assessments: playlist.songs.map((_item, songIndex) => ({ songIndex, kind: "close", judgments: ["match", "match"] })) };
+        if (category === "invalid_playlist_structure") playlist.songs[1].artist = "";
+        if (category === "candidate_count_mismatch") playlist.songs.pop();
+        if (category === "assessment_count_mismatch") playlist.musicalFit.assessments.push({ ...playlist.musicalFit.assessments[0] });
+        if (category === "reference_identity_mismatch") playlist.musicalFit.reference.artist = secret;
+        if (category === "invalid_musical_priorities") playlist.musicalFit.priorities[1].dimension = secret;
+        if (category === "invalid_song_assessments") playlist.musicalFit.assessments = secret + canonicalKeyFixture;
+        if (category === "invalid_explanation") playlist.explanation = secret + canonicalKeyFixture;
+        if (category === "insufficient_eligible_songs") Object.assign(playlist.musicalFit.assessments[1], { kind: "weak", judgments: ["different", "match"] });
+        data.choices[0].message.content = JSON.stringify(playlist);
+        data.id = secret; data.user = secret; data.usage = { completion_tokens: 123, authorization: canonicalKeyFixture };
+        if (category === "completion_incomplete") data.choices[0].finish_reason = secret;
+        if (category === "completion_missing") data.choices = [];
+        if (category === "completion_refused") data.choices[0].message.refusal = secret + canonicalKeyFixture;
+        if (category === "invalid_response_structure") data.choices = { privateData: secret + canonicalKeyFixture };
+        if (category === "invalid_playlist_json") data.choices[0].message.content = "invalid-json " + secret + canonicalKeyFixture;
+        if (category === "invalid_response_json") return { status: 200, ok: true,
+            json: async () => { throw new Error(secret + canonicalKeyFixture); } };
+        return response(data);
+    };
+    let faultMock;
+    if (category === "unexpected_validation_failure") {
+        const originalParse = JSON.parse;
+        faultMock = mock.method(JSON, "parse", function (text, reviver) {
+            const parsed = originalParse(text, reviver);
+            // Controlled in-process fault only; provider JSON cannot create getters.
+            if (parsed?.musicalFit) {
+                Object.defineProperty(parsed.musicalFit, "priorities", { get() {
+                    const error = new Error(secret + canonicalKeyFixture);
+                    error.playlistValidationTag = secret;
+                    throw error;
+                } });
+            }
+            return parsed;
+        });
+    }
+    let result;
+    try {
+        result = await invoke(getPlaylist, { mood: `Play "Lose Control" by Teddy Swims. Recommend similar vocals and groove. ${secret}`, length: 2,
+            diagnostics: { category: secret, completionTokens: canonicalKeyFixture }, expectedCandidateCount: secret },
+            "POST", { "x-forwarded-for": "PRIVATE-IP-NEVER-LOG", "x-private-context": secret });
+    } finally { faultMock?.mock.restore(); }
+    assert.equal(result.code, category === "invalid_response_structure" ? 503 : 502);
+    assertNoSecret(logs); assertNoKeyMaterial(logs); assertNoSecret(result.body); assertNoKeyMaterial(result.body);
+    assert.ok(!JSON.stringify(logs).includes("PRIVATE-IP-NEVER-LOG"));
+    assert.ok(!JSON.stringify(logs).includes("PRIVATE-ARTIST-NEVER-LOG"));
+    assert.ok(!JSON.stringify(logs).includes("Teddy Swims"));
+    assert.ok(!JSON.stringify(logs).includes("Lose Control"));
+    const entries = logs.filter(entry => entry[0] === "PLAYLIST VALIDATION DIAGNOSTIC:");
+    assert.equal(entries.length, 1);
+    const diagnostic = entries[0][1];
+    assert.equal(diagnostic.category, category);
+    assert.ok(["stop", "length", "content_filter", "tool_calls", "function_call", "missing", "unknown"].includes(diagnostic.finishReason));
+    assert.equal(typeof diagnostic.refused, "boolean");
+    const allowed = new Set(["category", "finishReason", "refused", "expectedSongCount", "expectedCandidateCount", "receivedCandidateCount",
+        "expectedAssessmentCount", "receivedAssessmentCount", "receivedPriorityCount", "eligibleSongCount", "completionTokens"]);
+    for (const [key, value] of Object.entries(diagnostic)) {
+        assert.ok(allowed.has(key));
+        if (!["category", "finishReason", "refused"].includes(key)) assert.ok(Number.isSafeInteger(value) && value >= 0);
+    }
+    assert.equal(diagnostic.expectedCandidateCount, 2);
+    assert.equal(diagnostic.completionTokens, category === "invalid_response_json" ? undefined : 123);
+    assert.equal(diagnostic.refused, category === "completion_refused");
+    if (category === "completion_incomplete") assert.equal(diagnostic.finishReason, "unknown");
+    assert.equal(calls.length, 1); assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    assert.equal(calls[0][1].headers.Authorization, "Bearer " + canonicalKeyFixture);
+    assert.equal(JSON.parse(calls[0][1].body).max_completion_tokens, 3072);
+    assert.equal(result.body.diagnostics, undefined);
+});
+
+for (const malformed of [false, true]) test(`musical-fit judgments never expose private characteristics or credentials (malformed: ${malformed})`, async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    const second = { song: "Synthetic alternative", artist: "Synthetic artist" };
+    fetchImpl = async () => {
+        const data = validAI(), playlist = JSON.parse(data.choices[0].message.content);
+        playlist.intro = "Synthetic playlist."; playlist.songs = [song, second];
+        playlist.explanation.connections[0].songIndex = 1;
+        playlist.musicalFit = { reference: song,
+            priorities: [{ dimension: "vocals", character: secret }, { dimension: "groove", character: "steady rhythm" }],
+            assessments: playlist.songs.map((_item, songIndex) => ({ songIndex, kind: "close", judgments: ["match", "match"] })) };
+        if (malformed) playlist.musicalFit.assessments[1].evidence = secret + canonicalKeyFixture;
+        data.choices[0].message.content = JSON.stringify(playlist);
+        return response(data);
+    };
+    const result = await invoke(getPlaylist, { mood: 'Play "Lose Control" by Teddy Swims. Recommend similar vocals and groove.', length: 2,
+        musicalFit: { authorization: untrustedKeyFixture } });
+    assert.equal(result.code, malformed ? 502 : 200); assert.equal(calls.length, 1);
+    assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    assert.equal(calls[0][1].headers.Authorization, "Bearer " + canonicalKeyFixture);
+    assertNoSecret(result.body); assertNoSecret(logs); assertNoKeyMaterial(result.body); assertNoKeyMaterial(logs);
+    const context = JSON.parse(JSON.parse(calls[0][1].body).messages[1].content);
+    assertNoKeyMaterial(context); assert.equal(context.musicalFit, undefined);
+    if (!malformed) assert.match(result.body.playlist.explanation, /unverified curator judgment/);
+});
+
+for (const outcome of ["success", "insufficient", "malformed"]) test(`reserve diagnostics contain fixed numeric counters only (${outcome})`, async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    fetchImpl = async () => {
+        const data = validAI(), playlist = JSON.parse(data.choices[0].message.content);
+        playlist.intro = "Synthetic playlist.";
+        playlist.songs = [song, ...Array.from({ length: 13 }, (_, i) => ({ song: `Candidate fixture ${i}`, artist: `Performer fixture ${i}` }))];
+        playlist.songs[11] = { song: secret, artist: "PRIVATE-ARTIST-NEVER-LOG" };
+        playlist.musicalFit = { reference: song,
+            priorities: [{ dimension: "vocals", character: secret }, { dimension: "groove", character: "steady rhythm" }],
+            assessments: playlist.songs.map((_item, songIndex) => ({ songIndex, kind: "close", judgments: ["match", "match"] })) };
+        if (outcome === "insufficient") for (const index of [1, 2, 3, 4, 5]) Object.assign(playlist.musicalFit.assessments[index], {
+            kind: "weak", judgments: ["different", "match"]
+        });
+        if (outcome === "malformed") playlist.musicalFit.assessments[11].evidence = secret + canonicalKeyFixture;
+        data.choices[0].message.content = JSON.stringify(playlist);
+        return response(data);
+    };
+    const result = await invoke(getPlaylist, { mood: `Play "Lose Control" by Teddy Swims. Recommend similar vocals and groove. ${secret}`,
+        candidateCount: 999, musicalFit: { authorization: untrustedKeyFixture } });
+    assert.equal(result.code, outcome === "insufficient" ? 502 : 200);
+    assert.equal(calls.length, 1); assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    assert.equal(calls[0][1].headers.Authorization, "Bearer " + canonicalKeyFixture);
+    const sent = JSON.parse(calls[0][1].body), context = JSON.parse(sent.messages[1].content);
+    assert.equal(context.candidateCount, 14); assert.equal(context.musicalFit, undefined); assert.equal(sent.max_completion_tokens, 3072);
+    assertNoSecret(logs); assertNoKeyMaterial(logs); assertNoKeyMaterial(result.body);
+    assert.ok(!JSON.stringify(logs).includes("PRIVATE-ARTIST-NEVER-LOG"));
+    assert.ok(!JSON.stringify(logs).includes("Candidate fixture"));
+    const diagnostic = logs.filter(entry => entry[0] === "MUSICAL FIT VALIDATION:");
+    assert.equal(diagnostic.length, 1);
+    if (diagnostic.length) {
+        const counts = diagnostic[0][1];
+        assert.deepEqual(Object.keys(counts).sort(), ["candidateCount", "eligibleCandidates", "selectedCount", "recoveredExplicit",
+            "excluded", "duplicate", "primaryMismatch", "primaryUnknown", "weakAssessment", "uncertainAssessment", "discoveryLimit", "discoveryBackfill",
+            "notSelected", "labelCorrections", "classificationConflicts", "invalidAssessment", "explicitAssessmentBypass",
+            "assessmentInvalidShape", "assessmentInvalidIndex", "assessmentDuplicateIndex", "assessmentMissingIndex",
+            "assessmentInvalidClassification", "assessmentInvalidSupport", "assessmentInvalidJudgmentCount"].sort());
+        assert.ok(Object.values(counts).every(value => Number.isInteger(value) && value >= 0 && value <= 25));
+        assert.equal(counts.candidateCount, 14); assert.equal(counts.selectedCount, outcome === "insufficient" ? 9 : 10);
+        assert.equal(counts.assessmentInvalidShape, outcome === "malformed" ? 1 : 0);
+    }
+    if (outcome === "insufficient") assert.equal(result.body.playlist, undefined);
+});
+test("priority-weighted selection keeps private judgments, discarded identities and keys out of diagnostics and explanations", async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    fetchImpl = async () => {
+        const data = validAI(), playlist = JSON.parse(data.choices[0].message.content);
+        playlist.intro = "Synthetic playlist.";
+        playlist.songs = [song, ...Array.from({ length: 13 }, (_, i) => ({ song: `Weighted fixture ${i}`, artist: `Performer fixture ${i}` }))];
+        playlist.songs[9] = { song: secret, artist: "PRIVATE-ARTIST-NEVER-LOG" };
+        playlist.musicalFit = { reference: { ...song }, priorities: [
+            { dimension: "vocals", character: secret }, { dimension: "energy", character: "gentle, restrained energy" },
+            { dimension: "genre", character: "related influences" }
+        ], assessments: playlist.songs.map((_item, songIndex) => ({ songIndex, kind: "close", judgments: ["match", "match", "match"] })) };
+        Object.assign(playlist.musicalFit.assessments[9], { judgments: ["match", "different", "match"] });
+        Object.assign(playlist.musicalFit.assessments[10], { judgments: ["match", "match", "uncertain"] });
+        Object.assign(playlist.musicalFit.assessments[11], { kind: "weak", judgments: ["different", "match", "match"] });
+        for (const index of [12, 13]) playlist.musicalFit.assessments[index].judgments = ["match", "different", "uncertain"];
+        playlist.explanation.connections = [
+            { songIndex: 9, emotionalTheme: "longing", musicalTrait: "expressive vocals" },
+            { songIndex: 10, emotionalTheme: "calm", musicalTrait: "low musical energy" }
+        ];
+        data.choices[0].message.content = JSON.stringify(playlist);
+        return response(data);
+    };
+    const result = await invoke(getPlaylist, { mood: `Play "Lose Control" by Teddy Swims. Recommend similar vocals and groove. ${secret}`,
+        weights: [100, 0, 0], authorization: untrustedKeyFixture });
+    assert.equal(result.code, 200); assert.equal(result.body.playlist.songs.length, 10);
+    assert.match(result.body.playlist.explanation, /vocal character, musical energy/);
+    assert.match(result.body.playlist.explanation, /unverified curator judgment/);
+    assert.equal(result.body.playlist.musicalFit, undefined);
+    assertNoSecret(result.body); assertNoKeyMaterial(result.body); assertNoSecret(logs); assertNoKeyMaterial(logs);
+    for (const text of ["PRIVATE-ARTIST-NEVER-LOG", "Weighted fixture", "Lose Control", "Teddy Swims"])
+        assert.ok(!JSON.stringify(logs).includes(text));
+    assert.equal(calls.length, 1); assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    assert.equal(calls[0][1].headers.Authorization, "Bearer " + canonicalKeyFixture);
+    const sent = JSON.parse(calls[0][1].body), context = JSON.parse(sent.messages[1].content);
+    assert.equal(sent.max_completion_tokens, 3072); assert.equal(context.weights, undefined); assertNoKeyMaterial(context);
+    const counts = logs.filter(entry => entry[0] === "MUSICAL FIT VALIDATION:");
+    assert.equal(counts.length, 1);
+    assert.ok(Object.values(counts[0][1]).every(value => Number.isSafeInteger(value) && value >= 0 && value <= 25));
+    assert.equal(counts[0][1].selectedCount, 10);
+});
+
+for (const rejected of [3, 4]) test(`fourteen-candidate reserves preserve privacy after ${rejected} primary rejections`, async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    fetchImpl = async () => {
+        const data = validAI(), playlist = JSON.parse(data.choices[0].message.content);
+        playlist.intro = "Synthetic playlist.";
+        playlist.songs = [song, ...Array.from({ length: 13 }, (_, i) => ({ song: `Reserve privacy fixture ${i}`, artist: `Synthetic performer ${i}` }))];
+        playlist.songs[1] = { song: secret, artist: "PRIVATE-ARTIST-NEVER-LOG" };
+        playlist.musicalFit = { reference: { ...song }, priorities: [
+            { dimension: "vocals", character: secret }, { dimension: "groove", character: "related musical rhythm" }
+        ], assessments: playlist.songs.map((_item, songIndex) => ({ songIndex, kind: "close",
+            judgments: songIndex > 0 && songIndex <= rejected ? ["different", "match"] : ["match", "match"] })) };
+        playlist.explanation.connections = [
+            { songIndex: 1, emotionalTheme: "longing", musicalTrait: "expressive vocals" },
+            { songIndex: rejected === 3 ? 12 : 13, emotionalTheme: "calm", musicalTrait: "groove and rhythm" }
+        ];
+        data.choices[0].message.content = JSON.stringify(playlist);
+        return response(data);
+    };
+    const result = await invoke(getPlaylist, { mood: `Play "Lose Control" by Teddy Swims. Recommend similar vocals and groove. ${secret}`,
+        candidateCount: 1000, authorization: untrustedKeyFixture });
+    assert.equal(result.code, 200); assert.equal(result.body.playlist.songs.length, 10);
+    assertNoSecret(result.body); assertNoKeyMaterial(result.body); assertNoSecret(logs); assertNoKeyMaterial(logs);
+    assert.ok(!JSON.stringify(logs).includes("PRIVATE-ARTIST-NEVER-LOG"));
+    assert.equal(calls.length, 1); assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    assert.equal(calls[0][1].headers.Authorization, "Bearer " + canonicalKeyFixture);
+    const sent = JSON.parse(calls[0][1].body), context = JSON.parse(sent.messages[1].content);
+    assert.equal(context.length, 10); assert.equal(context.candidateCount, 14); assert.equal(sent.max_completion_tokens, 3072);
+    const entries = logs.filter(entry => entry[0] === "MUSICAL FIT VALIDATION:");
+    assert.equal(entries.length, 1); assert.equal(entries[0][1].candidateCount, 14);
+    assert.equal(entries[0][1].primaryMismatch, rejected); assert.equal(entries[0][1].selectedCount, 10);
+    assert.ok(Object.values(entries[0][1]).every(value => Number.isSafeInteger(value) && value >= 0 && value <= 25));
+});
+
+for (const insufficient of [false, true]) test(`discovery backfill preserves numeric-only diagnostics and private-data redaction (${insufficient})`, async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    fetchImpl = async () => {
+        const data = validAI(), playlist = JSON.parse(data.choices[0].message.content);
+        playlist.intro = "Synthetic playlist."; playlist.requestedSongs = [];
+        playlist.songs = Array.from({ length: 14 }, (_, i) => ({ song: `Backfill fixture ${i}`, artist: `Synthetic performer ${i}` }));
+        playlist.songs[11] = { song: secret, artist: "PRIVATE-ARTIST-NEVER-LOG" };
+        playlist.musicalFit = { reference: { ...song }, priorities: [
+            { dimension: "vocals", character: secret }, { dimension: "energy", character: "listener's requested energy" },
+            { dimension: "genre", character: "related influences" }
+        ], assessments: playlist.songs.map((_item, songIndex) => ({ songIndex, kind: songIndex < 4 ? "close" : "discovery",
+            judgments: songIndex < 4 ? ["match", "match", "uncertain"] : ["match", "different", "uncertain"] })) };
+        if (insufficient) playlist.musicalFit.assessments.slice(8).forEach(item => { item.kind = "weak"; });
+        playlist.explanation.connections = [
+            { songIndex: 11, emotionalTheme: "longing", musicalTrait: "high musical energy" },
+            { songIndex: 8, emotionalTheme: "calm", musicalTrait: "low musical energy" }
+        ];
+        data.choices[0].message.content = JSON.stringify(playlist);
+        return response(data);
+    };
+    const result = await invoke(getPlaylist, { mood: `Play "Lose Control" by Teddy Swims. Recommend similar vocals and groove. ${secret}`,
+        discoveryLimit: 1000, discoveryBackfill: secret, authorization: untrustedKeyFixture });
+    assert.equal(result.code, insufficient ? 502 : 200);
+    assertNoSecret(result.body); assertNoKeyMaterial(result.body); assertNoSecret(logs); assertNoKeyMaterial(logs);
+    for (const forbidden of ["PRIVATE-ARTIST-NEVER-LOG", "Backfill fixture", "Lose Control", "Teddy Swims"])
+        assert.ok(!JSON.stringify(logs).includes(forbidden));
+    const counts = logs.filter(entry => entry[0] === "MUSICAL FIT VALIDATION:");
+    assert.equal(counts.length, 1); assert.equal(counts[0][1].discoveryBackfill, insufficient ? 1 : 2);
+    assert.equal(counts[0][1].discoveryLimit, insufficient ? 1 : 7);
+    assert.ok(Object.values(counts[0][1]).every(value => Number.isSafeInteger(value) && value >= 0 && value <= 25));
+    if (insufficient) { assert.equal(result.body.reason, "insufficient_musical_fit"); assert.equal(result.body.playlist, undefined); }
+    else {
+        assert.equal(result.body.playlist.songs.length, 10);
+        assert.match(result.body.playlist.explanation, /similarities in vocal character \(an unverified curator judgment\)/);
+        assert.ok(!result.body.playlist.explanation.includes("musical energy"));
+    }
+    assert.equal(calls.length, 1); assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    assert.equal(calls[0][1].headers.Authorization, "Bearer " + canonicalKeyFixture);
+    const sent = JSON.parse(calls[0][1].body), context = JSON.parse(sent.messages[1].content);
+    assert.equal(sent.max_completion_tokens, 3072); assert.equal(context.candidateCount, 14);
+    assert.equal(context.discoveryLimit, undefined); assert.equal(context.discoveryBackfill, undefined); assertNoKeyMaterial(context);
+});
+
+for (const failure of ["private judgment", "missing judgment", "private legacy fields"]) {
+    test(`ordered judgment failures expose only fixed numeric diagnostics (${failure})`, async () => {
+        process.env.OPENAI_API_KEY = canonicalKeyFixture;
+        fetchImpl = async () => {
+            const data = validAI(), playlist = JSON.parse(data.choices[0].message.content);
+            playlist.intro = "Synthetic playlist.";
+            playlist.songs = [song, ...Array.from({ length: 13 }, (_, i) => ({ song: `Judgment fixture ${i}`, artist: `Synthetic performer ${i}` }))];
+            playlist.songs[9] = { song: secret, artist: "PRIVATE-ARTIST-NEVER-LOG" };
+            playlist.musicalFit = { reference: { ...song }, priorities: [
+                { dimension: "vocals", character: secret }, { dimension: "energy", character: "listener's requested energy" },
+                { dimension: "genre", character: "related influences" }
+            ], assessments: playlist.songs.map((_item, songIndex) => ({ songIndex, kind: "close", judgments: ["match", "match", "match"] })) };
+            if (failure === "private judgment") playlist.musicalFit.assessments[9].judgments[2] = secret + canonicalKeyFixture;
+            if (failure === "missing judgment") playlist.musicalFit.assessments[9].judgments.pop();
+            if (failure === "private legacy fields") Object.assign(playlist.musicalFit.assessments[9], {
+                matches: [0, 1, 2], differences: [secret + canonicalKeyFixture], uncertain: []
+            });
+            playlist.explanation.connections = [
+                { songIndex: 9, emotionalTheme: "longing", musicalTrait: "expressive vocals" },
+                { songIndex: 10, emotionalTheme: "calm", musicalTrait: "low musical energy" }
+            ];
+            data.choices[0].message.content = JSON.stringify(playlist);
+            return response(data);
+        };
+        const result = await invoke(getPlaylist, { mood: `Play "Lose Control" by Teddy Swims. Recommend similar vocals and groove. ${secret}` });
+        assert.equal(result.code, 200); assert.equal(result.body.playlist.songs.length, 10);
+        assertNoSecret(result.body); assertNoKeyMaterial(result.body); assertNoSecret(logs); assertNoKeyMaterial(logs);
+        assert.ok(!JSON.stringify(logs).includes("PRIVATE-ARTIST-NEVER-LOG"));
+        assert.match(result.body.playlist.explanation, /vocal character, musical energy/);
+        assert.equal(calls.length, 1); assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+        assert.equal(JSON.parse(calls[0][1].body).max_completion_tokens, 3072);
+        const counts = logs.filter(entry => entry[0] === "MUSICAL FIT VALIDATION:");
+        assert.equal(counts.length, 1); assert.equal(counts[0][1].invalidAssessment, 1);
+        assert.equal(counts[0][1][failure === "private judgment" ? "assessmentInvalidSupport"
+            : failure === "missing judgment" ? "assessmentInvalidJudgmentCount" : "assessmentInvalidShape"], 1);
+        assert.ok(Object.values(counts[0][1]).every(value => Number.isSafeInteger(value) && value >= 0 && value <= 25));
+    });
+}
+
+for (const [category, alter, count] of [
+    ["assessmentInvalidShape", rows => { rows[1].evidence = secret + canonicalKeyFixture; }, 1],
+    ["assessmentInvalidIndex", rows => { rows[1].songIndex = secret + canonicalKeyFixture; }, 1],
+    ["assessmentDuplicateIndex", rows => { rows[1] = { songIndex: 0, evidence: secret + canonicalKeyFixture }; }, 1],
+    ["assessmentMissingIndex", rows => { rows.pop(); }, 1],
+    ["assessmentInvalidClassification", rows => { rows[1].kind = secret + canonicalKeyFixture; }, 1],
+    ["assessmentInvalidSupport", rows => { rows[1].judgments = [secret + canonicalKeyFixture, "match"]; }, 1],
+    ["assessmentInvalidJudgmentCount", rows => { rows[1].judgments = ["match"]; }, 1]
+]) test(`individual assessment diagnostics reveal only numeric rejection counts (${category})`, async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    fetchImpl = async () => {
+        const data = validAI(), playlist = JSON.parse(data.choices[0].message.content);
+        playlist.intro = "Synthetic playlist.";
+        playlist.songs.push({ song: secret, artist: "PRIVATE-ARTIST-NEVER-LOG" });
+        playlist.musicalFit = { reference: { ...song },
+            priorities: [{ dimension: "vocals", character: secret }, { dimension: "groove", character: "steady rhythm" }],
+            assessments: playlist.songs.map((_item, songIndex) => ({ songIndex, kind: "close", judgments: ["match", "match"] })) };
+        alter(playlist.musicalFit.assessments);
+        playlist.explanation.connections[0].songIndex = 1;
+        data.choices[0].message.content = JSON.stringify(playlist); data.usage = { completion_tokens: 632, privateValue: secret };
+        return response(data);
+    };
+    const result = await invoke(getPlaylist, { mood: `Play "Lose Control" by Teddy Swims. Recommend similar vocals and groove. ${secret}`,
+        length: 2 }, "POST", { "x-forwarded-for": "PRIVATE-IP-NEVER-LOG" });
+    assert.equal(result.code, 502); assert.equal(result.body.reason, "insufficient_musical_fit");
+    assert.equal(result.body.playlist, undefined); assert.equal(result.body.diagnostics, undefined);
+    assert.equal(calls.length, 1); assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    assert.equal(JSON.parse(calls[0][1].body).max_completion_tokens, 3072);
+    assertNoSecret(logs); assertNoKeyMaterial(logs); assertNoSecret(result.body); assertNoKeyMaterial(result.body);
+    for (const forbidden of ["Lose Control", "Teddy Swims", "PRIVATE-ARTIST-NEVER-LOG", "PRIVATE-IP-NEVER-LOG"])
+        assert.ok(!JSON.stringify(logs).includes(forbidden));
+    const selection = logs.filter(entry => entry[0] === "MUSICAL FIT VALIDATION:");
+    assert.equal(selection.length, 1); assert.equal(selection[0][1][category], count);
+    assert.ok(Object.values(selection[0][1]).every(value => Number.isSafeInteger(value) && value >= 0 && value <= 25));
+    const failure = logs.filter(entry => entry[0] === "PLAYLIST VALIDATION DIAGNOSTIC:");
+    assert.equal(failure.length, 1); assert.equal(failure[0][1].category, "insufficient_eligible_songs");
+    assert.equal(failure[0][1].finishReason, "stop"); assert.equal(failure[0][1].completionTokens, 632);
+});
+
 function source(start, end) {
     const begin = html.indexOf(start), finish = html.indexOf(end, begin);
     assert.ok(begin >= 0 && finish > begin);
@@ -56,14 +404,70 @@ function browser(origin = "https://tune4-me.vercel.app", initial = {}) {
         localStorage: storage, sessionStorage: storage, console: { log: (...args) => events.push(args), warn: (...args) => events.push(args), error: (...args) => events.push(args) },
         fetch: (...args) => fetchImpl(...args), YOUTUBE_CACHE_TTL_MS: 7 * 86400000,
         showStatusMessage: message => events.push([message]), trackTune4Me: event => events.push([event]) });
+    vm.runInContext(source("const PRIVACY_POLICY_VERSION", "function trackTune4Me("), context);
+    vm.runInContext("privacyAccepted = true;", context); // Consented cache/security fixture.
     vm.runInContext(source("function getVideoCacheKey(", "function closeYouTubePreview("), context);
     return { context, storage, values, events };
 }
 function cacheKey(songName = song.song) { return "yt_v4_" + JSON.stringify([[songName.toLowerCase(), song.artist.toLowerCase()], null]); }
-function candidate() { return { videoId: id, video: { title: secret, channelTitle: secret } }; }
+function candidate() { return { videoId: id, video: { title: secret, channelTitle: secret, duration: "PT3M", durationSeconds: 180 } }; }
 function seedCache(count = 200) {
     global.videoCache = Object.fromEntries(Array.from({ length: count }, (_, i) => [cacheKey("song" + i),
         { candidates: [candidate()], nextSearchStage: 1, cachedAt: Date.now() - i }]));
+}
+
+for (const video of [
+    { title: secret, madeForKids: false },
+    { title: secret, madeForKids: false, duration: "PT25S", durationSeconds: 25 },
+    { title: secret, madeForKids: false, duration: "PT25S", durationSeconds: 180 },
+    { title: secret, madeForKids: false, duration: secret, durationSeconds: 180 }
+]) {
+    test(`unverified server cache duration fails closed without providers (${Object.keys(video).length}/${String(video.durationSeconds)}/${video.duration === "PT25S"})`, async () => {
+        global.videoCache = { [cacheKey()]: { candidates: [{ videoId: id, video }], cachedAt: Date.now(), nextSearchStage: 1 } };
+        const result = await invoke(getYouTubeVideo, song);
+        assert.equal(result.code, 404); assert.equal(result.body.reason, "unplayable");
+        assert.equal(result.body.nextSearchStage, 4); assert.equal(calls.length, 0);
+        assertNoSecret(result.body); assertNoSecret(logs);
+    });
+}
+
+test("a verified server-cache alternative is reused without any search or status request", async () => {
+    const rejected = { videoId: "short______", video: { title: secret, madeForKids: false, duration: "PT25S", durationSeconds: 25 } };
+    const full = candidate();
+    global.videoCache = { [cacheKey()]: { candidates: [rejected, full], cachedAt: Date.now(), nextSearchStage: 1 } };
+    const result = await invoke(getYouTubeVideo, song);
+    assert.equal(result.code, 200); assert.equal(result.body.videoId, id);
+    assert.equal(result.body.duration, 180); assert.equal(result.body.candidates.length, 1);
+    assert.equal(result.body.nextSearchStage, 4); assert.equal(calls.length, 0); assertNoSecret(logs);
+});
+
+for (const duration of [secret, { toString: null, private: secret }, "PT25S"]) {
+    test(`duration rejection never logs provider text (${typeof duration}/${duration === "PT25S"})`, async () => {
+        fetchImpl = async url => response(String(url).includes("/videos?") ? { items: [{ id,
+            snippet: { title: "Teddy Swims - Lose Control", channelTitle: "Teddy Swims" },
+            status: { embeddable: true, privacyStatus: "public", uploadStatus: "processed", madeForKids: false },
+            contentDetails: { duration } }] }
+            : { items: [{ id: { videoId: id }, snippet: { title: "Teddy Swims - Lose Control", channelTitle: "Teddy Swims" } }] });
+        const result = await invoke(getYouTubeVideo, song);
+        assert.equal(result.code, 404); assert.equal(result.body.reason, "unplayable");
+        assert.equal(calls.length, 2); assertNoSecret(logs); assertNoSecret(result.body);
+    });
+}
+
+test("browser duration rejection cannot fabricate a non-child-directed status", () => {
+    const ui = browser();
+    ui.context.saveCachedVideo(song.song, song.artist, id, { duration: "PT3M", durationSeconds: 180, madeForKids: true });
+    assert.equal(ui.context.getCachedVideo(song.song, song.artist), null); assert.equal(ui.events.length, 0);
+});
+
+for (const value of ["PT25S", "PT30S", "PT45S", "PT3M31S", "PT1H2M3S", "P1DT1S", "PT30.5S", "PT", "P1DT", "P1M", null]) {
+    test(`browser duration parser preserves the server eligibility boundary (${String(value)})`, () => {
+        const ui = browser();
+        const expected = { PT25S: 25, PT30S: 30, PT45S: 45, PT3M31S: 211, PT1H2M3S: 3723, P1DT1S: 86401, "PT30.5S": 30.5 };
+        const seconds = expected[value] ?? null;
+        assert.equal(ui.context.parsePreviewDuration(value), seconds);
+        assert.equal(ui.context.hasEligiblePreviewDuration({ duration: value, durationSeconds: seconds }), seconds !== null && seconds >= 30);
+    });
 }
 function assertNoSecret(value) { assert.ok(!JSON.stringify(value).includes(secret)); }
 
@@ -77,6 +481,45 @@ function assertNoKeyMaterial(value) {
     }
 }
 
+for (const mode of ["featured omission", "featured identity", "negated", "artist exclusion", "multiple references", "taste only"]) {
+    test(`quoted feature recognition preserves private diagnostics and canonical credentials (${mode})`, async () => {
+        process.env.OPENAI_API_KEY = canonicalKeyFixture;
+        const alternate = { song: "Someone Like You", artist: "Adele" };
+        const exact = "I love 'Lose Control' by Teddy Swims. Create a playlist featuring this song and nine other songs with similarly powerful, gritty vocals, soulful blues and R&B influences, passionate delivery, and driving musical energy. Prioritize musical similarity over shared emotions, while including a few thoughtful discoveries from other artists.";
+        const mood = (mode === "negated" ? "I love 'Lose Control' by Teddy Swims. Do not create a playlist featuring this song. Recommend songs with similar vocals."
+            : mode === "artist exclusion" ? exact + " Do not include any songs by Teddy Swims."
+            : mode === "multiple references" ? "I love 'Lose Control' by Teddy Swims and 'Someone Like You' by Adele. Create a playlist featuring this song and songs with similar vocals."
+            : mode === "taste only" ? "I love 'Lose Control' by Teddy Swims. Recommend songs with similar vocals." : exact) + " " + secret;
+        fetchImpl = async () => {
+            const data = validAI(), playlist = JSON.parse(data.choices[0].message.content);
+            playlist.intro = "Synthetic playlist."; playlist.inclusionRequested = mode.startsWith("featured");
+            playlist.requestedSongs = mode === "featured omission" ? [] : mode === "multiple references" ? [song, alternate] : [song];
+            playlist.songs = Array.from({ length: 14 }, (_, i) => ({ song: `Feature privacy fixture ${i}`, artist: `Synthetic performer ${i}` }));
+            playlist.musicalFit = { reference: { ...song }, priorities: [
+                { dimension: "vocals", character: secret }, { dimension: "energy", character: "Requested energy" },
+                { dimension: "groove", character: "Related musical rhythm" }
+            ], assessments: playlist.songs.map((_item, songIndex) => ({ songIndex, kind: "close", judgments: ["match", "match", "match"] })) };
+            data.choices[0].message.content = JSON.stringify(playlist); return response(data);
+        };
+        const result = await invoke(getPlaylist, { mood, avoidSongs: [song], recentSongs: [song],
+            referenceEnd: untrustedKeyFixture, requiredSongs: [{ song: untrustedKeyFixture, artist: "Untrusted" }] });
+        assert.equal(result.code, 200); assert.equal(result.body.playlist.songs.length, 10);
+        const included = mode.startsWith("featured");
+        assert.equal(result.body.playlist.songs.some(item => item.song === song.song && item.artist === song.artist), included);
+        assertNoSecret(result.body); assertNoKeyMaterial(result.body); assertNoSecret(logs); assertNoKeyMaterial(logs);
+        assert.ok(!JSON.stringify(logs).includes(song.song)); assert.ok(!JSON.stringify(logs).includes(song.artist));
+        assert.equal(calls.length, 1); assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+        assert.equal(calls[0][1].headers.Authorization, "Bearer " + canonicalKeyFixture);
+        const sent = JSON.parse(calls[0][1].body), context = JSON.parse(sent.messages[1].content);
+        assert.equal(sent.max_completion_tokens, 3072); assert.equal(context.candidateCount, 14); assert.equal(context.length, 10);
+        assert.equal(context.referenceEnd, undefined); assert.equal(context.referenceRanges, undefined); assertNoKeyMaterial(context);
+        assert.deepEqual(context.requiredSongs, included ? [song] : []);
+        for (const key of ["requiredSongs", "tasteSongs", "excludedSongs", "musicalReferences"])
+            for (const item of context[key] || []) assert.deepEqual(Object.keys(item).sort(), ["artist", "song"]);
+        if (included) { assert.deepEqual(context.avoidSongs, []); assert.equal(context.recentSongs, undefined); }
+    });
+}
+
 test("playlist uses the canonical server key for its single OpenAI request", async () => {
     process.env.OPENAI_API_KEY = canonicalKeyFixture;
     fetchImpl = async () => response(validAI());
@@ -86,6 +529,71 @@ test("playlist uses the canonical server key for its single OpenAI request", asy
     assert.equal(calls[0][1].headers.Authorization, "Bearer " + canonicalKeyFixture);
     assert.equal(JSON.parse(calls[0][1].body).messages[1].content.includes(secret), true);
     assertNoKeyMaterial(result.body); assertNoKeyMaterial(logs); assertNoSecret(logs);
+});
+
+test("untrusted explanation text is rejected without exposing content or credentials and without retry", async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    fetchImpl = async () => {
+        const data = validAI();
+        const playlist = JSON.parse(data.choices[0].message.content);
+        playlist.explanation = { connections: [{ songIndex: 0, emotionalTheme: secret + canonicalKeyFixture,
+            musicalTrait: "expressive vocals" }] };
+        data.choices[0].message.content = JSON.stringify(playlist);
+        return response(data);
+    };
+    const result = await invoke(getPlaylist, { mood: secret, length: 1 });
+    assert.equal(result.code, 502);
+    assert.equal(result.body.reason, "invalid_playlist_response");
+    assert.equal(result.body.playlist, undefined);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    assert.equal(calls[0][1].headers.Authorization, "Bearer " + canonicalKeyFixture);
+    assertNoSecret(result.body); assertNoSecret(logs); assertNoKeyMaterial(result.body); assertNoKeyMaterial(logs);
+});
+
+test("recent context forwards only bounded song identities, never extra private fields, key material, or history logs", async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    fetchImpl = async () => response(validAI());
+    const result = await invoke(getPlaylist, { mood: "Synthetic request", length: 1,
+        recentSongs: [{ song: secret, artist: "Fixture Artist", recommendedAt: 1800000000000,
+            mood: "PRIVATE-MOOD-MUST-NOT-FORWARD", authorization: canonicalKeyFixture }] });
+    assert.equal(result.code, 200); assert.equal(calls.length, 1);
+    assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    const context = JSON.parse(JSON.parse(calls[0][1].body).messages[1].content);
+    assert.deepEqual(context.recentSongs, [{ song: secret, artist: "Fixture Artist" }]);
+    assert.deepEqual(context.avoidSongs, []); assert.deepEqual(context.existingSongs, []);
+    assert.ok(!JSON.stringify(context).includes("PRIVATE-MOOD-MUST-NOT-FORWARD"));
+    assertNoKeyMaterial(context); assertNoKeyMaterial(result.body); assertNoKeyMaterial(logs); assertNoSecret(logs);
+});
+
+test("a failed OpenAI request with recent history never retries or logs the history or upstream private text", async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    fetchImpl = async () => response({ error: { type: "authentication_error", message: secret + canonicalKeyFixture } }, 401);
+    const result = await invoke(getPlaylist, { mood: "Synthetic request", length: 1,
+        recentSongs: [{ song: secret, artist: "Fixture Artist" }] });
+    assert.equal(result.code, 502); assert.equal(result.body.reason, "authentication_error");
+    assert.equal(calls.length, 1); assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    assertNoSecret(result.body); assertNoSecret(logs); assertNoKeyMaterial(result.body); assertNoKeyMaterial(logs);
+});
+
+test("a removed private recording cannot survive in the reconstructed explanation after anchor recovery", async () => {
+    process.env.OPENAI_API_KEY = canonicalKeyFixture;
+    fetchImpl = async () => {
+        const data = validAI();
+        const playlist = JSON.parse(data.choices[0].message.content);
+        playlist.intro = "Here is a synthetic playlist.";
+        playlist.songs = [{ song: secret, artist: "Fixture Artist" }];
+        data.choices[0].message.content = JSON.stringify(playlist);
+        return response(data);
+    };
+    const result = await invoke(getPlaylist, { mood: `Play Lose Control by Teddy Swims. Don't play "${secret}".`, length: 1 });
+    assert.equal(result.code, 200);
+    assert.deepEqual(result.body.playlist.songs, [song]);
+    assert.equal(result.body.playlist.explanation, "A song-specific explanation is unavailable for this final playlist.");
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][0], "https://api.openai.com/v1/chat/completions");
+    assert.equal(calls[0][1].headers.Authorization, "Bearer " + canonicalKeyFixture);
+    assertNoSecret(result.body); assertNoSecret(logs); assertNoKeyMaterial(result.body); assertNoKeyMaterial(logs);
 });
 
 test("explicit anchor recovery keeps parsed identities and emotional context out of logs and makes one canonical call", async () => {
@@ -439,10 +947,67 @@ for (const origin of ["https://tune4-me.vercel.app", "https://preview.vercel.app
         assert.deepEqual(ui.events, [["youtube_preview_attempt"], ["youtube_preview_attempt"]]);
     });
 }
-test("local loopback diagnostics retain existing troubleshooting behavior", () => {
+test("local loopback diagnostics omit listening data just like hosted diagnostics", () => {
     const ui = browser("http://127.0.0.1:3000");
     ui.context.logPreviewDiagnostic("log", "youtube_preview_attempt", { videoId: id });
-    assert.equal(ui.events[0][1].videoId, id);
+    assert.deepEqual(ui.events, [["youtube_preview_attempt"]]);
+});
+
+for (const origin of ["http://localhost:3000", "http://127.0.0.1:3000", "http://[::1]:3000", "https://staging.invalid"]) {
+    test(`all preview diagnostic paths redact local and hosted listening context (${origin})`, () => {
+        const ui = browser(origin);
+        const payload = { song: secret, artist: secret, videoId: id, video: secret, diagnostics: secret,
+            prompt: secret, authorization: secret, cookie: secret };
+        for (const event of ["youtube_preview_lookup", "youtube_preview_attempt", "youtube_preview_playback_error",
+            "youtube_preview_player_ready", "youtube_preview_player_state"]) {
+            ui.context.logPreviewDiagnostic("log", event, payload);
+        }
+        assert.equal(ui.events.length, 5);
+        assert.ok(ui.events.every(entry => entry.length === 1));
+        assertNoSecret(ui.events); assert.ok(!JSON.stringify(ui.events).includes(id));
+        ui.context.logPreviewDiagnostic("log", secret, payload);
+        ui.context.logPreviewDiagnostic(secret, "youtube_preview_attempt", payload);
+        assert.equal(ui.events.length, 5);
+    });
+}
+
+for (const [label, handler, body] of [
+    ["playlist mood", getPlaylist, { mood: { toString: null, private: secret } }],
+    ["playlist length", getPlaylist, { mood: secret, length: { toString: null } }],
+    ["preview song", getYouTubeVideo, { song: { toString: null }, artist: secret }],
+    ["preview artist", getYouTubeVideo, { song: secret, artist: { toString: null } }],
+    ["preview query", getYouTubeVideo, { query: { toString: null } }],
+    ["preview region", getYouTubeVideo, { ...song, regionCode: { toString: null } }],
+    ["analytics event", analytics, { event: { toString: null, private: secret } }]
+]) {
+    for (const serialized of [false, true]) {
+        test(`malformed ${label} returns 400 before providers without logging input (${serialized ? "JSON string" : "object"})`, async () => {
+            const result = await invoke(handler, serialized ? JSON.stringify(body) : body);
+            assert.equal(result.code, 400); assert.equal(calls.length, 0);
+            assertNoSecret(result.body); assertNoSecret(logs); assert.deepEqual(logs, []);
+        });
+    }
+}
+
+for (const [name, handler] of [["playlist", getPlaylist], ["preview", getYouTubeVideo], ["analytics", analytics]]) {
+    for (const body of [null, [], 42]) {
+        test(`${name} rejects a non-object request body without a provider call (${JSON.stringify(body)})`, async () => {
+            assert.equal((await invoke(handler, body)).code, 400);
+            assert.equal(calls.length, 0); assert.deepEqual(logs, []);
+        });
+    }
+}
+
+test("malformed preference identities are ignored without unsafe coercion or sensitive logging", async () => {
+    fetchImpl = async () => response(validAI());
+    const bad = { song: { toString: null, private: secret }, artist: secret };
+    const result = await invoke(getPlaylist, { mood: secret, length: 1, likedSongs: [bad],
+        avoidSongs: [bad], existingSongs: [bad], recentSongs: [bad] });
+    assert.equal(result.code, 200); assert.equal(calls.length, 1);
+    const context = JSON.parse(JSON.parse(calls[0][1].body).messages[1].content);
+    assert.deepEqual(context.likedSongs, []); assert.deepEqual(context.avoidSongs, []);
+    assert.deepEqual(context.existingSongs, []); assert.equal(context.recentSongs, undefined);
+    assertNoSecret(logs);
 });
 test("server positive caches are bounded even when many fresh identities already exist", async () => {
     seedCache(205);
@@ -451,7 +1016,7 @@ test("server positive caches are bounded even when many fresh identities already
 });
 test("new verified YouTube results also preserve the positive cache bound", async () => {
     seedCache();
-    fetchImpl = async url => response(String(url).includes("/videos?") ? { items: [{ id, snippet: { title: "Teddy Swims - Lose Control", channelTitle: "Teddy Swims" }, status: { embeddable: true, privacyStatus: "public", uploadStatus: "processed" }, contentDetails: {} }] }
+    fetchImpl = async url => response(String(url).includes("/videos?") ? { items: [{ id, snippet: { title: "Teddy Swims - Lose Control", channelTitle: "Teddy Swims" }, status: { embeddable: true, privacyStatus: "public", uploadStatus: "processed" }, contentDetails: { duration: "PT3M",} }] }
         : { items: [{ id: { videoId: id }, snippet: { title: "Teddy Swims - Lose Control", channelTitle: "Teddy Swims" } }] });
     const result = await invoke(getYouTubeVideo, song);
     assert.equal(result.code, 200); assert.equal(result.body.videoId, id);
@@ -504,7 +1069,7 @@ test("persistent preview cache evicts oldest entries and preserves songs, feedba
     initial.yt_v3_expired = JSON.stringify({ videoId: id, cachedAt: 1 });
     initial.yt_v4_corrupt = "invalid";
     const ui = browser(undefined, initial);
-    ui.context.saveCachedVideo(song.song, song.artist, id);
+    ui.context.saveCachedVideo(song.song, song.artist, id, { madeForKids: false, duration: "PT3M", durationSeconds: 180 });
     assert.equal([...ui.values.keys()].filter(key => /^yt_v/.test(key)).length, 200);
     assert.equal(ui.storage.getItem("savedSongs"), initial.savedSongs); assert.equal(ui.storage.getItem("songFeedback"), secret);
     assert.equal(ui.storage.getItem("saveLimit"), "100"); assert.equal(ui.context.getCachedVideo(song.song, song.artist), id);
@@ -512,7 +1077,7 @@ test("persistent preview cache evicts oldest entries and preserves songs, feedba
 });
 test("browser storage exhaustion does not throw from preview cache writes", () => {
     const ui = browser(); ui.storage.setItem = () => { throw new Error(secret); };
-    assert.doesNotThrow(() => ui.context.saveCachedVideo(song.song, song.artist, id)); assert.equal(ui.events.length, 0);
+    assert.doesNotThrow(() => ui.context.saveCachedVideo(song.song, song.artist, id, { madeForKids: false, duration: "PT3M", durationSeconds: 180 })); assert.equal(ui.events.length, 0);
 });
 test("browser candidate pools remain bounded during many distinct legitimate lookups", async () => {
     const ui = browser(); fetchImpl = async () => response({ ...candidate(), candidates: [candidate()], nextSearchStage: 1 });
