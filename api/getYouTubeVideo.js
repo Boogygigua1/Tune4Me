@@ -395,7 +395,8 @@ export default async function handler(req, res) {
     if (!Number.isInteger(requestedStage) || requestedStage < 0 || requestedStage >= SEARCH_STAGES.length) {
         return res.status(400).json({ error: "Invalid search stage", reason: "invalid_search_stage" });
     }
-    const cacheKey = "yt_v4_" + JSON.stringify([song ? [identity.song, identity.artist] : [identity.query], regionCode]);
+    // Only reuse previews selected under the strict search policy.
+    const cacheKey = "yt_v5_" + JSON.stringify([song ? [identity.song, identity.artist] : [identity.query], regionCode]);
 
     global.videoCache = global.videoCache || {};
     global.videoMissCache = global.videoMissCache || {};
@@ -549,7 +550,7 @@ async function lookupVideo({ query, identity, regionCode, excludedIds, includeAl
                     : "";
 
                 const data = await requestYouTube(
-                    `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchTerm)}&key=${YOUTUBE_API_KEY}&maxResults=25&type=video&videoEmbeddable=true&videoSyndicated=true${categoryParam}${regionCode ? "&regionCode=" + regionCode : ""}`
+                    `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchTerm)}&key=${YOUTUBE_API_KEY}&maxResults=25&type=video&safeSearch=strict&videoEmbeddable=true&videoSyndicated=true${categoryParam}${regionCode ? "&regionCode=" + regionCode : ""}`
                 );
 
                 const identityMatches = data.items.filter(item => !excludedIds.has(item.id?.videoId) && scoreVideo(item, identity, true));

@@ -4660,3 +4660,109 @@ test("cached search progress cannot make a caller repeat a previously completed 
     assert.equal(cached.body.nextSearchStage, 3);
     assert.equal(requests.length, 1);
 });
+
+for (const startSearchStage of [0, 1, 2, 3]) {
+    test("strict search policy covers every remaining stage from " + startSearchStage, async () => {
+        fetchImpl = async url => {
+            const params = new URL(url).searchParams;
+            assert.equal(params.get("safeSearch"), "strict");
+            assert.equal(params.get("type"), "video");
+            assert.equal(params.get("videoEmbeddable"), "true");
+            assert.equal(params.get("videoSyndicated"), "true");
+            return response({ items: [] });
+        };
+        const result = await invoke(getYouTubeVideo, { ...anchor, startSearchStage, safeSearch: "none" });
+        assert.equal(result.status, 404);
+        assert.equal(requests.length, 4 - startSearchStage);
+        assert.equal(detailRequests.length, 0);
+    });
+}
+
+for (const matchingStage of [0, 1, 2, 3]) {
+    for (const restricted of [false, true]) {
+        test("strict policy preserves age filtering and eligible music at stage " + matchingStage + " restricted " + restricted, async () => {
+            let stage = 0;
+            fetchImpl = async url => {
+                assert.equal(new URL(url).searchParams.get("safeSearch"), "strict");
+                return response({ items: stage++ === matchingStage ? [exactVideo] : [] });
+            };
+            detailsImpl = async () => response({ items: [verifiedVideo(exactVideo, {
+                contentDetails: { duration: "PT3M", contentRating: restricted ? { ytRating: "ytAgeRestricted" } : {} }
+            })] });
+            const result = await invoke(getYouTubeVideo, anchor);
+            assert.equal(result.status, restricted ? 404 : 200);
+            assert.equal(detailRequests.length, 1);
+            if (restricted) {
+                assert.equal(result.body.videoId, undefined);
+                assert.equal(Object.keys(global.videoCache).length, 0);
+                assert.equal(requests.length, 4);
+            } else {
+                assert.equal(result.body.videoId, exactVideo.id.videoId);
+                assert.equal(requests.length, matchingStage + 1);
+            }
+        });
+    }
+}
+
+test("strict search policy also covers legacy query-only music lookups", async () => {
+    fetchImpl = async url => {
+        assert.equal(new URL(url).searchParams.get("safeSearch"), "strict");
+        return response({ items: [exactVideo] });
+    };
+    const result = await invoke(getYouTubeVideo, { query: anchor.song + " " + anchor.artist });
+    assert.equal(result.status, 200);
+    assert.equal(requests.length, 1);
+});
+
+test("old-policy server previews and misses cannot bypass a fresh strict lookup", async () => {
+    fetchImpl = async () => response({ items: [exactVideo] });
+    await invoke(getYouTubeVideo, anchor);
+    const currentKey = Object.keys(global.videoCache)[0];
+    assert.ok(currentKey.startsWith("yt_v5_"));
+    const oldKey = currentKey.replace("yt_v5_", "yt_v4_");
+    global.videoCache[oldKey] = { ...global.videoCache[currentKey],
+        candidates: [{ videoId: idFor("old"), video: { duration: "PT3M", durationSeconds: 180, madeForKids: false } }] };
+    global.videoMissCache[oldKey] = { cachedAt: Date.now() };
+    delete global.videoCache[currentKey];
+    requests.length = 0;
+    detailRequests.length = 0;
+    const result = await invoke(getYouTubeVideo, anchor);
+    assert.equal(result.status, 200);
+    assert.equal(result.body.cached, false);
+    assert.equal(result.body.videoId, exactVideo.id.videoId);
+    assert.equal(new URL(requests[0][0]).searchParams.get("safeSearch"), "strict");
+    assert.equal(requests.length, 1);
+    assert.equal(detailRequests.length, 1);
+});
+
+test("old browser previews and candidate pools are bypassed while eligible playback and preferences survive", async () => {
+    const ui = playerFrontend();
+    const oldKey = "yt_v4_" + JSON.stringify([anchor.song.toLowerCase(), anchor.artist.toLowerCase()]);
+    const old = { videoId: idFor("old"), cachedAt: Date.now(), madeForKids: false, duration: "PT3M", durationSeconds: 180 };
+    ui.storage.set(oldKey, JSON.stringify(old));
+    const preserved = { savedSongs: JSON.stringify([anchor]), likedSongs: JSON.stringify([anchor]),
+        avoidSongs: JSON.stringify([other]), songFeedback: "[]", saveLimit: "65", tune4meRecentRecommendations: "[]" };
+    for (const [key, value] of Object.entries(preserved)) ui.storage.set(key, value);
+    ui.context.window.tune4mePreviewLookups = { pools: new Map([[oldKey, {
+        cachedAt: Date.now(), data: { ...old, video: old, candidates: [{ videoId: old.videoId, video: old }], nextSearchStage: 4 }
+    }]]), pending: new Map(), limited: null, attempt: 0 };
+    assert.equal(ui.context.getCachedVideo(anchor.song, anchor.artist), null);
+    let lookups = 0;
+    fetchImpl = async () => response({ items: [exactVideo] });
+    ui.context.fetch = async (url, options) => {
+        assert.equal(url, "/api/getYouTubeVideo");
+        lookups++;
+        const result = await invoke(getYouTubeVideo, JSON.parse(options.body));
+        return response(result.body, result.status);
+    };
+    await ui.context.playSong(anchor.song, anchor.artist, ui.button);
+    assert.equal(lookups, 1);
+    assert.equal(requests.length, 1);
+    assert.equal(detailRequests.length, 1);
+    assert.equal(ui.players.length, 1);
+    assert.ok(ui.players[0].iframe.src.includes(exactVideo.id.videoId));
+    ui.players[0].events.onStateChange({ data: 1 });
+    assert.equal(ui.context.getCachedVideo(anchor.song, anchor.artist), exactVideo.id.videoId);
+    assert.ok(ui.storage.has("yt_v5_" + JSON.stringify([anchor.song.toLowerCase(), anchor.artist.toLowerCase()])));
+    for (const [key, value] of Object.entries(preserved)) assert.equal(ui.storage.get(key), value);
+});

@@ -1,11 +1,78 @@
 # Regression checks
 
-Current complete suite: **1,058 tests**: 714 regression checks, 154 security checks,
-51 homepage/button-theme checks, and 139 privacy/accessibility/storage checks.
+The complete suite has **1,106 tests**, with 729 regression checks, 154 security checks,
+51 homepage/button-theme checks, and 172 privacy/accessibility/storage checks.
 
 ```powershell
 node --test tests/regression.test.mjs tests/security.test.mjs tests/homepage.test.mjs tests/privacy-controls.test.mjs
 ```
+
+## Strict YouTube searches and required support email
+
+The additional 37 offline checks cover all four search stages, explicit continuation
+stages, query-only callers, ignored client search-policy overrides, age-restricted
+results, eligible playback, and old server/browser previews. Searches now send
+`safeSearch=strict` through the shared URL. The server and browser use `yt_v5_`
+preview keys. Earlier preview entries are bypassed, with existing size/expiry pruning
+retained. Saved songs, preferences, feedback and recent recommendation history stay
+in their existing independent stores. The click-operated external YouTube link keeps
+its existing behavior. YouTube classifies its own results, and cached status can
+become outdated.
+
+Support now uses a required `email` field with native browser email validation,
+a 254-character bound, an associated alert and focus on invalid input. Tests exercise
+ordinary address formats, malformed addresses, native invalid events and separation
+from browser storage, playlist content and analytics.
+
+## Independent support submission and music consent
+
+Support sends independently of music consent, including before any playlist is
+created and after consent withdrawal. The processing notice beside Send identifies
+the name, email, topic and message sent to Formspree and links to the Privacy Policy.
+Support neither grants music consent nor replaces an existing pending music action.
+Playlist creation still waits for agreement and resumes exactly once after acceptance.
+YouTube playback retains its existing consent checks.
+
+Support uses an asynchronous, form-encoded POST requesting JSON confirmation.
+The persistent polite status region beside Send reports sending, confirmed success
+or failure using fixed text. Its updates do not move focus. The pending guard and
+`aria-disabled` Send control suppress duplicate submissions while retaining keyboard
+focus. HTTP and network failures preserve all entries for a manual retry, with no
+automatic retries. Redirects are rejected and provider response text is never shown
+or logged. The support action emits no analytics event.
+
+The offline suite covers pending responses, duplicate submissions, HTTP failures,
+network errors, manual retry, field preservation, accessible status markup, consent
+independence and privacy boundaries. Fresh isolated Chrome/CDP tests against the
+loopback mock harness also passed keyboard email validation before and after music
+agreement, accessible error/status-tree checks, feedback success without agreement,
+pending/duplicate handling, failure and retry, and exactly-once playlist consent.
+Preview cache bypass, an eligible local mock player, age-restricted-result rejection
+and the separate external-link fallback also passed. All form and provider responses
+were mocked and outside-harness page requests were blocked. NVDA spoken announcements
+and live Formspree delivery remain unverified.
+
+Email ownership verification remains pending. Formspree's documented
+[Workflow validation](https://help.formspree.io/articles/building-your-form/getting-started-with-workflow)
+checks required fields and email format. Its
+[confirmation-email action](https://help.formspree.io/articles/plugins/sending-a-confirmation-or-response-email)
+is an automatic acknowledgement. A native hold-until-ownership-confirmed flow and
+this form's authenticated account configuration have not been verified. The local
+form sends directly to Formspree for well-formed addresses.
+Browser validation can be bypassed by direct submissions. Verified-sender
+enforcement remains an outstanding implementation requirement.
+
+Before adding a service, confirm whether the existing Formspree plan can supply a
+real confirmation gate. Otherwise the minimal design is a Vercel intake/confirmation
+handler, private durable pending records, and an existing approved email-delivery
+facility if available. Use bounded expiring single-use tokens, per-address/IP limits,
+atomic confirmation and duplicate protection. Forward only verified messages to the
+support workflow, with no client-controlled verified flag or alternate public
+intake that delivers unverified messages. Keep message text and submitted links out
+of confirmation emails, logs, public pages and analytics. Storage/email capabilities,
+Formspree forwarding configuration, expiry/deletion and replay/failure tests need
+review before implementation. No verification emails or service changes are part
+of these local tests.
 
 ## In-place consent withdrawal
 

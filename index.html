@@ -443,7 +443,7 @@
     <section id="privacyAgreement" class="privacy-choices" aria-labelledby="privacyHeading" hidden>
         <h2 id="privacyHeading" tabindex="-1">Before we continue</h2>
         <p id="privacyAgreementText">Playlist requests share your description and bounded song preferences with OpenAI.
-            YouTube previews share search and playback information with Google and may show ads. Support messages use Formspree.
+            YouTube previews share search and playback information with Google and may show ads.
             By choosing Agree, you accept our <a href="/privacy.html">Privacy Policy</a> and
             <a href="/terms.html">Terms of Service</a>, including the
             <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a>.
@@ -650,9 +650,12 @@ margin-right:auto;
         <label for="supportName" class="form-label">Name (optional)</label>
         <input type="text" id="supportName" name="name" placeholder="Example: Alex" style="width:100%; margin-bottom:10px;">
 
-        <label for="supportContact" class="form-label">Email or phone (optional)</label>
-        <input type="text" id="supportContact" name="contact" placeholder="name@example.com or phone number"
+        <label for="supportEmail" class="form-label">Email (required)</label>
+        <input type="email" id="supportEmail" name="email" required maxlength="254" autocomplete="email"
+            placeholder="name@example.com" aria-describedby="supportEmailHint supportEmailError"
             style="width:100%; margin-bottom:10px;">
+        <p id="supportEmailHint" style="font-size:13px; color:#4D4D4D;">Enter an email address where we can reply.</p>
+        <p id="supportEmailError" role="alert" style="color:#B00020;" hidden></p>
 
         <label for="supportTopic" class="form-label">Support topic</label>
         <select id="supportTopic" name="topic" style="width:100%; margin-bottom:10px; padding:10px;">
@@ -681,19 +684,79 @@ margin-right:auto;
 
         <script>
             const supportMessage = document.getElementById("supportMessage");
+            const supportEmail = document.getElementById("supportEmail");
+            const supportEmailError = document.getElementById("supportEmailError");
+            let supportSubmissionPending = false;
 
-            supportMessage.form.addEventListener("submit", function (event) {
-                if (!requirePrivacyAcceptance(() => supportMessage.form.requestSubmit(), event.submitter,
-                    "Agree and send support message")) { event.preventDefault(); return; }
-                trackTune4Me("support_form_submitted");
+            function validateSupportEmail() {
+                supportEmail.value = supportEmail.value.trim();
+                const valid = supportEmail.value.length > 0 && supportEmail.value.length <= 254 && supportEmail.validity.valid;
+                supportEmailError.textContent = valid ? "" : "Enter a valid email address, such as name@example.com, so we can reply.";
+                supportEmailError.hidden = valid;
+                if (valid) {
+                    supportEmail.removeAttribute("aria-invalid");
+                } else {
+                    supportEmail.setAttribute("aria-invalid", "true");
+                    supportEmail.focus();
+                }
+                return valid;
+            }
+
+            supportEmail.addEventListener("invalid", function (event) {
+                event.preventDefault();
+                validateSupportEmail();
+            });
+            supportEmail.addEventListener("input", function () {
+                supportEmail.removeAttribute("aria-invalid");
+                supportEmailError.textContent = "";
+                supportEmailError.hidden = true;
+            });
+
+            supportMessage.form.addEventListener("submit", async function (event) {
+                event.preventDefault();
+                if (supportSubmissionPending) return;
+                const status = document.getElementById("supportStatus");
+                const sendButton = document.getElementById("supportSendBtn");
+                status.textContent = "";
+                if (!validateSupportEmail()) return;
+
+                supportSubmissionPending = true;
+                sendButton.setAttribute("aria-disabled", "true");
+                status.textContent = "Sending your message…";
+                try {
+                    const response = await fetch(supportMessage.form.action, {
+                        method: "POST",
+                        headers: { "Accept": "application/json" },
+                        credentials: "omit",
+                        redirect: "error",
+                        body: new URLSearchParams({
+                            name: document.getElementById("supportName").value,
+                            email: supportEmail.value,
+                            topic: document.getElementById("supportTopic").value,
+                            message: supportMessage.value
+                        })
+                    });
+                    if (!response.ok) throw new Error("Support submission failed");
+                    status.textContent = "Your message was sent. Thank you for your feedback.";
+                } catch {
+                    status.textContent = "We couldn’t send your message. Please try again.";
+                } finally {
+                    supportSubmissionPending = false;
+                    sendButton.removeAttribute("aria-disabled");
+                }
             });
         </script>
 
         <br><br>
 
-        <button type="submit">
+        <p id="supportProcessingNotice" style="font-size:13px; color:#4D4D4D; line-height:1.5;">
+            Sending shares your name, email, topic and message with Formspree to process your feedback.
+            See our <a href="/privacy.html">Privacy Policy</a>. Sending feedback does not grant consent to music features.
+        </p>
+        <button id="supportSendBtn" type="submit" aria-describedby="supportProcessingNotice">
             Send 🎧
         </button>
+        <p id="supportStatus" role="status" aria-live="polite" aria-atomic="true"></p>
 
     </form>
 
@@ -1647,7 +1710,8 @@ Planned promotional price: $1.99 USD, one time, for up to 25 additional saves (1
         }
 
         function getVideoCacheKey(song, artist) {
-            return "yt_v4_" + JSON.stringify([song, artist].map(value => value
+            // Keep older, moderately filtered previews outside the active cache namespace.
+            return "yt_v5_" + JSON.stringify([song, artist].map(value => value
                 .normalize("NFKC").toLowerCase().trim()));
         }
 
@@ -3146,8 +3210,9 @@ Planned promotion: $1.99 USD for up to 25 more saves (100-song maximum). Upgrade
 
     <details class="privacy-choices">
         <summary id="privacyControlsToggle">Privacy and stored data controls</summary>
-        <p>Browse without agreement. Before your first active music action or support submission, a short agreement
-            appears beside that action. Your unsent mood draft is not automatically saved or shared.</p>
+        <p>Browse without agreement. Before your first active music action, a short agreement
+            appears beside that action. Your unsent mood draft is not automatically saved or shared.
+            Support &amp; Feedback works independently and does not grant consent to music features.</p>
         <p><a href="/privacy.html">Privacy Policy</a> · <a href="/terms.html">Terms of Service</a> ·
             <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a> ·
             <a href="https://policies.google.com/privacy">Google Privacy Policy</a></p>

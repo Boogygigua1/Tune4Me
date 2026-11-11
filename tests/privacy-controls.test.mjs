@@ -27,6 +27,13 @@ class Element {
     setAttribute(key, value) { this.attributes[key] = String(value); }
     getAttribute(key) { return this.attributes[key] ?? null; }
     removeAttribute(key) { delete this.attributes[key]; }
+    get validity() {
+        // Approximate native HTML email constraints in this offline DOM fixture.
+        const emailSyntax = /^[a-zA-Z0-9.!#$%&'*+/=?^_\x60{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/;
+        const missing = this.required && !this.value;
+        const malformed = this.getAttribute("type") === "email" && this.value && !emailSyntax.test(this.value);
+        return { valid: !missing && !malformed };
+    }
     addEventListener(key, callback) { this.events[key] = callback; }
     click() { if (!this.disabled) return this.events.click?.({ currentTarget: this, target: this, isTrusted: true, stopPropagation() {}, preventDefault() {} }); }
     contains(item) { return item === this || descendants(this).includes(item); }
@@ -62,11 +69,14 @@ function page(initial = {}, options = {}) {
         const element = new Element(match[1]); elements[match[3]] = element;
         element.hidden = /\shidden(?:\s|$)/.test(match[2]); element.inert = /\sinert(?:\s|$)/.test(match[2]);
         element.disabled = /\sdisabled(?:\s|$)/.test(match[2]);
+        element.required = /\srequired(?:\s|$)/.test(match[2]);
         element.className = match[2].match(/class="([^"]*)"/)?.[1] || "";
         for (const attr of match[2].matchAll(/([\w-]+)="([^"]*)"/g)) element.setAttribute(attr[1], attr[2]);
         body.appendChild(element);
     }
     elements.supportMessage.form = new Element("form");
+    elements.supportMessage.form.action = "https://formspree.io/f/xojrboej";
+    elements.supportEmail.value = "listener@example.com";
     const localStorage = {
         getItem(key) { if (options.denyRead || options.unreadableKey === key) throw new Error("PRIVATE-STORAGE-ERROR"); return values.get(key) ?? null; },
         setItem(key, value) { if (options.denyWrite) throw new Error("PRIVATE-STORAGE-ERROR"); values.set(key, String(value)); },
@@ -92,7 +102,7 @@ function page(initial = {}, options = {}) {
         addEventListener() {}, matchMedia: () => ({ matches: true }), open: (...args) => opened.push(args)
     };
     const context = vm.createContext({
-        window, document, localStorage, Blob, AbortSignal, AbortController,
+        window, document, localStorage, Blob, AbortSignal, AbortController, URLSearchParams,
         navigator: { sendBeacon: (url, blob) => { beacons.push({ url, blob }); return true; } },
         requestAnimationFrame: callback => callback(),
         setTimeout: callback => { const id = timers.size + 1; timers.set(id, callback); return id; }, clearTimeout: id => timers.delete(id),
@@ -100,6 +110,10 @@ function page(initial = {}, options = {}) {
         console: Object.fromEntries(["log", "warn", "error"].map(level => [level, (...args) => logs.push([level, ...args])])),
         fetch: async (url, request) => {
             calls.push({ url, request });
+            if (url === elements.supportMessage.form.action) {
+                if (options.supportFetch) return options.supportFetch(url, request);
+                return { status: 200, ok: true };
+            }
             if (options.fetch) return options.fetch(url, request);
             assert.equal(url, "/api/getPlaylist", "Only the explicit mocked playlist request is allowed");
             const data = fixture(); return { status: 200, ok: true, text: async () => JSON.stringify(data), json: async () => data };
@@ -107,11 +121,7 @@ function page(initial = {}, options = {}) {
     });
     if (options.denyGetter) Object.defineProperty(context, "localStorage", { get() { throw new Error("PRIVATE-STORAGE-GETTER"); } });
     for (const script of scripts) vm.runInContext(script, context);
-    elements.supportMessage.form.requestSubmit = () => {
-        let prevented = false;
-        elements.supportMessage.form.events.submit({ preventDefault() { prevented = true; } });
-        if (!prevented) elements.supportMessage.form.submissions = (elements.supportMessage.form.submissions || 0) + 1;
-    };
+    elements.supportMessage.form.requestSubmit = () => elements.supportMessage.form.events.submit({ preventDefault() {} });
     window.onload();
     function agree() { context.requirePrivacyAcceptance(null, elements.moodInput); return context.acceptPrivacyPolicy(); }
     return { agree, context, values, elements, head, body, calls, beacons, opened, navigation, historyUpdates, logs, timers, confirmations,
@@ -179,12 +189,16 @@ for (const action of ["showMood", "continuePlaylist", "playSong", "playAllSongs"
         assert.match(ui.elements.privacyStatus.textContent, /No request has been sent/);
     });
 }
-test("direct lookup and support submission are blocked before agreement", async () => {
+test("direct music lookup stays blocked while support works without music agreement", async () => {
     const ui = page();
     const result = await ui.context.lookupYouTubePreview(song.song, song.artist, []);
     assert.equal(result.status, 403);
-    let prevented = false; ui.elements.supportMessage.form.events.submit({ preventDefault() { prevented = true; } });
-    assert.equal(prevented, true); assert.equal(ui.calls.length, 0); assert.equal(ui.beacons.length, 0);
+    const pending = ui.evaluate("pendingPrivacyAction");
+    let prevented = false; await ui.elements.supportMessage.form.events.submit({ preventDefault() { prevented = true; } });
+    assert.equal(prevented, true); assert.equal(ui.calls.length, 1); assert.equal(ui.beacons.length, 0);
+    assert.equal(ui.calls[0].url, ui.elements.supportMessage.form.action);
+    assert.equal(ui.evaluate("pendingPrivacyAction"), pending);
+    assert.equal(ui.values.has(acceptanceKey), false); assert.equal(ui.evaluate("privacyAccepted"), false);
 });
 
 test("agreement activates features with analytics off by default and preserves favorites and capacity", () => {
@@ -331,10 +345,11 @@ test("cleared preferences are absent from the next request while recent history 
     assert.equal(ui.values.get("savedSongs"), data); assert.equal(ui.values.get("saveLimit"), "65");
     assert.equal(ui.calls.length, 1); assert.equal(ui.head.children.length, 0);
 });
-test("agreed support submission does not require optional analytics", () => {
+test("agreed support submission does not require optional analytics", async () => {
     const ui = page({ [acceptanceKey]: agreed() }); let prevented = false;
-    ui.elements.supportMessage.form.events.submit({ preventDefault() { prevented = true; } });
-    assert.equal(prevented, false); assert.equal(ui.beacons.length, 0); assert.equal(ui.calls.length, 0);
+    await ui.elements.supportMessage.form.events.submit({ preventDefault() { prevented = true; } });
+    assert.equal(prevented, true); assert.equal(ui.beacons.length, 0); assert.equal(ui.calls.length, 1);
+    assert.equal(ui.elements.supportStatus.textContent, "Your message was sent. Thank you for your feedback.");
 });
 test("failed deletion can clear preferences using an empty replacement", () => {
     const data = JSON.stringify([song]); const ui = page({ songFeedback: data, likedSongs: data, avoidSongs: data }, { denyRemove: true });
@@ -394,8 +409,10 @@ test("the privacy flow retains native labels, live announcements, focus, and Ent
     const ui = page(); ui.agree(); assert.equal(ui.elements.moodInput.focused, true);
 });
 test("privacy and terms accurately describe agreement, retention, providers, deletion and disabled purchases", () => {
+    assert.match(privacy, /Last updated: November 6, 2026/);
+    assert.match(terms, /Last updated: November 1, 2026/);
     for (const page of [privacy, terms]) {
-        assert.match(page, /Last updated: November 1, 2026/); assert.match(page, /checkout[\s\S]{0,100}disabled/i);
+        assert.match(page, /checkout[\s\S]{0,100}disabled/i);
         assert.match(page, /100-song limit/); assert.match(page, /unverified AI judgments|AI judgments/);
     }
     for (const phrase of [/30-day expiration/, /no automatic expiry/, /Clear Likes, Dislikes and Avoidance/,
@@ -575,14 +592,222 @@ test("an analytics choice made in settings is not silently reset when the agreem
     assert.equal(ui.head.children.filter(item => item.src === "/_vercel/insights/script.js").length, 1);
     assert.equal(ui.head.children.some(item => item.src.includes("youtube")), false);
 });
-test("support's pending submit is explicit and resumes only once after agreement", async () => {
-    const ui = page(); const submitter = new Element("button"); ui.body.appendChild(submitter); let prevented = false;
-    ui.elements.supportMessage.form.events.submit({ submitter, preventDefault() { prevented = true; } });
-    assert.equal(prevented, true); assert.equal(ui.elements.supportMessage.form.submissions, undefined);
-    assert.equal(ui.elements.acceptPrivacyBtn.textContent, "Agree and send support message");
+test("feedback never grants music consent and playlist submission still requires agreement", async () => {
+    const ui = page();
+    await ui.elements.supportMessage.form.requestSubmit();
+    assert.equal(ui.calls.length, 1); assert.equal(ui.evaluate("pendingPrivacyAction"), null);
+    assert.equal(ui.elements.privacyAgreement.hidden, true); assert.equal(ui.values.has(acceptanceKey), false);
+    ui.elements.moodInput.value = "Synthetic music request";
+    await ui.context.showMood(ui.elements.createPlaylistBtn);
+    assert.equal(ui.calls.length, 1); assert.equal(ui.elements.privacyAgreement.hidden, false);
+    assert.equal(ui.elements.acceptPrivacyBtn.textContent, "Agree and create playlist");
     await ui.context.acceptPrivacyPolicy(); await ui.context.acceptPrivacyPolicy();
-    assert.equal(ui.elements.supportMessage.form.submissions, 1); assert.equal(ui.calls.length, 0);
+    assert.equal(ui.calls.filter(call => call.url === "/api/getPlaylist").length, 1);
 });
+
+test("support email is required, labelled and connected to a persistent accessible error", () => {
+    const ui = page();
+    assert.equal(ui.elements.supportEmail.getAttribute("type"), "email");
+    assert.equal(ui.elements.supportEmail.getAttribute("name"), "email");
+    assert.equal(ui.elements.supportEmail.required, true);
+    assert.equal(ui.elements.supportEmail.getAttribute("autocomplete"), "email");
+    assert.equal(ui.elements.supportEmail.getAttribute("maxlength"), "254");
+    assert.match(ui.elements.supportEmail.getAttribute("aria-describedby"), /supportEmailHint.*supportEmailError/);
+    assert.equal(ui.elements.supportEmailError.getAttribute("role"), "alert");
+    assert.equal(ui.elements.supportEmailError.hidden, true);
+    assert.match(html, /<label for="supportEmail"[^>]*>Email \(required\)<\/label>/);
+    assert.match(privacy, /support form requires an email address/i);
+});
+
+for (const email of ["", " ", "listener", "listener@", "@example.com", "listener example@example.com",
+    "listener@@example.com", "listener@example..com", "listener@-example.com",
+    "listener@example.com,other@example.com", "listener@example.com\nBcc: other@example.com",
+    "<script>@example.com", "a".repeat(255) + "@example.com"]) {
+    test("malformed support email is blocked accessibly before consent or transmission " + JSON.stringify(email), () => {
+        const ui = page();
+        ui.elements.supportEmail.value = email;
+        ui.elements.supportMessage.value = "PRIVATE-SUPPORT-MESSAGE";
+        ui.elements.moodInput.value = "PRIVATE-MUSIC-DRAFT";
+        let prevented = false;
+        ui.elements.supportMessage.form.events.submit({ preventDefault() { prevented = true; } });
+        assert.equal(prevented, true);
+        assert.equal(ui.elements.supportEmail.getAttribute("aria-invalid"), "true");
+        assert.equal(ui.elements.supportEmail.focused, true);
+        assert.equal(ui.elements.supportEmailError.hidden, false);
+        assert.match(ui.elements.supportEmailError.textContent, /valid email address/i);
+        assert.equal(ui.elements.supportMessage.value, "PRIVATE-SUPPORT-MESSAGE");
+        assert.equal(ui.elements.moodInput.value, "PRIVATE-MUSIC-DRAFT");
+        assert.equal(ui.elements.privacyAgreement.hidden, true);
+        assert.equal(ui.calls.length, 0);
+        assert.equal(ui.beacons.length, 0);
+        assert.equal(ui.logs.length, 0);
+        assert.equal(ui.elements.supportMessage.form.submissions, undefined);
+    });
+}
+
+for (const email of ["listener@example.com", "listener+support@example.co.uk", "O'Connor@example.com",
+    "First.Last@sub.example.com", "listener@xn--bcher-kva.example"]) {
+    test("well-formed support email preserves ordinary address formats " + email, async () => {
+        const ui = page({ [acceptanceKey]: agreed() });
+        ui.elements.supportEmail.value = " " + email + " ";
+        let prevented = false;
+        await ui.elements.supportMessage.form.events.submit({ preventDefault() { prevented = true; } });
+        assert.equal(prevented, true);
+        assert.equal(ui.elements.supportEmail.value, email);
+        assert.equal(ui.elements.supportEmailError.hidden, true);
+        assert.equal(ui.elements.supportEmail.getAttribute("aria-invalid"), null);
+        assert.equal(ui.calls.length, 1);
+        assert.equal(ui.beacons.length, 0);
+    });
+}
+
+test("native email invalid events announce a safe error and editing clears stale error state", () => {
+    const ui = page({ [acceptanceKey]: agreed() });
+    ui.elements.supportEmail.value = "PRIVATE-INVALID-CONTACT";
+    let prevented = false;
+    ui.elements.supportEmail.events.invalid({ preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(ui.elements.supportEmail.focused, true);
+    assert.equal(ui.elements.supportEmailError.hidden, false);
+    assert.doesNotMatch(ui.elements.supportEmailError.textContent, /PRIVATE/);
+    ui.elements.supportEmail.value = "listener@example.com";
+    ui.elements.supportEmail.events.input();
+    assert.equal(ui.elements.supportEmail.getAttribute("aria-invalid"), null);
+    assert.equal(ui.elements.supportEmailError.hidden, true);
+    assert.equal(ui.elements.supportEmailError.textContent, "");
+    assert.equal(ui.context.validateSupportEmail(), true);
+});
+
+test("support remains independent of an already-pending playlist agreement", async () => {
+    const ui = page();
+    ui.elements.moodInput.value = "Synthetic music request";
+    await ui.context.showMood(ui.elements.createPlaylistBtn);
+    const pending = ui.evaluate("pendingPrivacyAction");
+    await ui.elements.supportMessage.form.requestSubmit();
+    assert.equal(ui.calls.length, 1); assert.equal(ui.evaluate("pendingPrivacyAction"), pending);
+    assert.equal(ui.evaluate("privacyAccepted"), false);
+    await ui.context.acceptPrivacyPolicy();
+    assert.equal(ui.calls.filter(call => call.url === "/api/getPlaylist").length, 1);
+    assert.equal(ui.calls.filter(call => call.url === ui.elements.supportMessage.form.action).length, 1);
+    assert.equal(ui.beacons.length, 0);
+});
+
+test("support email and message stay out of storage, public playlist content, analytics and music requests", async () => {
+    const ui = page({ [acceptanceKey]: agreed(true) });
+    ui.elements.supportEmail.value = "private-support-fixture@example.com";
+    ui.elements.supportMessage.value = "PRIVATE-SUPPORT-MESSAGE https://example.invalid/support-fixture";
+    ui.elements.result.textContent = "Existing public playlist fixture";
+    await ui.elements.supportMessage.form.requestSubmit();
+    assert.equal(ui.elements.result.textContent, "Existing public playlist fixture");
+    assert.equal(ui.calls.length, 1);
+    assert.deepEqual([...ui.calls[0].request.body.keys()], ["name", "email", "topic", "message"]);
+    assert.equal(ui.calls[0].request.body.get("message"), ui.elements.supportMessage.value);
+    const diagnostics = JSON.stringify({ storage: [...ui.values], logs: ui.logs });
+    assert.doesNotMatch(diagnostics, /private-support-fixture|PRIVATE-SUPPORT-MESSAGE|support-fixture/);
+    for (const beacon of ui.beacons) {
+        const body = await beacon.blob.text();
+        assert.deepEqual(Object.keys(JSON.parse(body)), ["event"]);
+        assert.doesNotMatch(body, /private-support-fixture|PRIVATE-SUPPORT-MESSAGE|support-fixture/);
+    }
+    ui.elements.moodInput.value = "Synthetic music request";
+    await ui.context.showMood(ui.elements.createPlaylistBtn);
+    assert.equal(ui.calls.length, 2);
+    assert.doesNotMatch(ui.calls[1].request.body, /private-support-fixture|PRIVATE-SUPPORT-MESSAGE|support-fixture/);
+});
+test("support processing notice is adjacent to Send and its status is a persistent accessible live region", () => {
+    const ui = page();
+    assert.equal(ui.elements.supportSendBtn.getAttribute("aria-describedby"), "supportProcessingNotice");
+    assert.equal(ui.elements.supportStatus.getAttribute("role"), "status");
+    assert.equal(ui.elements.supportStatus.getAttribute("aria-live"), "polite");
+    assert.equal(ui.elements.supportStatus.getAttribute("aria-atomic"), "true");
+    assert.equal(ui.elements.supportStatus.hidden, false);
+    assert.match(html, /id="supportProcessingNotice"[\s\S]*?name, email, topic and message with Formspree[\s\S]*?<a href="\/privacy.html">Privacy Policy<\/a>[\s\S]*?id="supportSendBtn"[\s\S]*?id="supportStatus"/);
+    assert.match(privacy, /Sending feedback does not grant consent to playlist/);
+    assert.doesNotMatch(html, /first active music action or support submission|Agree and send support message/);
+});
+
+test("slow support submission shows pending status, keeps focus and prevents duplicate sends", async () => {
+    let finish;
+    const ui = page({}, { supportFetch: () => new Promise(resolve => { finish = resolve; }) });
+    ui.elements.supportMessage.value = "Synthetic support message";
+    ui.elements.supportSendBtn.focus();
+    const pending = ui.elements.supportMessage.form.requestSubmit();
+    assert.equal(ui.elements.supportStatus.textContent, "Sending your message…");
+    assert.equal(ui.elements.supportSendBtn.getAttribute("aria-disabled"), "true");
+    await ui.elements.supportMessage.form.requestSubmit();
+    assert.equal(ui.calls.length, 1); assert.equal(ui.elements.supportSendBtn.focused, true);
+    assert.equal(ui.elements.supportMessage.value, "Synthetic support message");
+    assert.equal(ui.evaluate("privacyAccepted"), false);
+    finish({ ok: true, status: 200 }); await pending;
+    assert.equal(ui.elements.supportStatus.textContent, "Your message was sent. Thank you for your feedback.");
+    assert.equal(ui.elements.supportSendBtn.getAttribute("aria-disabled"), null);
+    assert.equal(ui.calls.length, 1); assert.equal(ui.elements.supportEmail.focused, undefined);
+    assert.equal(ui.elements.supportMessage.value, "Synthetic support message");
+});
+
+for (const status of [400, 422, 429, 500, 503]) {
+    test("support HTTP failure " + status + " preserves all entries and only retries on a new submission", async () => {
+        let attempts = 0;
+        const ui = page({}, { supportFetch: async () => ({ ok: ++attempts > 1, status: attempts === 1 ? status : 200 }) });
+        const expected = { supportName: "Fixture Listener", supportEmail: "listener@example.com",
+            supportTopic: "Bug", supportMessage: "Synthetic support message" };
+        for (const [key, value] of Object.entries(expected)) ui.elements[key].value = value;
+        await ui.elements.supportMessage.form.requestSubmit();
+        assert.equal(ui.elements.supportStatus.textContent, "We couldn’t send your message. Please try again.");
+        assert.equal(ui.calls.length, 1); assert.equal(attempts, 1);
+        assert.equal(ui.elements.supportSendBtn.getAttribute("aria-disabled"), null);
+        for (const [key, value] of Object.entries(expected)) assert.equal(ui.elements[key].value, value);
+        await ui.elements.supportMessage.form.requestSubmit();
+        assert.equal(ui.calls.length, 2); assert.equal(attempts, 2);
+        assert.equal(ui.elements.supportStatus.textContent, "Your message was sent. Thank you for your feedback.");
+        assert.equal(ui.values.has(acceptanceKey), false); assert.equal(ui.elements.privacyAgreement.hidden, true);
+    });
+}
+
+test("support network errors use a fixed safe message without logging provider responses or retrying", async () => {
+    const ui = page({}, { supportFetch: async () => { throw new Error("PRIVATE-NETWORK-ERROR"); } });
+    ui.elements.supportMessage.value = "PRIVATE-SUPPORT-MESSAGE";
+    await ui.elements.supportMessage.form.requestSubmit();
+    assert.equal(ui.elements.supportStatus.textContent, "We couldn’t send your message. Please try again.");
+    assert.equal(ui.calls.length, 1); assert.equal(ui.logs.length, 0); assert.equal(ui.beacons.length, 0);
+    assert.equal(ui.elements.supportMessage.value, "PRIVATE-SUPPORT-MESSAGE");
+    assert.equal(ui.elements.supportSendBtn.getAttribute("aria-disabled"), null);
+    assert.doesNotMatch(ui.elements.supportStatus.textContent, /PRIVATE/);
+});
+
+test("support uses only its bounded form fields and never accepts redirected responses", async () => {
+    const ui = page();
+    ui.elements.moodInput.value = "PRIVATE-MUSIC-DRAFT";
+    await ui.elements.supportMessage.form.requestSubmit();
+    const request = ui.calls[0].request;
+    assert.equal(request.method, "POST"); assert.equal(request.redirect, "error");
+    assert.equal(request.credentials, "omit"); assert.equal(request.headers.Accept, "application/json");
+    assert.deepEqual([...request.body.keys()], ["name", "email", "topic", "message"]);
+    assert.ok(!request.body.toString().includes("PRIVATE-MUSIC-DRAFT"));
+    assert.equal(ui.evaluate("privacyAccepted"), false); assert.equal(ui.values.has(acceptanceKey), false);
+});
+
+test("invalid support email cannot enter a sending state or send after a previous success", async () => {
+    const ui = page();
+    await ui.elements.supportMessage.form.requestSubmit();
+    ui.elements.supportEmail.value = "not-an-email";
+    await ui.elements.supportMessage.form.requestSubmit();
+    assert.equal(ui.calls.length, 1); assert.equal(ui.elements.supportStatus.textContent, "");
+    assert.equal(ui.elements.supportEmail.focused, true);
+    assert.equal(ui.elements.supportEmailError.hidden, false);
+    assert.equal(ui.elements.supportSendBtn.getAttribute("aria-disabled"), null);
+});
+
+test("support keeps working after music consent is withdrawn without granting it again", async () => {
+    const ui = page({ [acceptanceKey]: agreed(true) });
+    ui.context.withdrawPrivacyAcceptance();
+    const beaconsBeforeSupport = ui.beacons.length;
+    await ui.elements.supportMessage.form.requestSubmit();
+    assert.equal(ui.calls.length, 1); assert.equal(ui.evaluate("privacyAccepted"), false);
+    assert.equal(ui.values.has(acceptanceKey), false); assert.equal(ui.elements.privacyAgreement.hidden, true);
+    assert.equal(ui.beacons.length, beaconsBeforeSupport);
+});
+
 test("an external YouTube action resumes only on its specifically labelled agreement", async () => {
     const ui = page(), slot = new Element(); ui.context.showPreviewFailure(slot, song.song, song.artist, "unplayable");
     const button = descendants(slot).find(element => element.tagName === "BUTTON"); ui.body.appendChild(slot);

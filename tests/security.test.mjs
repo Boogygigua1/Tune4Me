@@ -409,7 +409,7 @@ function browser(origin = "https://tune4-me.vercel.app", initial = {}) {
     vm.runInContext(source("function getVideoCacheKey(", "function closeYouTubePreview("), context);
     return { context, storage, values, events };
 }
-function cacheKey(songName = song.song) { return "yt_v4_" + JSON.stringify([[songName.toLowerCase(), song.artist.toLowerCase()], null]); }
+function cacheKey(songName = song.song) { return "yt_v5_" + JSON.stringify([[songName.toLowerCase(), song.artist.toLowerCase()], null]); }
 function candidate() { return { videoId: id, video: { title: secret, channelTitle: secret, duration: "PT3M", durationSeconds: 180 } }; }
 function seedCache(count = 200) {
     global.videoCache = Object.fromEntries(Array.from({ length: count }, (_, i) => [cacheKey("song" + i),
